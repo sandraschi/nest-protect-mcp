@@ -1,8 +1,12 @@
 # Nest Protect MCP Server
 
-A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and CO detectors via MCP (Message Control Protocol).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## Features
+A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and CO detectors via MCP (Message Control Protocol). This server provides a unified interface to monitor and control your Nest Protect devices programmatically.
+
+## 🚀 Features
 
 - **FastMCP 2.11.3 Compatibility**: Full support for MCP protocol with stdio and HTTP/S connections
 - **Dual Connectivity**:
@@ -21,32 +25,73 @@ A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and C
   - OAuth 2.0 authentication
   - Role-based access control
   - Secure token management
+- **Stateful Operation**: Maintains device state between restarts
+- **Extensible Architecture**: Easy to add new device types and features
 
-## Installation
+## 🛠️ Installation
 
 ### Prerequisites
-- Python 3.8+
-- FastMCP 2.11.3 or later
+- Python 3.8 or later
 - Google Cloud Project with Smart Device Management API enabled
+- Nest Developer Account
 
-### Installation Options
+### Quick Start
 
-1. **From Source**:
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/nest-protect-mcp.git
+   git clone https://github.com/sandraschi/nest-protect-mcp.git
    cd nest-protect-mcp
+   ```
+
+2. **Set up a virtual environment (recommended)**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
    pip install -e .
    ```
 
-2. **From PyPI**:
+4. **Configure your environment**:
    ```bash
-   pip install nest-protect-mcp
+   cp config/default.toml.example config/default.toml
+   # Edit the config file with your credentials
    ```
 
-3. **Using Docker**:
+5. **Run the server**:
    ```bash
-   docker pull yourusername/nest-protect-mcp:latest
+   python -m nest_protect_mcp.cli
    ```
+
+### Docker Installation
+
+```bash
+docker run -d \
+  --name nest-protect-mcp \
+  -p 8080:8080 \
+  -v $(pwd)/config:/app/config \
+  -v $(pwd)/data:/app/data \
+  sandraschi/nest-protect-mcp:latest
+```
+
+### Configuration
+
+Create a `config/default.toml` file based on the example:
+
+```toml
+[nest]
+project_id = "your-project-id"
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+refresh_token = "your-refresh-token"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+log_level = "INFO"
+```
 
 ## Configuration
 
@@ -69,43 +114,10 @@ A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and C
    # HTTPS (enable for production)
    enable_https = false
    ssl_cert = "path/to/cert.pem"
-   ssl_key = "path/to/key.pem"
-   
-   # Authentication
-   auth_required = true
-   
-   [nest]
-   # Google Cloud Project settings
-   project_id = "your-project-id"
-   client_id = "your-client-id"
-   client_secret = "your-client-secret"
-   refresh_token = "your-refresh-token"
-   ```
+nest-protect-mcp status
 
-3. Set up environment variables (optional, overrides config file):
-   ```bash
-   export NEST_PROJECT_ID=your-project-id
-   export NEST_CLIENT_ID=your-client-id
-   export NEST_CLIENT_SECRET=your-client-secret
-   export NEST_REFRESH_TOKEN=your-refresh-token
-   ```
-
-## Usage
-
-### Starting the Server
-
-#### MCP Mode (stdio):
-```bash
-nest-protect-mcp --mcp
-```
-
-#### HTTP Mode:
-```bash
-nest-protect-mcp --http
-```
-
-#### Both MCP and HTTP:
-```bash
+# Run a safety test on a device
+nest-protect-mcp test --device-id <device_id>
 nest-protect-mcp --mcp --http
 ```
 

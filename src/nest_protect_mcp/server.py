@@ -13,9 +13,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Callable, Awaitable, TypeVar, cast
 
 from fastapi import FastAPI
-from fastmcp.server import McpServer
-from fastmcp.messages import McpMessage
-from fastmcp.fastmcp import FastMCP
+from fastmcp import FastMCP
+from fastmcp.server import Server
+from fastmcp.messages import Message as McpMessage
 from pydantic import ValidationError
 
 from .state_manager import state_manager, lifespan
@@ -48,25 +48,30 @@ MessageHandler = Callable[[McpMessage], Awaitable[Dict[str, Any]]]
 # Configure logging
 logger = logging.getLogger(__name__)
 
-class NestProtectMCP(McpServer):
-# MCP server for interacting with Nest Protect devices with stateful support
+class NestProtectMCP(FastMCP):
+    """MCP server for interacting with Nest Protect devices with stateful support."""
     
-    def __init__(self, config: Union[Dict[str, Any], ProtectConfig], **kwargs):
+    def __init__(self, config: Union[Dict[str, Any], 'ProtectConfig'], **kwargs):
         """Initialize the Nest Protect MCP server.
         
         Args:
             config: Configuration dictionary or ProtectConfig instance
             **kwargs: Additional arguments to pass to the base class
         """
-        # Initialize the base class with FastAPI app and state management
-        app = FastAPI(lifespan=lifespan)
-        super().__init__("nest-protect", app=app, **kwargs)
+        # Initialize the base class
+        super().__init__(
+            name="nest-protect",
+            version="1.0.0",
+            description="MCP server for Nest Protect devices",
+            **kwargs
+        )
         
         # Store state manager reference
         self._state_manager = state_manager
         
         # Load configuration
         if isinstance(config, dict):
+            from .models import ProtectConfig
             self._config = ProtectConfig(**config)
         else:
             self._config = config
@@ -87,19 +92,17 @@ class NestProtectMCP(McpServer):
             'devices': 'nest_devices'
         }
         
-        # Initialize FastMCP server with state management
-        self._fastmcp = FastMCP(
-            name="nest_protect",
-            version="0.1.0",
-            description="MCP server for Nest Protect devices",
-            state_manager=self._state_manager
-        )
-        
         # Load auth state
         asyncio.create_task(self._load_auth_state())
         
         # Register message handlers
         self._register_message_handlers()
+        
+        # Initialize FastAPI app
+        self.app = FastAPI(lifespan=lifespan)
+        
+        # Setup routes
+        self._setup_routes()
     
     async def _ensure_session(self) -> None:
     # Ensure we have a valid session and access token
@@ -332,282 +335,39 @@ class NestProtectMCP(McpServer):
     # === API Endpoints ===
     
     async def _handle_get_devices(self, message: McpMessage) -> Dict[str, Any]:
-    # Handle GET /devices endpoint
-        devices = await self.get_devices()
-        return {
-            "status": "success",
-            "data": [device.dict() for device in devices]
-        }
-    
-    async def _handle_get_device_status(self, message: McpMessage) -> Dict[str, Any]:
-    # Handle GET /device/{device_id}/status endpoint
-        device_id = message.params.get("device_id")
-        if not device_id:
-            return {"status": "error", "message": "Device ID is required"}
-        
-        device = await self.get_device(device_id)
-        if not device:
-            return {"status": "error", "message": f"Device {device_id} not found"}
-        
-        return {"status": "success", "data": device.dict()}
-    
-    async def _handle_get_alarms(self, message: McpMessage) -> Dict[str, Any]:
-    # Handle GET /alarms endpoint
-        devices = await self.get_devices()
-        alarms = []
-        
-        for device in devices:
-            if device.smoke_alarm_state in [ProtectAlarmState.WARNING, ProtectAlarmState.EMERGENCY]:
-                alarms.append({
-                    "device_id": device.device_id,
-                    "device_name": device.name,
-                    "alarm_type": "smoke",
-                    "state": device.smoke_alarm_state,
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                })
-            if device.co_alarm_state in [ProtectAlarmState.WARNING, ProtectAlarmState.EMERGENCY]:
-                alarms.append({
-                    "device_id": device.device_id,
-                    "device_name": device.name,
-                    "alarm_type": "carbon_monoxide",
-                    "state": device.co_alarm_state,
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                })
-        
-        return {"status": "success", "data": alarms}
-    
-    async def _handle_hush_alarm(self, message: McpMessage) -> Dict[str, Any]:
-    # Handle POST /device/{device_id}/hush endpoint
-        device_id = message.params.get("device_id")
-        if not device_id:
-            return {"status": "error", "message": "Device ID is required"}
-        
-        duration = message.params.get("duration", 10)  # Default 10 minutes
-        
-        try:
-            success = await self.send_command(ProtectCommand(
-                command="hush",
-                device_id=device_id,
-                params={"duration": duration}
-            ))
-            
-            if success:
-                return {
-                    "status": "success",
-                    "message": f"Alarm hush command sent to device {device_id} for {duration} minutes"
-                }
-            else:
-                return {
-                    "status": "error",
-                    "message": f"Failed to send hush command to device {device_id}"
-                }
-                
-        except Exception as e:
-            logger.error(f"Error hushing alarm: {e}", exc_info=True)
-            return {
-                "status": "error",
-                "message": f"Failed to hush alarm: {str(e)}"
-            }
-    
-    # === Server Lifecycle ===
-    
-    async def start(self) -> None:
-    # Start the Nest Protect MCP server
-        if self._running:
-            logger.warning("Server is already running")
-            return
-        
-        logger.info("Starting Nest Protect MCP server")
-        
-        try:
-            # Initialize connection to Nest API
-            await self._init_nest_connection()
-            
-            # Start background tasks
-            self._running = True
-            self._update_task = asyncio.create_task(self._update_loop())
-            
-            # Start MCP server
-            await super().start()
-            
-            logger.info("Nest Protect MCP server started successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to start Nest Protect MCP server: {e}", exc_info=True)
-            await self.stop()
-            raise
-    
-    async def stop(self) -> None:
-    # Stop the Nest Protect MCP server
-        if not self._running:
-            return
-        
-        logger.info("Stopping Nest Protect MCP server")
-        self._running = False
-        
-        # Cancel background tasks
-        if self._update_task:
-            self._update_task.cancel()
-            try:
-                await self._update_task
-            except asyncio.CancelledError:
-                pass
-            self._update_task = None
-        
-        # Close Nest API connection
-        await self._close_nest_connection()
-        
-        # Stop MCP server
-        await super().stop()
-        
-        logger.info("Nest Protect MCP server stopped")
-    
-    async def get_devices(self) -> List[ProtectDeviceState]:
-    # Get the current state of all Nest Protect devices
-        return list(self._devices.values())
-    
-    async def get_device(self, device_id: str) -> Optional[ProtectDeviceState]:
-    # Get the current state of a specific Nest Protect device
-        logger.info(f"Attempting to hush alarm on device {device_id}")
-        
-        # Check if device exists
-        if device_id not in self._devices:
-            logger.warning(f"Device {device_id} not found")
-            raise NestDeviceNotFound(f"Device {device_id} not found")
-        
-        try:
-            # Execute the hush command via the Nest API
-            response = await self._make_request(
-                'POST',
-                f'enterprises/{self.config.project_id}/devices/{device_id}:executeCommand',
-                json={
-                    'command': 'sdm.devices.commands.SafetyHush.Hush',
-                    'params': {}
-                }
-            )
-            
-            # Check if the command was successful
-            if response.get('results', {}).get('status') == 'SUCCESS':
-                logger.info(f"Successfully hushed alarm on device {device_id}")
-                
-                # Update the local device state
-                device = self._devices[device_id]
-                old_state = device.copy()
-                device.co_alarm_state = ProtectAlarmState.OFF
-                device.smoke_alarm_state = ProtectAlarmState.OFF
-                device.heat_alarm_state = ProtectAlarmState.OFF
-                
-                # Emit an event for the state change
-                event = ProtectEvent(
-                    event_type="alarm_hushed",
-                    device_id=device_id,
-                    timestamp=datetime.now(timezone.utc),
-                    data={
-                        "device": device.dict(),
-                        "previous_state": old_state.dict()
-                    }
-                )
-                self._emit_event(event)
-                
-                return True
-            else:
-                logger.error(f"Failed to hush alarm on device {device_id}: {response}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error hushing alarm on device {device_id}: {e}", exc_info=True)
-            raise NestConnectionError(f"Failed to hush alarm: {e}")
-
-    async def _send_device_command(self, device_id: str, command: ProtectCommand) -> bool:
-    # Send a command to a specific device
-        logger.info(f"Sending command {command.command} to device {device_id}")
-        
-        # Check if device exists
-        if device_id not in self._devices:
-            logger.warning(f"Device {device_id} not found")
-            raise NestDeviceNotFound(f"Device {device_id} not found")
-        
-        try:
-            if command.command == "hush":
-                # Handle hush command
-                return await self._hush_alarm(device_id)
-                
-            elif command.command == "test":
-                # Handle test command
-                logger.info(f"Starting test on device {device_id}")
-                
-                # Execute the test command via the Nest API
-                response = await self._make_request(
-                    'POST',
-                    f'enterprises/{self.config.project_id}/devices/{device_id}:executeCommand',
-                    json={
-                        'command': 'sdm.devices.commands.SafetyTest.Test',
-                        'params': {}
-                    }
-                )
-                
-                # Check if the command was successful
-                if response.get('results', {}).get('status') == 'SUCCESS':
-                    logger.info(f"Successfully started test on device {device_id}")
-                    
-                    # Emit an event for the test start
-                    event = ProtectEvent(
-                        event_type="test_started",
-                        device_id=device_id,
-                        timestamp=datetime.now(timezone.utc),
-                        data={
-                            "test_type": command.params.get("test_type", "manual")
-                        }
-                    )
-                    self._emit_event(event)
-                    
-                    return True
-                else:
-                    logger.error(f"Failed to start test on device {device_id}: {response}")
-                    return False
-                    
-            else:
-                logger.warning(f"Unsupported command: {command.command}")
-                raise NestInvalidCommandError(f"Unsupported command: {command.command}")
-                
-        except Exception as e:
-            logger.error(f"Error sending command to device {device_id}: {e}", exc_info=True)
-            if not isinstance(e, (NestDeviceNotFound, NestInvalidCommandError)):
-                raise NestConnectionError(f"Failed to send command: {e}")
-            raise
-    
-    def _fire_event(self, event: ProtectEvent) -> None:
-    # Fire an event to all listeners
-        logger.debug(f"Firing event: {event.event_type} for device {event.device_id}")
-        for callback in self._event_listeners:
-            try:
-                callback(event)
-            except Exception as e:
-                logger.error(f"Error in event listener: {e}", exc_info=True)
-    
-    # ===== MCP Message Handlers =====
-    
-    async def _handle_get_devices(self, message: McpMessage) -> Dict[str, Any]:
     # Handle get_devices message
-        devices = await self.get_devices()
-        return {
-            "status": "success",
-            "devices": [device.dict() for device in devices]
-        }
+        try:
+            devices = await self.get_devices()
+            return {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "result": [device.dict() for device in devices]
+            }
+        except Exception as e:
+            logger.error(f"Error getting devices: {e}")
+            return {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32000,
+                    "message": f"Failed to get devices: {str(e)}"
+                }
+            }
     
     async def _handle_get_device(self, message: McpMessage) -> Dict[str, Any]:
     # Handle get_device message
         device_id = message.params.get("device_id")
         if not device_id:
-            return {"status": "error", "message": "device_id is required"}
+            return {"jsonrpc": "2.0", "id": message.get("id"), "error": {"code": -32000, "message": "device_id is required"}}
         
         device = await self.get_device(device_id)
         if not device:
-            return {"status": "error", "message": f"Device {device_id} not found"}
+            return {"jsonrpc": "2.0", "id": message.get("id"), "error": {"code": -32000, "message": f"Device {device_id} not found"}}
         
         return {
-            "status": "success",
-            "device": device.dict()
+            "jsonrpc": "2.0",
+            "id": message.get("id"),
+            "result": device.dict()
         }
     
     async def _handle_send_command(self, message: McpMessage) -> Dict[str, Any]:

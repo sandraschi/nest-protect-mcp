@@ -99,7 +99,7 @@ try {
 
     # Build the DXT package
     Write-Header "Building DXT Package"
-    & $Python "$ProjectRoot\dxt_build.py"
+    & $Python "$PSScriptRoot\dxt_build.py"
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to build DXT package"
     }
