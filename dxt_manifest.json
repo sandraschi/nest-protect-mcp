@@ -1,0 +1,146 @@
+{
+  "name": "nest-protect-mcp",
+  "version": "0.1.0",
+  "display_name": "Nest Protect MCP",
+  "description": "MCP server for monitoring and controlling Nest Protect smoke and CO detectors",
+  "author": "Sandra Schi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandraschi/nest-protect-mcp"
+  },
+  "categories": ["iot", "home-automation", "safety", "nest"],
+  "keywords": ["nest", "protect", "smoke", "co", "detector", "alarm"],
+  
+  "server": {
+    "command": ["python", "-m", "nest_protect_mcp.server"],
+    "timeout": 30,
+    "launch_delay": 10000,
+    "port": 8080,
+    "auto_start": true,
+    "environment": {
+      "PYTHONUNBUFFERED": "1"
+    }
+  },
+
+  "dependencies": [
+    {
+      "name": "fastmcp",
+      "version": ">=2.11.3"
+    },
+    {
+      "name": "pydantic",
+      "version": ">=1.10.0"
+    },
+    {
+      "name": "aiohttp",
+      "version": ">=3.8.0"
+    },
+    {
+      "name": "python-dotenv",
+      "version": ">=0.19.0"
+    },
+    {
+      "name": "toml",
+      "version": ">=0.10.2"
+    },
+    {
+      "name": "requests",
+      "version": ">=2.28.0"
+    }
+  ],
+
+  "configuration": {
+    "project_id": {
+      "type": "string",
+      "description": "Google Cloud Project ID for Nest API",
+      "required": true
+    },
+    "client_id": {
+      "type": "string",
+      "description": "OAuth 2.0 Client ID for Nest API",
+      "required": true
+    },
+    "client_secret": {
+      "type": "string",
+      "description": "OAuth 2.0 Client Secret for Nest API",
+      "required": true,
+      "secret": true
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "OAuth 2.0 Refresh Token for Nest API",
+      "required": true,
+      "secret": true
+    },
+    "update_interval": {
+      "type": "integer",
+      "description": "How often to check for device updates (in seconds)",
+      "default": 60,
+      "minimum": 10
+    },
+    "log_level": {
+      "type": "string",
+      "description": "Logging level",
+      "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+      "default": "INFO"
+    }
+  },
+
+  "prompts": [
+    {
+      "name": "get_device_status_prompt",
+      "description": "Get the status of Nest Protect devices",
+      "template": "Show me the status of {device_name} including {details}."
+    },
+    {
+      "name": "check_alarms_prompt",
+      "description": "Check for active alarms",
+      "template": "Are there any active {alarm_type} alarms? Show me {details_level} information."
+    },
+    {
+      "name": "test_device_prompt",
+      "description": "Test a Nest Protect device",
+      "template": "Run a {test_type} test on the {location} Nest Protect."
+    },
+    {
+      "name": "hush_alarm_prompt",
+      "description": "Hush an active alarm",
+      "template": "{action} the alarm on the {location} Nest Protect for {duration} minutes."
+    },
+    {
+      "name": "get_battery_status_prompt",
+      "description": "Check battery status of devices",
+      "template": "Show me the battery status of {device_filter} devices, sorted by {sort_by}."
+    },
+    {
+      "name": "get_device_history_prompt",
+      "description": "Get history of device events",
+      "template": "Show me {event_type} events for {device_name} from {start_time} to {end_time}."
+    },
+    {
+      "name": "check_connectivity_prompt",
+      "description": "Check device connectivity status",
+      "template": "Which Nest Protects are currently {status}? Show me {details}."
+    },
+    {
+      "name": "set_alert_preferences_prompt",
+      "description": "Configure alert preferences",
+      "template": "{action} {alert_type} alerts for {device_name} via {notification_method}."
+    },
+    {
+      "name": "get_device_info_prompt",
+      "description": "Get detailed device information",
+      "template": "Show me {details_level} information about the {location} Nest Protect."
+    },
+    {
+      "name": "check_environment_prompt",
+      "description": "Check environmental readings",
+      "template": "What are the current {sensor_type} readings from {device_filter}?"
+    }
+  ],
+
+  "screenshots": [],
+  "icon": "https://raw.githubusercontent.com/sandraschi/nest-protect-mcp/main/icon.png",
+  "documentation": "https://github.com/sandraschi/nest-protect-mcp/blob/main/README.md"
+}

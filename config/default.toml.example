@@ -1,0 +1,34 @@
+# Nest Protect MCP Configuration
+
+[nest]
+# Google Cloud Project ID
+project_id = "your-project-id"
+
+# OAuth 2.0 Credentials
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+refresh_token = "your-refresh-token"
+
+[server]
+# Server configuration
+host = "0.0.0.0"
+port = 8080
+log_level = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# How often to check for device updates (in seconds)
+update_interval = 60
+
+# Optional: MQTT configuration for Home Assistant integration
+[mqtt]
+enabled = false
+host = "localhost"
+port = 1883
+username = ""
+password = ""
+base_topic = "homeassistant"
+
+# Optional: Home Assistant discovery
+[homeassistant]
+enabled = false
+discovery_prefix = "homeassistant"
+node_id = "nest_protect"

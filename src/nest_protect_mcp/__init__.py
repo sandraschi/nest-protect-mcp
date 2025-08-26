@@ -1,5 +1,5 @@
 """
-Nest Protect MCP - A FastMCP 2.10 compliant server for Nest Protect integration.
+Nest Protect MCP - A FastMCP 2.11.3 compliant server for Nest Protect integration.
 
 This package provides a Message Control Protocol (MCP) server for interacting with
 Nest Protect smoke and carbon monoxide detectors.

@@ -1,0 +1,36 @@
+# Nest Protect MCP Configuration
+
+# Connection settings
+project_id = "your-project-id"
+client_id = "your-client-id"
+client_secret = "your-client-secret"
+refresh_token = "your-refresh-token"
+
+# Server settings
+host = "0.0.0.0"
+port = 8080
+log_level = "INFO"
+
+# Device settings
+update_interval = 60  # seconds
+
+# MQTT settings (optional)
+[mqtt]
+enabled = false
+host = "localhost"
+port = 1883
+username = ""
+password = ""
+topic_prefix = "nest/protect/"
+
+# Home Assistant integration (optional)
+[homeassistant]
+discovery = false
+discovery_prefix = "homeassistant"
+
+# Logging
+[logging]
+level = "INFO"
+file = "nest-protect-mcp.log"
+max_size = 10  # MB
+backup_count = 5
