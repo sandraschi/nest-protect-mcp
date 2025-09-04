@@ -3,12 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![FastMCP 2.12.0](https://img.shields.io/badge/FastMCP-2.12.0-blue)](https://github.com/yourusername/fastmcp)
 
-A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and CO detectors via MCP (Message Control Protocol). This server provides a unified interface to monitor and control your Nest Protect devices programmatically.
+A FastMCP 2.12.0 compatible server for interacting with Nest Protect smoke and CO detectors via MCP (Message Control Protocol). This server provides a unified interface to monitor and control your Nest Protect devices programmatically.
 
 ## 🚀 Features
 
-- **FastMCP 2.11.3 Compatibility**: Full support for MCP protocol with stdio and HTTP/S connections
+- **FastMCP 2.12.0 Compatibility**: Full support for MCP protocol with stdio and HTTP/S connections using the latest tool-based approach
 - **Dual Connectivity**:
   - **MCP Protocol** (stdio) for client-server communication
   - **REST API** (HTTP/HTTPS) for testing and dashboard integration
@@ -62,7 +63,14 @@ A FastMCP 2.11.3 compatible server for interacting with Nest Protect smoke and C
 
 5. **Run the server**:
    ```bash
-   python -m nest_protect_mcp.cli
+   # Run with MCP (stdio) interface
+   python -m nest_protect_mcp
+   
+   # Or run with HTTP server
+   python -m nest_protect_mcp --http
+   
+   # For development with auto-reload
+   python -m nest_protect_mcp --reload
    ```
 
 ### Docker Installation
@@ -82,43 +90,63 @@ Create a `config/default.toml` file based on the example:
 
 ```toml
 [nest]
+# Google Cloud Project credentials
 project_id = "your-project-id"
 client_id = "your-client-id"
 client_secret = "your-client-secret"
 refresh_token = "your-refresh-token"
 
 [server]
+# General server settings
 host = "0.0.0.0"
 port = 8080
 log_level = "INFO"
+
+# Enable/disable interfaces
+enable_mcp = true
+enable_http = true
+
+# HTTP/HTTPS configuration
+http_host = "0.0.0.0"
+http_port = 8080
+enable_https = false
+ssl_cert = "path/to/cert.pem"
+ssl_key = "path/to/key.pem"
+
+# MCP specific settings
+mcp_timeout = 30  # seconds
+max_retries = 3
 ```
 
-## Configuration
+## Usage Examples
 
-1. Copy the example configuration file:
-   ```bash
-   cp config/default.toml.example config/default.toml
-   ```
+### Command Line Interface
 
-2. Configure the server (default values shown):
-   ```toml
-   [server]
-   # MCP Protocol (stdio)
-   enable_mcp = true
-   
-   # HTTP Server
-   enable_http = true
-   http_host = "0.0.0.0"
-   http_port = 8080
-   
-   # HTTPS (enable for production)
-   enable_https = false
-   ssl_cert = "path/to/cert.pem"
-nest-protect-mcp status
+```bash
+# Show help
+python -m nest_protect_mcp --help
 
-# Run a safety test on a device
-nest-protect-mcp test --device-id <device_id>
-nest-protect-mcp --mcp --http
+# Run with MCP interface (default)
+python -m nest_protect_mcp
+
+# Run with HTTP server on custom port
+python -m nest_protect_mcp --http --port 8000
+
+# Run with development settings (auto-reload, debug)
+python -m nest_protect_mcp --reload --debug
+```
+
+### Checking Status
+
+```bash
+# Check server status
+curl http://localhost:8080/health
+
+# List all devices
+curl http://localhost:8080/api/devices
+
+# Get device details
+curl http://localhost:8080/api/devices/{device_id}
 ```
 
 ### Connection Methods
