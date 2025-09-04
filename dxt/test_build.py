@@ -17,18 +17,20 @@ def test_dxt_build():
         
         # Create a simple __init__.py
         with open(package_dir / "__init__.py", "w") as f:
-            f.write("""""Test package for DXT build."""\n""")
+            f.write('"""Test package for DXT build."""\n')
         
         # Create a simple cli.py
-        with open(package_dir / "cli.py", "w") as f:
-            f.write("""""Test package CLI."""
-                   """\n\n"""
-                   """def main():"""
-                   """Main entry point."""
-                   """    print(\"Test package\")"""
-                   """\n\n"""
-                   """if __name__ == \"__main__\":"""
-                   """    main()""")
+        cli_content = '''# Test package CLI
+
+def main():
+    """Main entry point."""
+    print("Test package")
+
+if __name__ == "__main__":
+    main()
+'''
+        with open(package_dir / "cli.py", "w", encoding="utf-8") as f:
+            f.write(cli_content)
         
         # Create a simple pyproject.toml
         with open(temp_dir / "pyproject.toml", "w") as f:

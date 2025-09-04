@@ -28,7 +28,7 @@ def create_dxt_package():
         "entry_point": "nest_protect_mcp.server:main",
         "python_version": "3.9",
         "dependencies": [
-            "fastmcp>=2.11.3",
+            "fastmcp==2.12.0",
             "pydantic>=1.10.0",
             "aiohttp>=3.8.0",
             "python-dotenv>=0.19.0",

@@ -26,6 +26,20 @@ classifiers = [
     "Typing :: Typed"
 ]
 license = {text = "MIT"}
+dependencies = [
+    "fastmcp==2.12.0",
+    "pydantic>=2.0.0,<3.0.0",
+    "aiohttp>=3.8.0,<4.0.0",
+    "fastapi>=0.95.0,<1.0.0",
+    "uvicorn[standard]>=0.21.0,<1.0.0",
+    "websockets>=11.0.0,<12.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "tomli>=2.0.0,<3.0.0",
+    "python-dateutil>=2.8.2,<3.0.0",
+    "anyio>=4.5.0,<5.0.0",
+    "httpx>=0.24.0,<1.0.0",
+    "structlog>=23.1.0,<24.0.0"
+]
 
 [project.urls]
 Homepage = "https://github.com/sandraschi/nest-protect-mcp"
@@ -35,6 +49,7 @@ Source = "https://github.com/sandraschi/nest-protect-mcp"
 
 [project.scripts]
 nest-protect-mcp = "nest_protect_mcp.cli:main"
+
 
 [project.optional-dependencies]
 dev = [
@@ -69,30 +84,7 @@ dev = [
     "twine>=4.0.0,<5.0.0"
 ]
 
-[project.dependencies]
-# Core dependencies
-fastmcp = ">=2.11.3,<3.0.0"
-pydantic = ">=2.0.0,<3.0.0"
-aiohttp = ">=3.8.0,<4.0.0"
 
-# Web server and API
-fastapi = ">=0.95.0,<1.0.0"
-uvicorn = {extras = ["standard"], version = ">=0.21.0,<1.0.0"}
-websockets = ">=11.0.0,<12.0.0"
-
-# Configuration and utilities
-python-dotenv = ">=1.0.0,<2.0.0"
-tomli = ">=2.0.0,<3.0.0"
-python-dateutil = ">=2.8.2,<3.0.0"
-
-# Async utilities
-anyio = ">=3.6.0,<4.0.0"
-
-# HTTP client
-httpx = ">=0.24.0,<1.0.0"
-
-# Logging
-structlog = ">=23.1.0,<24.0.0"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
