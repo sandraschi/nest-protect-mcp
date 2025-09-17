@@ -59,23 +59,39 @@ class NestProtectMCP(FastMCP):
             config: Configuration dictionary or ProtectConfig instance
             **kwargs: Additional arguments to pass to the base class
         """
-        # Initialize the base class with required parameters
-        super().__init__(
-            name=kwargs.pop("name", "nest-protect"),
-            instructions=kwargs.pop("instructions", "MCP server for Nest Protect devices"),
-            version=kwargs.pop("version", "1.0.0"),
-            **kwargs
-        )
-        
-        # Store state manager reference
-        self._state_manager = state_manager
-        
-        # Load configuration
-        if isinstance(config, dict):
-            from .models import ProtectConfig
-            self._config = ProtectConfig(**config)
-        else:
-            self._config = config
+        try:
+            logger.debug("Initializing NestProtectMCP with config: %s", 
+                        {k: '***' if 'secret' in k.lower() or 'token' in k.lower() else v 
+                         for k, v in (config if isinstance(config, dict) else config.dict()).items()})
+            
+            # Initialize the base class with required parameters
+            super().__init__(
+                name=kwargs.pop("name", "nest-protect"),
+                instructions=kwargs.pop("instructions", "MCP server for Nest Protect devices"),
+                version=kwargs.pop("version", "1.0.0"),
+                **kwargs
+            )
+            
+            # Initialize FastAPI router
+            from fastapi import APIRouter
+            self.router = APIRouter()
+            self._setup_routes()
+            
+            # Store state manager reference
+            self._state_manager = state_manager
+            
+            # Load configuration
+            if isinstance(config, dict):
+                from .models import ProtectConfig
+                self._config = ProtectConfig(**config)
+            else:
+                self._config = config
+                
+            logger.debug("Configuration loaded successfully")
+            
+        except Exception as e:
+            logger.error("Failed to initialize NestProtectMCP: %s", str(e), exc_info=True)
+            raise
             
         # Initialize state
         self._session = None
@@ -100,16 +116,76 @@ class NestProtectMCP(FastMCP):
         
     async def initialize(self):
         """Initialize the server asynchronously."""
-        if not self._initialized:
+        if self._initialized:
+            logger.debug("Server already initialized, skipping initialization")
+            return
+            
+        try:
+            logger.info("Initializing Nest Protect MCP server...")
+            
+            # Initialize HTTP client session first
+            logger.debug("Initializing HTTP client session...")
+            self._session = aiohttp.ClientSession()
+            
             # Load auth state
+            logger.debug("Loading authentication state...")
             await self._load_auth_state()
+            
+            # Register message handlers
+            logger.debug("Registering message handlers...")
+            self._register_message_handlers()
+            
+            # Try to initialize device state, but don't fail if not authenticated yet
+            try:
+                logger.debug("Attempting to initialize device state...")
+                await self._get_devices_from_api()
+                logger.info("Successfully connected to Nest API")
+            except Exception as e:
+                logger.warning(f"Could not initialize device state: {e}")
+                logger.info("Please complete the authentication process to access Nest devices")
+            
             self._initialized = True
-        
-        # Initialize FastAPI app
-        self.app = FastAPI(lifespan=lifespan)
-        
-        # Setup routes
-        self._setup_routes()
+            logger.info("Nest Protect MCP server initialized successfully")
+            if not self._refresh_token:
+                logger.info("\n⚠️  No authentication token found. Please run the following command to authenticate:")
+                logger.info("   python -m nest_protect_mcp auth\n")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize server: {e}", exc_info=True)
+            if hasattr(self, '_session') and not self._session.closed:
+                await self._session.close()
+            raise
+    
+    async def shutdown(self):
+        """Shutdown the server and clean up resources."""
+        logger.info("Shutting down Nest Protect MCP server...")
+        if hasattr(self, '_session') and self._session and not self._session.closed:
+            await self._session.close()
+            logger.debug("HTTP session closed")
+        self._initialized = False
+        logger.info("Nest Protect MCP server shutdown complete")
+    
+    def _setup_routes(self) -> None:
+        """Set up FastAPI routes for the server."""
+        @self.router.get("/health")
+        async def health_check():
+            return {"status": "ok"}
+            
+        @self.router.get("/api/devices")
+        async def get_devices():
+            return await self._handle_get_devices()
+            
+        @self.router.get("/api/devices/{device_id}")
+        async def get_device(device_id: str):
+            return await self._handle_get_device(device_id)
+            
+        @self.router.post("/api/devices/{device_id}/hush")
+        async def hush_device(device_id: str):
+            return await self._handle_hush_alarm(device_id)
+            
+        @self.router.post("/api/devices/{device_id}/test")
+        async def test_device(device_id: str, test_type: str = "manual"):
+            return await self._handle_run_test(device_id, test_type)
     
     def _register_message_handlers(self) -> None:
         """Register message handlers for MCP server using FastMCP 2.12.0 tool decorators."""
@@ -227,7 +303,8 @@ class NestProtectMCP(FastMCP):
     async def _refresh_access_token(self) -> None:
         """Refresh the access token using the refresh token."""
         if not self._refresh_token:
-            raise NestAuthError("No refresh token available")
+            logger.warning("No refresh token available. Please complete the authentication process.")
+            return
             
         logger.info("Refreshing access token...")
         
@@ -316,12 +393,19 @@ class NestProtectMCP(FastMCP):
     
     async def _get_devices_from_api(self) -> List[Dict[str, Any]]:
         # Load all devices from the Nest API
+        if not self._refresh_token:
+            logger.warning("No refresh token available. Please complete the authentication process first.")
+            return []
+            
         try:
             response = await self._make_request('GET', f'enterprises/{self._config.project_id}/devices')
             return response.get('devices', [])
+        except NestAuthError as e:
+            logger.warning(f"Authentication error while fetching devices: {e}")
+            return []
         except Exception as e:
             logger.error(f"Failed to get devices from API: {e}")
-            raise NestConnectionError(f"Failed to get devices: {e}")
+            return []
     
     def _map_device_state(self, device_data: Dict[str, Any]) -> ProtectDeviceState:
         # Map Nest API device data to our internal device state model
@@ -533,41 +617,75 @@ NestProtectServer = NestProtectMCP
 # Lifespan handler for FastAPI
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Lifespan handler for FastAPI application."""
     # Startup
-    mcp_server = None
-    try:
-        # Load configuration from environment variables
-        config = {
-            "client_id": os.getenv("NEST_CLIENT_ID", ""),
-            "client_secret": os.getenv("NEST_CLIENT_SECRET", ""),
-            "project_id": os.getenv("NEST_PROJECT_ID", ""),
-            "refresh_token": os.getenv("NEST_REFRESH_TOKEN", ""),
-            "redirect_uri": os.getenv("NEST_REDIRECT_URI", "http://localhost:8000/auth/callback")
-        }
-        
-        # Initialize MCP server
-        mcp_server = NestProtectMCP(config)
-        await mcp_server.initialize()
-        
-        # Store mcp_server in app state
-        app.state.mcp_server = mcp_server
-        
-        # Register MCP routes
-        app.include_router(mcp_server.router, prefix="/mcp")
-        
-        logger.info("Nest Protect MCP server started")
-        yield
-        
-    except Exception as e:
-        logger.error(f"Failed to start Nest Protect MCP: {e}")
-        raise
+    logger.info("Starting Nest Protect MCP server...")
     
+    # Initialize MCP server
+    mcp_server = NestProtectMCP(config=app.state.config)
+    await mcp_server.initialize()
+    
+    # Store server instance
+    app.state.mcp_server = mcp_server
+    
+    # Include MCP routes if router is available
+    if hasattr(mcp_server, 'router'):
+        app.include_router(mcp_server.router, prefix="/mcp")
+    
+    try:
+        yield
     finally:
         # Shutdown
-        if mcp_server:
-            if hasattr(mcp_server, 'close'):
-                await mcp_server.close()
-            logger.info("Nest Protect MCP server stopped")
+        logger.info("Shutting down Nest Protect MCP server...")
+        try:
+            await mcp_server.shutdown()
+            if mcp_server._session and not mcp_server._session.closed:
+                await mcp_server._session.close()
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
+        logger.info("Nest Protect MCP server stopped")
 
-# Create FastAPI app with lifespan management
-app = FastAPI(lifespan=lifespan)
+def create_app(config: Optional[Dict[str, Any]] = None) -> FastAPI:
+    """Create and configure the FastAPI application."""
+    # Create the app with lifespan management
+    app = FastAPI(
+        title="Nest Protect MCP Server",
+        description="MCP server for controlling Nest Protect devices",
+        version="1.0.0",
+        docs_url="/api/docs",  # Enable Swagger UI at /api/docs
+        redoc_url="/api/redoc",  # Enable ReDoc at /api/redoc
+        openapi_url="/api/openapi.json",  # Path to OpenAPI schema
+        lifespan=lifespan
+    )
+    
+    # Store config in app state
+    app.state.config = config or {}
+    
+    # Add built-in routes
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        """Health check endpoint.
+        
+        Returns:
+            dict: Status of the service
+        """
+        return {"status": "ok", "service": "Nest Protect MCP Server"}
+    
+    # Add API versioning
+    @app.get("/api/version", tags=["API"])
+    async def get_version():
+        """Get API version information.
+        
+        Returns:
+            dict: API version information
+        """
+        return {
+            "name": "Nest Protect MCP API",
+            "version": "1.0.0",
+            "docs": "/api/docs"
+        }
+    
+    return app
+
+# Create default app instance
+app = create_app()
