@@ -8,7 +8,7 @@ refresh_token = "your-refresh-token"
 
 # Server settings
 host = "0.0.0.0"
-port = 8080
+port = 8090
 log_level = "INFO"
 
 # Device settings

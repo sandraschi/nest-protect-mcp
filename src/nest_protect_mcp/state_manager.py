@@ -2,11 +2,14 @@
 
 import json
 import asyncio
+import time
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional, TypeVar, Generic, Callable, Awaitable
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import logging
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -18,41 +21,102 @@ class StateManager:
     _state: Dict[str, Any] = {}
     _state_file: Path = Path("data/state.json")
     _lock = asyncio.Lock()
+    _initialized = False
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(StateManager, cls).__new__(cls)
             cls._instance._state = {}
             cls._instance._state_file.parent.mkdir(parents=True, exist_ok=True)
+            cls._instance._initialized = False
         return cls._instance
     
     async def initialize(self) -> None:
         """Initialize the state manager and load state from disk."""
-        await self._load_state()
+        if self._initialized:
+            return
+            
+        try:
+            await self._load_state()
+            self._initialized = True
+        except Exception as e:
+            logger.error(f"Failed to initialize state manager: {e}")
+            self._state = {}
+            self._initialized = True
     
     async def _load_state(self) -> None:
         """Load state from file if it exists."""
         if not self._state_file.exists():
+            logger.debug(f"No state file found at {self._state_file}, using empty state")
             self._state = {}
             return
             
         try:
             async with self._lock:
-                with open(self._state_file, 'r') as f:
-                    self._state = json.load(f)
-            logger.info(f"Loaded state from {self._state_file}")
+                try:
+                    with open(self._state_file, 'r', encoding='utf-8') as f:
+                        self._state = json.load(f)
+                    logger.info(f"Successfully loaded state from {self._state_file}")
+                    logger.debug(f"State content: {self._state}")
+                except json.JSONDecodeError as e:
+                    logger.error(f"Invalid JSON in state file {self._state_file}: {e}")
+                    # Try to back up the corrupted file
+                    backup_file = f"{self._state_file}.corrupted.{int(time.time())}"
+                    try:
+                        import shutil
+                        shutil.copy2(self._state_file, backup_file)
+                        logger.warning(f"Backed up corrupted state file to {backup_file}")
+                    except Exception as backup_error:
+                        logger.error(f"Failed to back up corrupted state file: {backup_error}")
+                    self._state = {}
         except Exception as e:
-            logger.error(f"Failed to load state: {e}")
+            logger.error(f"Failed to load state from {self._state_file}: {e}", exc_info=True)
             self._state = {}
     
     async def _save_state(self) -> None:
-        """Save current state to file."""
+        """
+        Save current state to file.
+        
+        This method is thread-safe and includes error handling for file operations.
+        It ensures the state is only saved if the state manager is initialized.
+        """
+        if not self._initialized:
+            logger.warning("Attempted to save state before initialization")
+            return
+            
         try:
+            # Create the directory if it doesn't exist
+            self._state_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Use a temporary file for atomic writes
+            temp_file = f"{self._state_file}.tmp"
+            
             async with self._lock:
-                with open(self._state_file, 'w') as f:
-                    json.dump(self._state, f, indent=2)
+                try:
+                    # Write to a temporary file first
+                    with open(temp_file, 'w', encoding='utf-8') as f:
+                        json.dump(self._state, f, indent=2, ensure_ascii=False)
+                    
+                    # On Windows, we need to remove the destination file first
+                    if os.name == 'nt' and self._state_file.exists():
+                        os.replace(temp_file, self._state_file)
+                    else:
+                        # On Unix-like systems, we can use rename which is atomic
+                        os.rename(temp_file, self._state_file)
+                    
+                    logger.debug(f"Successfully saved state to {self._state_file}")
+                    
+                except Exception as e:
+                    logger.error(f"Error saving state to {self._state_file}: {e}", exc_info=True)
+                    # Clean up the temporary file if it exists
+                    if os.path.exists(temp_file):
+                        try:
+                            os.unlink(temp_file)
+                        except Exception as cleanup_error:
+                            logger.error(f"Failed to clean up temporary file {temp_file}: {cleanup_error}")
+        
         except Exception as e:
-            logger.error(f"Failed to save state: {e}")
+            logger.error(f"Unexpected error in _save_state: {e}", exc_info=True)
     
     async def get(self, key: str, default: T = None) -> T:
         """Get a value from the state."""
@@ -117,3 +181,33 @@ async def lifespan(app: FastAPI):
 def setup_state(app: FastAPI) -> None:
     """Set up state management for FastAPI app."""
     app.state.state_manager = state_manager
+
+# Legacy compatibility layer for tools
+class AppState(BaseModel):
+    """Legacy AppState for backward compatibility."""
+    config: Any = None
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_expires_in: Optional[int] = None
+    oauth_state: Optional[str] = None
+    http_session: Any = None  # aiohttp.ClientSession
+    
+    class Config:
+        arbitrary_types_allowed = True
+
+_app_state: Optional[AppState] = None
+
+def initialize_app_state(config_instance: Any = None) -> None:
+    """Initialize app state for legacy compatibility."""
+    global _app_state
+    if _app_state is None:
+        _app_state = AppState(config=config_instance)
+        logger.info("App state initialized for legacy compatibility.")
+
+def get_app_state() -> AppState:
+    """Get app state for legacy compatibility."""
+    global _app_state
+    if _app_state is None:
+        # Auto-initialize with empty state
+        initialize_app_state()
+    return _app_state

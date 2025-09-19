@@ -4,41 +4,65 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nest-protect-mcp"
-version = "0.1.0"
-description = "Message Control Protocol (MCP) server for Nest Protect devices"
+version = "0.2.0"
+description = "🔥 FastMCP server for Google Nest Protect devices with real-time monitoring, device control, and alarm management"
 readme = "README.md"
 authors = [
     {name = "Sandra Schiessl", email = "sandra.schiessl@example.com"}
 ]
 requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
+    "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Home Automation",
     "Topic :: System :: Networking",
+    "Topic :: System :: Monitoring",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
     "Typing :: Typed"
 ]
 license = {text = "MIT"}
+keywords = [
+    "nest", "protect", "mcp", "fastmcp", "claude", "smart-home", 
+    "home-automation", "smoke-detector", "carbon-monoxide", 
+    "google", "nest-api", "device-control", "monitoring"
+]
 dependencies = [
-    "fastmcp==2.12.0",
+    # Core MCP framework
+    "fastmcp>=2.12.0,<3.0.0",
     "pydantic>=2.0.0,<3.0.0",
+    
+    # HTTP and networking
     "aiohttp>=3.8.0,<4.0.0",
+    "httpx>=0.24.0,<1.0.0",
+    "websockets>=11.0.0,<12.0.0",
+    
+    # Web framework (for potential future REST API)
     "fastapi>=0.95.0,<1.0.0",
     "uvicorn[standard]>=0.21.0,<1.0.0",
-    "websockets>=11.0.0,<12.0.0",
+    
+    # Configuration and utilities
     "python-dotenv>=1.0.0,<2.0.0",
     "tomli>=2.0.0,<3.0.0",
     "python-dateutil>=2.8.2,<3.0.0",
     "anyio>=4.5.0,<5.0.0",
-    "httpx>=0.24.0,<1.0.0",
-    "structlog>=23.1.0,<24.0.0"
+    
+    # Logging and debugging
+    "structlog>=23.1.0,<24.0.0",
+    
+    # Type hints support
+    "typing-extensions>=4.5.0,<5.0.0"
 ]
 
 [project.urls]
@@ -48,10 +72,19 @@ Issues = "https://github.com/sandraschi/nest-protect-mcp/issues"
 Source = "https://github.com/sandraschi/nest-protect-mcp"
 
 [project.scripts]
-nest-protect-mcp = "nest_protect_mcp.cli:main"
+nest-protect-mcp = "nest_protect_mcp.__main__:main"
 
+# FastMCP entry point for Claude Desktop
+[project.entry-points.fastmcp]
+nest-protect = "nest_protect_mcp.fastmcp_server:app"
 
 [project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0"
+]
 dev = [
     # Testing
     "pytest>=7.3.0,<8.0.0",

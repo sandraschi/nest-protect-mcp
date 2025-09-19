@@ -44,10 +44,10 @@ class ProtectHushState(str, Enum):
 class ProtectConfig(BaseModel):
     """Configuration for the Nest Protect MCP server."""
     # Connection settings
-    project_id: str = Field(..., description="Google Cloud Project ID")
-    client_id: str = Field(..., description="OAuth 2.0 Client ID")
-    client_secret: str = Field(..., description="OAuth 2.0 Client Secret")
-    refresh_token: str = Field(..., description="OAuth 2.0 Refresh Token")
+    project_id: str = Field("", description="Google Cloud Project ID")
+    client_id: str = Field("", description="OAuth 2.0 Client ID")
+    client_secret: str = Field("", description="OAuth 2.0 Client Secret")
+    refresh_token: str = Field("", description="OAuth 2.0 Refresh Token")
     
     # Device settings
     update_interval: int = Field(60, description="Update interval in seconds")

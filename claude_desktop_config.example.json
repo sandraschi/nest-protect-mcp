@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "🔥 nest-protect": {
+      "command": "python",
+      "args": ["-m", "nest_protect_mcp"],
+      "cwd": "D:\\path\\to\\your\\nest-protect-mcp",
+      "env": {
+        "NEST_CLIENT_ID": "your-google-oauth-client-id",
+        "NEST_CLIENT_SECRET": "your-google-oauth-client-secret",
+        "NEST_PROJECT_ID": "your-google-cloud-project-id"
+      }
+    }
+  }
+}

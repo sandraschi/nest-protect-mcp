@@ -1,23 +1,23 @@
 """
-Nest Protect MCP Server
+Nest Protect MCP Server (FastMCP 2.12)
 
 This module implements the main server for interacting with Nest Protect devices
-using the Message Control Protocol (MCP).
+using the Message Control Protocol (MCP) with FastMCP 2.12 compatibility.
 """
 import asyncio
-import json
 import logging
-import os
+import signal
+import sys
 import time
 import aiohttp
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union, Callable, Awaitable, TypeVar, cast
+from typing import Any, Dict, List, Optional, Union, Callable, Awaitable, TypeVar, cast, Type
 
-from fastapi import FastAPI, Request
 from fastmcp import FastMCP
+from fastmcp.tools import Tool
 from fastmcp.client.messages import Message as McpMessage
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError, Field
 
 from .state_manager import state_manager
 
@@ -26,6 +26,7 @@ NEST_AUTH_URL = "https://www.googleapis.com/oauth2/v4/token"
 NEST_API_URL = "https://smartdevicemanagement.googleapis.com/v1"
 TOKEN_EXPIRY_BUFFER = 300  # 5 minutes in seconds
 
+# Import models and exceptions
 from .models import (
     ProtectConfig,
     ProtectDeviceState,
@@ -42,119 +43,218 @@ from .exceptions import (
     NestInvalidCommandError,
 )
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("nest_protect_mcp")
+
 # Type aliases
 T = TypeVar('T')
 MessageHandler = Callable[[McpMessage], Awaitable[Dict[str, Any]]]
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Pydantic models for tool parameters
+class EmptyParams(BaseModel):
+    pass
+
+class DeviceIdParams(BaseModel):
+    device_id: str = Field(..., description="The ID of the device")
+
+class SilenceAlarmParams(DeviceIdParams):
+    duration_seconds: int = Field(
+        300, 
+        ge=60, 
+        le=3600,
+        description="Duration to silence the alarm in seconds"
+    )
 
 class NestProtectMCP(FastMCP):
-    """MCP server for interacting with Nest Protect devices with stateful support."""
+    """MCP server for interacting with Nest Protect devices with FastMCP 2.12 support."""
     
-    def __init__(self, config: Union[Dict[str, Any], 'ProtectConfig'], **kwargs):
+    def __init__(self, config: Optional[Union[Dict[str, Any], 'ProtectConfig']] = None, **kwargs):
         """Initialize the Nest Protect MCP server.
         
         Args:
-            config: Configuration dictionary or ProtectConfig instance
+            config: Optional configuration dictionary or ProtectConfig instance
             **kwargs: Additional arguments to pass to the base class
         """
-        try:
-            logger.debug("Initializing NestProtectMCP with config: %s", 
-                        {k: '***' if 'secret' in k.lower() or 'token' in k.lower() else v 
-                         for k, v in (config if isinstance(config, dict) else config.dict()).items()})
+        # Set default config if none provided
+        if config is None:
+            config = {}
             
+        try:
             # Initialize the base class with required parameters
             super().__init__(
                 name=kwargs.pop("name", "nest-protect"),
-                instructions=kwargs.pop("instructions", "MCP server for Nest Protect devices"),
                 version=kwargs.pop("version", "1.0.0"),
+                instructions=kwargs.pop("instructions", "MCP server for Nest Protect devices"),
                 **kwargs
             )
-            
-            # Initialize FastAPI router
-            from fastapi import APIRouter
-            self.router = APIRouter()
-            self._setup_routes()
             
             # Store state manager reference
             self._state_manager = state_manager
             
             # Load configuration
             if isinstance(config, dict):
-                from .models import ProtectConfig
-                self._config = ProtectConfig(**config)
+                self._config = ProtectConfig(**(config or {}))
             else:
                 self._config = config
                 
             logger.debug("Configuration loaded successfully")
             
+            # Initialize state
+            self._session: Optional[aiohttp.ClientSession] = None
+            self._access_token: Optional[str] = None
+            self._refresh_token: Optional[str] = None
+            self._token_expires_at: float = 0
+            self._devices: Dict[str, Any] = {}
+            self._initialized: bool = False
+            self._auth_loaded = asyncio.Event()
+            
+            # State keys for persistence
+            self._state_keys = {
+                'access_token': 'nest_access_token',
+                'refresh_token': 'nest_refresh_token',
+                'token_expires_at': 'nest_token_expires_at',
+                'devices': 'nest_devices'
+            }
+            
+            # Register message handlers and tools
+            self._message_handlers = {}
+            self._register_message_handlers()
+            self._register_tools()
+            
         except Exception as e:
             logger.error("Failed to initialize NestProtectMCP: %s", str(e), exc_info=True)
             raise
-            
-        # Initialize state
-        self._session = None
-        self._access_token = None
-        self._refresh_token = None
-        self._token_expires_at = 0
-        self._devices = {}
-        self._initialized = False
-        self._auth_loaded = asyncio.Event()
-        
-        # State keys for persistence
-        self._state_keys = {
-            'access_token': 'nest_access_token',
-            'refresh_token': 'nest_refresh_token',
-            'token_expires_at': 'nest_token_expires_at',
-            'devices': 'nest_devices'
-        }
-        
-        # Register message handlers
-        self._message_handlers = {}
-        self._register_message_handlers()
         
     async def initialize(self):
-        """Initialize the server asynchronously."""
+        """Initialize the server asynchronously.
+        
+        This method performs the following operations:
+        1. Initializes the HTTP session with proper timeouts
+        2. Loads authentication state
+        3. Initializes devices in the background
+        4. Sets up periodic tasks
+        
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+            Exception: For any other unexpected errors
+        """
         if self._initialized:
             logger.debug("Server already initialized, skipping initialization")
             return
             
+        logger.info("Initializing Nest Protect MCP server...")
+        
         try:
-            logger.info("Initializing Nest Protect MCP server...")
+            # Initialize HTTP session
+            self._session = aiohttp.ClientSession(
+                headers={
+                    'User-Agent': 'NestProtectMCP/1.0',
+                    'Accept': 'application/json'
+                }
+            )
             
-            # Initialize HTTP client session first
-            logger.debug("Initializing HTTP client session...")
-            self._session = aiohttp.ClientSession()
-            
-            # Load auth state
-            logger.debug("Loading authentication state...")
+            # Load authentication state
             await self._load_auth_state()
             
+            # Initialize devices
+            await self._initialize_devices()
+            # Set up periodic tasks
+            self._setup_periodic_tasks()
+            
             # Register message handlers
-            logger.debug("Registering message handlers...")
             self._register_message_handlers()
             
-            # Try to initialize device state, but don't fail if not authenticated yet
-            try:
-                logger.debug("Attempting to initialize device state...")
-                await self._get_devices_from_api()
-                logger.info("Successfully connected to Nest API")
-            except Exception as e:
-                logger.warning(f"Could not initialize device state: {e}")
-                logger.info("Please complete the authentication process to access Nest devices")
-            
             self._initialized = True
+            duration = time.time() - start_time
+            logger.info(f"Nest Protect MCP server initialized successfully in {duration:.2f} seconds")
+            
+        except NestAuthError as e:
+            logger.error(f"Authentication failed during initialization: {e}")
+            await self.shutdown()
+            raise
+            
+        except aiohttp.ClientError as e:
+            error_msg = f"Network error during initialization: {e}"
+            logger.error(error_msg, exc_info=True)
+            await self.shutdown()
+            raise NestConnectionError(error_msg) from e
+            
+        except Exception as e:
+            error_msg = f"Unexpected error during initialization: {e}"
+            logger.error(error_msg, exc_info=True)
+            await self.shutdown()
+            raise Exception(error_msg) from e
+    
+    async def _initialize_devices(self):
+        """Initialize device state in the background."""
+        try:
+            if not self._refresh_token:
+                logger.warning("No refresh token available. Please authenticate first.")
+                return
+                
+            logger.info("Starting device initialization...")
+            await self._get_devices_from_api()
+            logger.info("Successfully initialized device state")
+            
+        except Exception as e:
+            logger.warning(f"Device initialization warning: {e}")
+            if "401" in str(e):
+                logger.warning("Authentication may have expired. Please re-authenticate.")
+                logger.info("\n⚠️  Please run: python -m nest_protect_mcp auth\n")
             logger.info("Nest Protect MCP server initialized successfully")
             if not self._refresh_token:
                 logger.info("\n⚠️  No authentication token found. Please run the following command to authenticate:")
                 logger.info("   python -m nest_protect_mcp auth\n")
             
+    async def startup_event(self):
+        """Handle application startup with improved error handling."""
+        max_retries = 3
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Starting up Nest Protect MCP server (attempt {attempt + 1}/{max_retries})...")
+                await self.initialize()
+                logger.info("Startup completed successfully")
+                return True
+                
+            except Exception as e:
+                logger.error(f"Startup attempt {attempt + 1} failed: {e}", exc_info=True)
+                
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying in {retry_delay} seconds...")
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error("All startup attempts failed")
+                    raise NestProtectError("Failed to start Nest Protect MCP server")
+    
+    async def shutdown_event(self):
+        """Handle application shutdown with cleanup."""
+        logger.info("Shutting down Nest Protect MCP server...")
+        
+        # Close all active WebSocket connections
+        if hasattr(self, '_active_connections'):
+            logger.info(f"Closing {len(self._active_connections)} active WebSocket connections...")
+            for websocket in list(self._active_connections):
+                try:
+                    await websocket.close()
+                except Exception as e:
+                    logger.warning(f"Error closing WebSocket: {e}")
+            self._active_connections.clear()
+        
+        # Perform server shutdown
+        try:
+            await self.shutdown()
         except Exception as e:
-            logger.error(f"Failed to initialize server: {e}", exc_info=True)
-            if hasattr(self, '_session') and not self._session.closed:
-                await self._session.close()
-            raise
+            logger.error(f"Error during shutdown: {e}", exc_info=True)
+        
+        logger.info("Shutdown completed")
     
     async def shutdown(self):
         """Shutdown the server and clean up resources."""
@@ -165,70 +265,80 @@ class NestProtectMCP(FastMCP):
         self._initialized = False
         logger.info("Nest Protect MCP server shutdown complete")
     
-    def _setup_routes(self) -> None:
-        """Set up FastAPI routes for the server."""
-        @self.router.get("/health")
-        async def health_check():
-            return {"status": "ok"}
-            
-        @self.router.get("/api/devices")
-        async def get_devices():
-            return await self._handle_get_devices()
-            
-        @self.router.get("/api/devices/{device_id}")
-        async def get_device(device_id: str):
-            return await self._handle_get_device(device_id)
-            
-        @self.router.post("/api/devices/{device_id}/hush")
-        async def hush_device(device_id: str):
-            return await self._handle_hush_alarm(device_id)
-            
-        @self.router.post("/api/devices/{device_id}/test")
-        async def test_device(device_id: str, test_type: str = "manual"):
-            return await self._handle_run_test(device_id, test_type)
+    def _setup_routes(self):
+        """Set up MCP message handlers."""
+        # This method is kept for backward compatibility
+        # All routes are now registered in _register_message_handlers()
+        pass
     
-    def _register_message_handlers(self) -> None:
-        """Register message handlers for MCP server using FastMCP 2.12.0 tool decorators."""
-        # Create tool methods with proper decorators
-        @self.tool(name="get_devices")
-        async def get_devices_tool():
-            """Get all Nest Protect devices."""
-            return await self._handle_get_devices()
+    def _register_message_handlers(self):
+        """Register message handlers for MCP methods."""
+        self._message_handlers = {
+            "ping": self._handle_ping,
+            "get_device": self._handle_get_device,
+            "get_devices": self._get_devices,
+            "get_alarm_state": self._handle_get_alarm_state,
+            "hush_alarm": self._handle_hush_alarm,
+            "run_test": self._handle_run_test,
+        }
+        
+    def _register_tools(self):
+        """Register tools for FastMCP 2.12."""
+        @self.tool("get_devices")
+        async def get_devices(params: EmptyParams) -> List[Dict[str, Any]]:
+            """Get a list of all Nest Protect devices."""
+            return await self._get_devices()
+        
+        @self.tool("get_device")
+        async def get_device(params: DeviceIdParams) -> Dict[str, Any]:
+            """Get detailed information about a specific device."""
+            return await self._get_device(params.device_id)
             
-        @self.tool(name="get_device")
-        async def get_device_tool(device_id: str):
-            """Get a specific Nest Protect device by ID."""
-            return await self._handle_get_device(device_id)
+        @self.tool("silence_alarm")
+        async def silence_alarm(params: SilenceAlarmParams) -> Dict[str, Any]:
+            """Silence the alarm on a specific device."""
+            return await self._handle_hush_alarm(params.device_id)
+    
+    async def _handle_ping(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle ping messages to keep the connection alive."""
+        return {
+            "pong": True,
+            "timestamp": params.get("timestamp"),
+            "server_time": time.time()
+        }
+    
+    async def handle_message(self, message: McpMessage) -> Dict[str, Any]:
+        """Handle an incoming MCP message."""
+        try:
+            method = message.method
+            params = message.params or {}
             
-        @self.tool(name="send_command")
-        async def send_command_tool(device_id: str, command: str, params: dict = None):
-            """Send a command to a Nest Protect device."""
-            return await self._handle_send_command(device_id, command, params or {})
+            logger.debug(f"Received MCP message - Method: {method}, Params: {params}")
             
-        @self.tool(name="get_alarm_state")
-        async def get_alarm_state_tool(device_id: str):
-            """Get the current alarm state of a Nest Protect device."""
-            return await self._handle_get_alarm_state(device_id)
+            # Find the handler for this method
+            handler = self._message_handlers.get(method)
+            if not handler:
+                raise ValueError(f"Unknown method: {method}")
             
-        @self.tool(name="hush_alarm")
-        async def hush_alarm_tool(device_id: str):
-            """Hush the alarm on a Nest Protect device."""
-            return await self._handle_hush_alarm(device_id)
+            # Call the handler
+            result = await handler(**params)
             
-        @self.tool(name="run_test")
-        async def run_test_tool(device_id: str, test_type: str = "manual"):
-            """Run a test on a Nest Protect device."""
-            return await self._handle_run_test(device_id, test_type)
+            return {
+                "jsonrpc": "2.0",
+                "id": message.id,
+                "result": result
+            }
             
-        # Store references to prevent garbage collection
-        self._tools = [
-            get_devices_tool,
-            get_device_tool,
-            send_command_tool,
-            get_alarm_state_tool,
-            hush_alarm_tool,
-            run_test_tool
-        ]
+        except Exception as e:
+            logger.error(f"Error handling MCP message: {e}", exc_info=True)
+            return {
+                "jsonrpc": "2.0",
+                "id": getattr(message, 'id', None),
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                }
+            }
     
     async def _ensure_session(self) -> None:
         """Ensure we have a valid session and access token."""
@@ -468,19 +578,6 @@ class NestProtectMCP(FastMCP):
     
     # === API Endpoints ===
     
-    async def _handle_get_devices(self) -> List[Dict[str, Any]]:
-        """Get all Nest Protect devices.
-        
-        Returns:
-            List of device information dictionaries
-        """
-        try:
-            devices = await self.get_devices()
-            return [device.dict() for device in devices]
-        except Exception as e:
-            logger.error(f"Error getting devices: {e}")
-            raise Exception(f"Failed to get devices: {str(e)}")
-    
     async def _handle_get_device(self, device_id: str) -> Dict[str, Any]:
         """Get a specific Nest Protect device by ID.
         
@@ -611,81 +708,138 @@ class NestProtectMCP(FastMCP):
             logger.error(f"Error running test: {e}", exc_info=True)
             raise Exception(f"Error running test: {e}")
 
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from typing import Any, Dict, Optional
+
 # For backward compatibility
 NestProtectServer = NestProtectMCP
 
-# Lifespan handler for FastAPI
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan handler for FastAPI application."""
-    # Startup
-    logger.info("Starting Nest Protect MCP server...")
+def create_app():
+    """Create and configure the FastAPI application.
     
-    # Initialize MCP server
-    mcp_server = NestProtectMCP(config=app.state.config)
-    await mcp_server.initialize()
-    
-    # Store server instance
-    app.state.mcp_server = mcp_server
-    
-    # Include MCP routes if router is available
-    if hasattr(mcp_server, 'router'):
-        app.include_router(mcp_server.router, prefix="/mcp")
-    
-    try:
-        yield
-    finally:
-        # Shutdown
-        logger.info("Shutting down Nest Protect MCP server...")
+    Returns:
+        FastAPI: Configured FastAPI application instance
+    """
+    # Create FastAPI app with lifespan management
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Initialize the server
+        server = NestProtectMCP({})
         try:
-            await mcp_server.shutdown()
-            if mcp_server._session and not mcp_server._session.closed:
-                await mcp_server._session.close()
+            # Start the server
+            await server.initialize()
+            
+            # Make server available in app state
+            app.state.server = server
+            
+            # Log successful startup
+            logger.info("Nest Protect MCP Server started successfully")
+            
+            yield
+            
         except Exception as e:
-            logger.error(f"Error during shutdown: {e}")
-        logger.info("Nest Protect MCP server stopped")
+            logger.error("Failed to start server: %s", str(e), exc_info=True)
+            raise
+            
+        finally:
+            # Cleanup
+            try:
+                await server.shutdown()
+                logger.info("Server shutdown complete")
+            except Exception as e:
+                logger.error("Error during server shutdown: %s", str(e), exc_info=True)
 
-def create_app(config: Optional[Dict[str, Any]] = None) -> FastAPI:
-    """Create and configure the FastAPI application."""
-    # Create the app with lifespan management
+    # Create FastAPI app with OpenAPI configuration
     app = FastAPI(
         title="Nest Protect MCP Server",
-        description="MCP server for controlling Nest Protect devices",
+        description="REST API for Nest Protect MCP Server with FastMCP 2.12 support",
         version="1.0.0",
-        docs_url="/api/docs",  # Enable Swagger UI at /api/docs
-        redoc_url="/api/redoc",  # Enable ReDoc at /api/redoc
-        openapi_url="/api/openapi.json",  # Path to OpenAPI schema
+        contact={
+            "name": "Support",
+            "url": "https://github.com/sandraschi/nest-protect-mcp/issues"
+        },
+        license_info={
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         lifespan=lifespan
     )
-    
-    # Store config in app state
-    app.state.config = config or {}
-    
-    # Add built-in routes
-    @app.get("/health", tags=["Health"])
-    async def health_check():
-        """Health check endpoint.
-        
-        Returns:
-            dict: Status of the service
-        """
-        return {"status": "ok", "service": "Nest Protect MCP Server"}
-    
-    # Add API versioning
-    @app.get("/api/version", tags=["API"])
-    async def get_version():
+
+    # API Routes
+    @app.get(
+        "/api/version", 
+        tags=["API"],
+        summary="Get API version information",
+        response_description="API version information"
+    )
+    async def get_version() -> Dict[str, str]:
         """Get API version information.
         
         Returns:
-            dict: API version information
+            dict: API version information including name, version, and MCP version
         """
         return {
-            "name": "Nest Protect MCP API",
+            "name": "Nest Protect MCP Server",
             "version": "1.0.0",
-            "docs": "/api/docs"
+            "mcp_version": "2.12.0",
+            "docs": "/docs"
         }
+    
+    # Health check endpoint
+    @app.get(
+        "/health",
+        tags=["System"],
+        summary="Health check endpoint",
+        response_description="Server health status"
+    )
+    async def health_check() -> Dict[str, str]:
+        """Check if the server is running."""
+        return {"status": "ok"}
     
     return app
 
-# Create default app instance
+# Create FastAPI app instance
 app = create_app()
+
+# Create server function for MCP compatibility
+def create_server(config: Optional[Dict[str, Any]] = None) -> NestProtectMCP:
+    """Create and configure the NestProtectMCP server.
+    
+    This function creates a new instance of NestProtectMCP with the provided
+    configuration. It's used for both standalone MCP server operation and
+    integration with the FastAPI application.
+    
+    Args:
+        config: Optional configuration dictionary with the following keys:
+            - client_id: Nest OAuth client ID
+            - client_secret: Nest OAuth client secret
+            - project_id: Google Cloud project ID
+            - log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            - state_file: Path to the state file for persistence
+            - token_expiry_buffer: Buffer time in seconds before token expiry (default: 300)
+            
+    Returns:
+        NestProtectMCP: Configured server instance
+        
+    Example:
+        ```python
+        config = {
+            "client_id": "your-client-id",
+            "client_secret": "your-client-secret",
+            "project_id": "your-project-id",
+            "log_level": "INFO"
+        }
+        server = create_server(config)
+        ```
+    """
+    # Set default config if none provided
+    if config is None:
+        config = {}
+        
+    # Initialize and return the server
+    server = NestProtectMCP(config)
+    return server
+
+# Server instance will be created when needed
+server = None

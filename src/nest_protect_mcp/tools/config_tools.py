@@ -5,30 +5,52 @@ import json
 import toml
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
-from ..tools import tool
-from ..config import Config, load_config, save_config
+from pydantic import BaseModel, Field
 
-@tool(name="get_config", description="Get current configuration", parameters={"section": {"type": "string", "description": "Specific section to retrieve (optional)", "required": False}}, examples=["get_config()", "get_config('nest')"])
+class ConfigSectionParams(BaseModel):
+    """Parameters for getting config section."""
+    section: Optional[str] = Field(None, description="Specific section to retrieve (optional)")
+
+class UpdateConfigParams(BaseModel):
+    """Parameters for updating config."""
+    updates: Dict[str, Any] = Field(..., description="Dictionary of configuration updates")
+    save_to_file: bool = Field(True, description="Whether to save changes to config file")
+
+class ResetConfigParams(BaseModel):
+    """Parameters for resetting config."""
+    confirm: bool = Field(False, description="Must be set to True to confirm reset")
+
+class ExportConfigParams(BaseModel):
+    """Parameters for exporting config."""
+    file_path: str = Field("config/exported_config.toml", description="Path to save the config file")
+    format: str = Field("toml", description="Export format (toml, json)")
+
+class ImportConfigParams(BaseModel):
+    """Parameters for importing config."""
+    file_path: str = Field(..., description="Path to the config file to import")
+    merge: bool = Field(True, description="Merge with existing config (True) or replace (False)")
+
 async def get_config(section: Optional[str] = None) -> Dict[str, Any]:
     """Get current configuration or a specific section."""
-    from ..server import app
+    from ..state_manager import get_app_state
     
     try:
-        config = app.state.config.dict()
+        state = get_app_state()
+        config = state.config.model_dump()
         if section:
             return {"status": "success", "config": {section: config.get(section, {})}}
         return {"status": "success", "config": config}
     except Exception as e:
         return {"status": "error", "message": f"Failed to get config: {str(e)}"}
 
-@tool(name="update_config", description="Update configuration values", parameters={"updates": {"type": "object", "description": "Dictionary of configuration updates", "required": True}, "save_to_file": {"type": "boolean", "description": "Whether to save changes to config file", "default": True}}, examples=["update_config({'nest': {'client_id': 'new-id', 'client_secret': 'new-secret'}})"])
 async def update_config(updates: Dict[str, Any], save_to_file: bool = True) -> Dict[str, Any]:
     """Update configuration values."""
-    from ..server import app
+    from ..state_manager import get_app_state
     
     try:
+        state = get_app_state()
         # Get current config as dict
-        current_config = app.state.config.dict()
+        current_config = state.config.model_dump()
         
         # Apply updates
         for section, values in updates.items():
@@ -38,7 +60,8 @@ async def update_config(updates: Dict[str, Any], save_to_file: bool = True) -> D
                 current_config[section] = values
         
         # Update config object
-        app.state.config = Config(**current_config)
+        for key, value in current_config.items():
+            setattr(state.config, key, value)
         
         # Save to file if requested
         if save_to_file:
@@ -53,18 +76,18 @@ async def update_config(updates: Dict[str, Any], save_to_file: bool = True) -> D
     except Exception as e:
         return {"status": "error", "message": f"Failed to update config: {str(e)}"}
 
-@tool(name="reset_config", description="Reset configuration to defaults", parameters={"confirm": {"type": "boolean", "description": "Must be set to True to confirm reset", "default": False}}, examples=["reset_config(confirm=True)"])
 async def reset_config(confirm: bool = False) -> Dict[str, Any]:
     """Reset configuration to default values."""
     if not confirm:
         return {"status": "error", "message": "Confirmation required. Set confirm=True to reset configuration."}
     
     try:
-        from ..server import app
-        from ..config import default_config
+        from ..state_manager import get_app_state
+        from ..models import ProtectConfig
         
+        state = get_app_state()
         # Reset to defaults
-        app.state.config = default_config()
+        state.config = ProtectConfig()
         
         # Save to file
         config_path = Path("config/default.toml")
@@ -75,13 +98,13 @@ async def reset_config(confirm: bool = False) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": f"Failed to reset config: {str(e)}"}
 
-@tool(name="export_config", description="Export current configuration to a file", parameters={"file_path": {"type": "string", "description": "Path to save the config file", "default": "config/exported_config.toml"}, "format": {"type": "string", "description": "Export format (toml, json)", "enum": ["toml", "json"], "default": "toml"}}, examples=["export_config()", "export_config('backup/config_backup.json', 'json')"])
 async def export_config(file_path: str = "config/exported_config.toml", format: str = "toml") -> Dict[str, Any]:
     """Export current configuration to a file."""
-    from ..server import app
+    from ..state_manager import get_app_state
     
     try:
-        config_data = app.state.config.dict()
+        state = get_app_state()
+        config_data = state.config.model_dump()
         export_path = Path(file_path)
         export_path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -96,10 +119,10 @@ async def export_config(file_path: str = "config/exported_config.toml", format: 
     except Exception as e:
         return {"status": "error", "message": f"Failed to export config: {str(e)}"}
 
-@tool(name="import_config", description="Import configuration from a file", parameters={"file_path": {"type": "string", "description": "Path to the config file to import", "required": True}, "merge": {"type": "boolean", "description": "Merge with existing config (True) or replace (False)", "default": True}}, examples=["import_config('backup/config_backup.toml')", "import_config('config/custom.json', merge=False)"])
 async def import_config(file_path: str, merge: bool = True) -> Dict[str, Any]:
     """Import configuration from a file."""
-    from ..server import app
+    from ..state_manager import get_app_state
+    from ..models import ProtectConfig
     
     try:
         import_path = Path(file_path)
@@ -114,8 +137,9 @@ async def import_config(file_path: str, merge: bool = True) -> Dict[str, Any]:
             with open(import_path, 'r') as f:
                 imported_config = toml.load(f)
         
+        state = get_app_state()
         # Get current config
-        current_config = app.state.config.dict()
+        current_config = state.config.model_dump()
         
         # Merge or replace
         if merge:
@@ -133,7 +157,7 @@ async def import_config(file_path: str, merge: bool = True) -> Dict[str, Any]:
             updated_config = imported_config
         
         # Update config
-        app.state.config = Config(**updated_config)
+        state.config = ProtectConfig(**updated_config)
         
         # Save to default config file
         config_path = Path("config/default.toml")

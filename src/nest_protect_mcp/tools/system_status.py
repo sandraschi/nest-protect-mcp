@@ -4,10 +4,13 @@ import os
 import platform
 import psutil
 import time
-from typing import Dict, Any, List
-from ..tools import tool
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel, Field
 
-@tool(name="get_system_status", description="Get system status and metrics", parameters={}, examples=["get_system_status()"])
+class ProcessStatusParams(BaseModel):
+    """Parameters for process status."""
+    pid: Optional[int] = Field(None, description="Process ID to check (default: current process)")
+
 async def get_system_status() -> Dict[str, Any]:
     """Get system status and metrics."""
     try:
@@ -72,7 +75,6 @@ async def get_system_status() -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": f"Failed to get system status: {str(e)}"}
 
-@tool(name="get_process_status", description="Get status of the Nest Protect MCP process", parameters={"pid": {"type": "integer", "description": "Process ID to check (default: current process)", "required": False}}, examples=["get_process_status()", "get_process_status(pid=1234)"])
 async def get_process_status(pid: int = None) -> Dict[str, Any]:
     """Get status of the Nest Protect MCP process."""
     try:
@@ -111,39 +113,42 @@ async def get_process_status(pid: int = None) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": f"Failed to get process status: {str(e)}"}
 
-@tool(name="get_api_status", description="Get status of the Nest API connection", parameters={}, examples=["get_api_status()"])
 async def get_api_status() -> Dict[str, Any]:
     """Get status of the Nest API connection."""
-    from ..server import app
+    from ..state_manager import get_app_state
+    import aiohttp
     
-    if not hasattr(app.state, 'access_token') or not app.state.access_token:
+    state = get_app_state()
+    
+    if not state.access_token:
         return {"status": "success", "api_connected": False, "message": "Not authenticated with Nest API"}
     
     try:
-        url = f"https://smartdevicemanagement.googleapis.com/v1/enterprises/{app.state.config.project_id}/devices"
-        headers = {"Authorization": f"Bearer {app.state.access_token}"}
+        url = f"https://smartdevicemanagement.googleapis.com/v1/enterprises/{state.config.project_id}/devices"
+        headers = {"Authorization": f"Bearer {state.access_token}"}
         
-        async with app.state.http_session.get(url, headers=headers, params={"pageSize": 1}) as response:
-            if response.status == 200:
-                return {
-                    "status": "success",
-                    "api_connected": True,
-                    "message": "Successfully connected to Nest API",
-                    "token_expires_in": getattr(app.state, 'token_expires_in', None)
-                }
-            else:
-                error = await response.json()
-                return {
-                    "status": "error",
-                    "api_connected": False,
-                    "message": "Failed to connect to Nest API",
-                    "error": error.get("error", {}).get("message"),
-                    "token_expires_in": getattr(app.state, 'token_expires_in', None)
-                }
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, params={"pageSize": 1}) as response:
+                if response.status == 200:
+                    return {
+                        "status": "success",
+                        "api_connected": True,
+                        "message": "Successfully connected to Nest API",
+                        "token_expires_in": getattr(state, 'token_expires_in', None)
+                    }
+                else:
+                    error = await response.json()
+                    return {
+                        "status": "error",
+                        "api_connected": False,
+                        "message": "Failed to connect to Nest API",
+                        "error": error.get("error", {}).get("message"),
+                        "token_expires_in": getattr(state, 'token_expires_in', None)
+                    }
     except Exception as e:
         return {
             "status": "error",
             "api_connected": False,
             "message": f"Failed to check API status: {str(e)}",
-            "token_expires_in": getattr(app.state, 'token_expires_in', None)
+            "token_expires_in": getattr(state, 'token_expires_in', None)
         }
