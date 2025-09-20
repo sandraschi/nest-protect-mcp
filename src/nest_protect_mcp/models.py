@@ -7,7 +7,7 @@ including configuration, state, and command models.
 from enum import Enum, auto
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, HttpUrl, ConfigDict
 
 class ProtectAlarmState(str, Enum):
     """Possible alarm states for Nest Protect."""
@@ -68,12 +68,12 @@ class ProtectConfig(BaseModel):
     log_level: str = Field("INFO", description="Logging level")
     log_file: Optional[str] = Field(None, description="Path to log file")
     
-    class Config:
-        """Pydantic model configuration."""
-        env_prefix = "NEST_PROTECT_"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = ConfigDict(
+        env_prefix="NEST_PROTECT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 class ProtectDeviceState(BaseModel):
     """Current state of a Nest Protect device."""
@@ -104,11 +104,7 @@ class ProtectDeviceState(BaseModel):
     wifi_ip: Optional[str] = Field(None, description="IP address on WiFi network")
     wifi_ssid: Optional[str] = Field(None, description="Connected WiFi SSID")
     
-    class Config:
-        """Pydantic model configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+    model_config = ConfigDict()
 
 class ProtectCommand(BaseModel):
     """Command to send to a Nest Protect device."""
@@ -116,7 +112,8 @@ class ProtectCommand(BaseModel):
     device_id: Optional[str] = Field(None, description="Target device ID (if not specified, applies to all)")
     params: Dict[str, Any] = Field(default_factory=dict, description="Command parameters")
     
-    @validator('command')
+    @field_validator('command')
+    @classmethod
     def validate_command(cls, v):
         """Validate the command type."""
         valid_commands = ["hush", "test", "locate", "update"]
@@ -132,8 +129,4 @@ class ProtectEvent(BaseModel):
     event_type: str = Field(..., description="Type of event")
     event_data: Dict[str, Any] = Field(default_factory=dict, description="Event data")
     
-    class Config:
-        """Pydantic model configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+    model_config = ConfigDict()

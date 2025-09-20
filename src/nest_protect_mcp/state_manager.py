@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, TypeVar, Generic, Callable, Awaitable
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import logging
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -192,8 +192,7 @@ class AppState(BaseModel):
     oauth_state: Optional[str] = None
     http_session: Any = None  # aiohttp.ClientSession
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 _app_state: Optional[AppState] = None
 

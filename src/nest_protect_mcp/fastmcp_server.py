@@ -9,12 +9,24 @@ from typing import Dict, Any, List, Optional, Literal
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure enhanced logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+)
 logger = logging.getLogger("nest_protect_mcp")
 
+logger.info("=== INITIALIZING FASTMCP SERVER ===")
+logger.info("Loading FastMCP framework...")
+
 # Create the FastMCP app with emoji icon
-app = FastMCP("🔥 nest-protect", version="1.0.0")
+try:
+    logger.info("Creating FastMCP app instance...")
+    app = FastMCP("🔥 nest-protect", version="1.0.0")
+    logger.info("FastMCP app created successfully")
+except Exception as e:
+    logger.error(f"Failed to create FastMCP app: {e}", exc_info=True)
+    raise
 
 # ===== Pydantic Models for Tool Parameters =====
 
@@ -118,18 +130,66 @@ class AboutParams(BaseModel):
 
 # ===== Device Status Tools =====
 
-@app.tool("list_devices")
-async def list_devices(params: EmptyParams) -> Dict[str, Any]:
+@app.tool(
+    name="list_devices",
+    description="""
+    🔥 **Discover Your Nest Protect Devices**
+    
+    Get a comprehensive list of all Nest Protect smoke and CO detectors in your home.
+    
+    **Returns:**
+    • Device IDs and friendly names
+    • Device models (1st Gen, 2nd Gen, etc.)
+    • Room locations and assignments
+    • Online/offline status
+    • Last activity timestamps
+    
+    Perfect for getting an overview of your entire Nest Protect ecosystem.
+    """
+)
+async def list_devices() -> Dict[str, Any]:
     """Get a list of all Nest Protect devices."""
-    # Import here to avoid circular imports
-    from .tools.device_status import list_devices as tool_func
-    return await tool_func()
+    try:
+        logger.debug("=== LIST_DEVICES TOOL CALLED ===")
+        logger.debug("Importing device_status.list_devices...")
+        from .tools.device_status import list_devices as tool_func
+        logger.debug("Successfully imported device_status.list_devices")
+        
+        logger.debug("Calling list_devices tool function...")
+        result = await tool_func()
+        logger.debug(f"list_devices returned: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"=== ERROR IN LIST_DEVICES ===", exc_info=True)
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error message: {e}")
+        return {"error": f"Failed to list devices: {e}", "status": "error"}
 
-@app.tool("get_device_status")
-async def get_device_status(params: DeviceIdParams) -> Dict[str, Any]:
+@app.tool(
+    name="get_device_status", 
+    description="""
+    📊 **Get Real-Time Device Status**
+    
+    Get comprehensive status information for a specific Nest Protect device.
+    
+    **What You'll See:**
+    • 🔋 Battery level and health status
+    • 💨 Smoke detector status and sensitivity
+    • ☁️ Carbon monoxide sensor readings
+    • 📶 Wi-Fi connectivity and signal strength
+    • 🔧 Device health and diagnostic info
+    • 📅 Last test date and maintenance alerts
+    
+    Essential for monitoring device health and troubleshooting issues.
+    
+    **Parameters:**
+    • device_id: Full device ID (format: enterprises/project-id/devices/device-id)
+    """
+)
+async def get_device_status(device_id: str) -> Dict[str, Any]:
     """Get status of a specific Nest Protect device."""
     from .tools.device_status import get_device_status as tool_func
-    return await tool_func(params.device_id)
+    return await tool_func(device_id)
 
 @app.tool("get_device_events")
 async def get_device_events(params: DeviceEventsParams) -> Dict[str, Any]:
@@ -157,11 +217,36 @@ async def set_led_brightness(params: LedBrightnessParams) -> Dict[str, Any]:
     from .tools.device_control import set_led_brightness as tool_func
     return await tool_func(params.device_id, params.brightness)
 
-@app.tool("sound_alarm")
-async def sound_alarm(params: SoundAlarmParams) -> Dict[str, Any]:
+@app.tool(
+    name="sound_alarm",
+    description="""
+    🚨 **Test Alarm Systems (Use Responsibly!)**
+    
+    Trigger real alarm sounds on your Nest Protect devices for testing purposes.
+    
+    **⚠️ IMPORTANT SAFETY NOTES:**
+    • Only use for testing and maintenance
+    • Warn household members before testing
+    • Verify alarms work properly in emergencies
+    • Keep duration short to avoid false emergency responses
+    
+    **Alarm Types:**
+    • 🔥 **Smoke**: Fire detection alarm (loud, pulsing)
+    • ☁️ **CO**: Carbon monoxide alarm (distinct pattern)
+    • 🔒 **Security**: Intrusion/breach alarm (continuous)
+    • 🆘 **Emergency**: Panic button (immediate response)
+    
+    **Parameters:**
+    • device_id: Target Nest Protect device ID (enterprises/project-id/devices/device-id)
+    • alarm_type: Type of alarm (smoke, co, security, emergency) - default: smoke
+    • duration_seconds: How long to sound alarm (5-60 seconds) - default: 10
+    • volume: Alarm volume percentage (50-100%) - default: 100
+    """
+)
+async def sound_alarm(device_id: str, alarm_type: str = "smoke", duration_seconds: int = 10, volume: int = 100) -> Dict[str, Any]:
     """Sound an alarm on a Nest device for testing purposes."""
     from .tools.device_control import sound_alarm as tool_func
-    return await tool_func(params.device_id, params.alarm_type, params.duration_seconds, params.volume)
+    return await tool_func(device_id, alarm_type, duration_seconds, volume)
 
 @app.tool("arm_disarm_security")
 async def arm_disarm_security(params: ArmDisarmParams) -> Dict[str, Any]:
@@ -263,11 +348,29 @@ async def import_config(params: ImportConfigParams) -> Dict[str, Any]:
 
 # ===== About & General Help Tools =====
 
-@app.tool("about_server")
-async def about_server(params: AboutParams) -> Dict[str, Any]:
+@app.tool(
+    name="about_server",
+    description="""
+    🔥 **Learn About Your Nest Protect MCP Server**
+    
+    Get comprehensive information about this server's capabilities, supported devices, 
+    and how to get started with home automation using your Nest Protect devices.
+    
+    **Information Levels:**
+    • 📋 **Simple**: Quick overview and basic capabilities
+    • ⚙️ **Intermediate**: Detailed features and tool categories  
+    • 🔬 **Technical**: Implementation details and API integration
+    
+    Perfect for understanding what this server can do before diving into specific tools!
+    
+    **Parameters:**
+    • level: Detail level (simple, intermediate, technical) - default: simple
+    """
+)
+async def about_server(level: str = "simple") -> Dict[str, Any]:
     """Get information about what this MCP server is and what it can do."""
     from .tools.about_tool import about_server as tool_func
-    return await tool_func(params.level)
+    return await tool_func(level)
 
 @app.tool("get_supported_devices")
 async def get_supported_devices(params: EmptyParams) -> Dict[str, Any]:
@@ -276,6 +379,16 @@ async def get_supported_devices(params: EmptyParams) -> Dict[str, Any]:
     return await tool_func()
 
 # ===== Main Entry Point =====
+
+logger.info("=== TOOL REGISTRATION COMPLETE ===")
+logger.info("All 20 tools have been registered with FastMCP")
+logger.info("Tools registered:")
+logger.info("  • Device Status: list_devices, get_device_status, get_device_events")
+logger.info("  • Device Control: hush_alarm, run_safety_check, set_led_brightness, sound_alarm, arm_disarm_security") 
+logger.info("  • System Status: get_system_status, get_process_status, get_api_status")
+logger.info("  • Authentication: initiate_oauth_flow, handle_oauth_callback, refresh_access_token")
+logger.info("  • Configuration: get_config, update_config, reset_config, export_config, import_config")
+logger.info("  • Help & About: list_available_tools, get_tool_help, search_tools, about_server, get_supported_devices")
 
 if __name__ == "__main__":
     # Handle --kill argument for MCP client compatibility

@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Any, Type, TypeVar, Union, Callable, Aw
 from fastmcp import FastMCP
 from fastmcp.tools import Tool
 from fastmcp.client.messages import Message as McpMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, ConfigDict
 
 from .models import ProtectConfig, ProtectDeviceState, ProtectAlarmState, ProtectBatteryState
 from .exceptions import (
@@ -36,10 +36,11 @@ T = TypeVar('T')
 
 # Pydantic models for tool parameters with proper schema definitions
 class EmptyParams(BaseModel):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        schema_extra={
             "description": "Empty parameters for methods that don't require any input"
         }
+    )
 
 class DeviceIdParams(BaseModel):
     device_id: str = Field(
