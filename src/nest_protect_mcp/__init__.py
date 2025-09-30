@@ -1,15 +1,24 @@
 """
-Nest Protect MCP - A FastMCP 2.11.3 compliant server for Nest Protect integration.
+Nest Protect MCP - A FastMCP 2.12 compliant server for Nest Protect integration.
 
 This package provides a Message Control Protocol (MCP) server for interacting with
 Nest Protect smoke and carbon monoxide detectors.
 """
 
 __version__ = "0.1.0"
-__author__ = "Your Name <your.email@example.com>"
-__all__ = ["NestProtectMCP"]
+__author__ = "Sandra Schiessl"
+__email__ = "sandra.schiessl@example.com"
+__all__ = [
+    "NestProtectMCP",
+    "create_server",
+    "create_app",
+    "ProtectConfig",
+    "ProtectDeviceState",
+    "ProtectCommand"
+]
 
-from .server import NestProtectMCP
+from .server import NestProtectMCP, create_server, create_app
+from .models import ProtectConfig, ProtectDeviceState, ProtectCommand
 
 # Initialize logging
 import logging

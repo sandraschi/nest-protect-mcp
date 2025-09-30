@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nest-protect-mcp"
-version = "1.0.0"
+version = "0.1.0"
 description = "🔥 Production-ready FastMCP server for Google Nest Protect devices with real-time monitoring, device control, and alarm management"
 readme = "README.md"
 authors = [

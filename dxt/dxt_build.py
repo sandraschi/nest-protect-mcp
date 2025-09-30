@@ -107,51 +107,18 @@ def validate_with_dxd(manifest_path: Path) -> bool:
     return True  # Always return True to continue the build process
 
 def install_dependencies(temp_dir: Path) -> bool:
-    """Install package dependencies into the temporary directory."""
-    print("Installing dependencies...")
-    
-    # Create a requirements.txt file
-    requirements = temp_dir / "requirements.txt"
-    with open(requirements, 'w', encoding='utf-8') as f:
-        for dep in REQUIRED_DEPENDENCIES:
-            f.write(f"{dep}\n")
-    
-    # Install dependencies to a lib directory
-    lib_dir = temp_dir / "lib"
-    lib_dir.mkdir(exist_ok=True, parents=True)
-    
-    # Use the project's pip to ensure consistent environment
-    pip_cmd = [sys.executable, "-m", "pip"]
-    
-    # Install dependencies
-    success, output = run_command(
-        pip_cmd + [
-            "install",
-            "--target", str(lib_dir),
-            "--no-compile",
-            "--no-deps",  # We'll handle dependencies explicitly
-            "-r", str(requirements)
-        ]
-    )
-    
-    if not success:
-        print(f"Failed to install dependencies: {output}", file=sys.stderr)
-        return False
-        
-    # Install dependencies of dependencies
-    success, output = run_command(
-        pip_cmd + [
-            "install",
-            "--target", str(lib_dir),
-            "--no-compile",
-            "--only-binary=:all:",
-            "-r", str(requirements)
-        ]
-    )
-    
-    if not success:
-        print(f"Warning: Failed to install all dependencies: {output}", file=sys.stderr)
-    
+    """
+    Install minimal dependencies for the DXT package.
+    Note: DXT packages should not include full dependencies as they are installed in the target environment.
+    """
+    print("Note: DXT package does not include runtime dependencies - they will be installed in target environment")
+
+    # Copy requirements.txt for reference
+    requirements_src = Path(__file__).parent.parent / "requirements.txt"
+    if requirements_src.exists():
+        shutil.copy2(requirements_src, temp_dir / "requirements.txt")
+        print(f"Copied requirements.txt to {temp_dir / 'requirements.txt'}")
+
     return True
 
 def copy_package_files(temp_dir: Path) -> bool:
@@ -198,34 +165,18 @@ def copy_package_files(temp_dir: Path) -> bool:
 def create_manifest(temp_dir: Path) -> bool:
     """Create or update the DXT manifest file."""
     print("Creating DXT manifest...")
-    
-    # Get package metadata
-    metadata = get_package_metadata()
-    
-    # Create the manifest
-    manifest = {
-        "name": metadata.get("name", PACKAGE_NAME),
-        "version": PACKAGE_VERSION,
-        "description": metadata.get("description", "Nest Protect MCP Server"),
-        "author": metadata.get("authors", [{"name": ""}])[0]["name"],
-        "license": metadata.get("license", {"text": "MIT"})["text"],
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "entry_point": "nest_protect_mcp.cli:main",
-        "python_version": ">=3.9",
-        "dependencies": REQUIRED_DEPENDENCIES,
-        "files": [
-            f"{PACKAGE_NAME}/**/*",
-            "config/*",
-            "*.md",
-            "*.txt"
-        ]
-    }
-    
-    # Write the manifest file
-    manifest_path = temp_dir / "dxt_manifest.json"
-    with open(manifest_path, 'w', encoding='utf-8') as f:
-        json.dump(manifest, f, indent=2, ensure_ascii=False)
-    
+
+    # Use the existing DXT manifest file
+    source_manifest = Path(__file__).parent / "dxt_manifest.json"
+    if not source_manifest.exists():
+        print(f"Error: DXT manifest not found at {source_manifest}", file=sys.stderr)
+        return False
+
+    # Copy the manifest to the temp directory
+    dest_manifest = temp_dir / "dxt_manifest.json"
+    shutil.copy2(source_manifest, dest_manifest)
+
+    print(f"Copied DXT manifest to {dest_manifest}")
     return True
 
 def create_dxt_package() -> bool:

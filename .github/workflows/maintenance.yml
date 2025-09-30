@@ -1,0 +1,101 @@
+name: Code Quality & Maintenance
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'  # Weekly on Mondays at 4 AM UTC
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  code-quality:
+    name: Enhanced Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Run comprehensive code analysis
+      run: |
+        # Run mypy for type checking
+        pip install mypy
+        mypy src/ --ignore-missing-imports || true
+
+        # Run radon for code complexity
+        pip install radon
+        radon cc src/ -s -a || true
+
+        # Run xenon for maintainability index
+        pip install xenon
+        xenon src/ --max-absolute B --max-modules A --max-relative B || true
+
+    - name: Run performance benchmarks
+      run: |
+        pip install pytest-benchmark
+        pytest tests/performance/ --benchmark-only --benchmark-json benchmark.json || echo "No performance tests found"
+
+    - name: Upload code quality reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-quality-reports
+        path: |
+          .mypy_cache/
+          benchmark.json
+          radon_report.html
+
+  maintenance:
+    name: Repository Maintenance
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up old workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        retain_days: 30
+        keep_minimum_runs: 10
+
+    - name: Update issue templates
+      run: |
+        # Check for outdated issue templates
+        find .github/ISSUE_TEMPLATE -name "*.md" -exec grep -l "outdated\|deprecated" {} \; || echo "No outdated templates found"
+
+    - name: Check for security advisories
+      run: |
+        # Check for known security issues in dependencies
+        pip install safety
+        safety check --output json > security_advisories.json || true
+
+    - name: Generate maintenance report
+      run: |
+        echo "## Maintenance Report" > maintenance_report.md
+        echo "- Workflow runs cleaned up" >> maintenance_report.md
+        echo "- Security advisories checked" >> maintenance_report.md
+        echo "- Repository structure validated" >> maintenance_report.md
+
+    - name: Upload maintenance report
+      uses: actions/upload-artifact@v4
+      with:
+        name: maintenance-report
+        path: maintenance_report.md

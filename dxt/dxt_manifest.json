@@ -2,16 +2,16 @@
   "name": "nest-protect-mcp",
   "version": "0.1.0",
   "display_name": "Nest Protect MCP",
-  "description": "MCP server for monitoring and controlling Nest Protect smoke and CO detectors",
+  "description": "MCP server for monitoring and controlling Nest Protect smoke and CO detectors with FastMCP 2.12",
   "author": "Sandra Schi",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/sandraschi/nest-protect-mcp"
   },
-  "categories": ["iot", "home-automation", "safety", "nest"],
-  "keywords": ["nest", "protect", "smoke", "co", "detector", "alarm"],
-  
+  "categories": ["iot", "home-automation", "safety", "nest", "monitoring"],
+  "keywords": ["nest", "protect", "smoke", "co", "detector", "alarm", "mcp", "fastmcp"],
+
   "server": {
     "command": ["python", "-m", "nest_protect_mcp.server"],
     "timeout": 30,
@@ -27,26 +27,6 @@
     {
       "name": "fastmcp",
       "version": "2.12.0"
-    },
-    {
-      "name": "pydantic",
-      "version": ">=1.10.0"
-    },
-    {
-      "name": "aiohttp",
-      "version": ">=3.8.0"
-    },
-    {
-      "name": "python-dotenv",
-      "version": ">=0.19.0"
-    },
-    {
-      "name": "toml",
-      "version": ">=0.10.2"
-    },
-    {
-      "name": "requests",
-      "version": ">=2.28.0"
     }
   ],
 
@@ -89,54 +69,418 @@
 
   "prompts": [
     {
-      "name": "get_device_status_prompt",
-      "description": "Get the status of Nest Protect devices",
-      "template": "Show me the status of {device_name} including {details}."
+      "name": "device_status_overview",
+      "description": "Get comprehensive overview of all Nest Protect devices",
+      "template": "Show me the current status of all Nest Protect devices in my home. Include information about {details} for each device.",
+      "parameters": {
+        "details": {
+          "type": "string",
+          "description": "Specific details to include",
+          "enum": ["battery levels", "alarm states", "connectivity", "environmental readings", "all details"],
+          "default": "all details"
+        }
+      }
     },
     {
-      "name": "check_alarms_prompt",
-      "description": "Check for active alarms",
-      "template": "Are there any active {alarm_type} alarms? Show me {details_level} information."
+      "name": "alarm_check",
+      "description": "Check for active alarms and their status",
+      "template": "Are there any {alarm_type} alarms currently active? Show me {details} about {device_filter} devices.",
+      "parameters": {
+        "alarm_type": {
+          "type": "string",
+          "description": "Type of alarm to check",
+          "enum": ["smoke", "carbon monoxide", "heat", "any"],
+          "default": "any"
+        },
+        "details": {
+          "type": "string",
+          "description": "Level of detail to show",
+          "enum": ["basic status", "full details", "troubleshooting info"],
+          "default": "basic status"
+        },
+        "device_filter": {
+          "type": "string",
+          "description": "Which devices to check",
+          "enum": ["all devices", "online devices", "specific device"],
+          "default": "all devices"
+        }
+      }
     },
     {
-      "name": "test_device_prompt",
-      "description": "Test a Nest Protect device",
-      "template": "Run a {test_type} test on the {location} Nest Protect."
+      "name": "device_test",
+      "description": "Run tests on Nest Protect devices",
+      "template": "Run a {test_type} test on the {device_location} Nest Protect device. {test_instructions}",
+      "parameters": {
+        "test_type": {
+          "type": "string",
+          "description": "Type of test to run",
+          "enum": ["manual", "smoke", "carbon monoxide", "heat", "battery", "connectivity"],
+          "default": "manual"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location or name of the device",
+          "examples": ["living room", "bedroom", "kitchen", "hallway"]
+        },
+        "test_instructions": {
+          "type": "string",
+          "description": "Additional test instructions",
+          "default": "Please ensure the area is clear before testing."
+        }
+      }
     },
     {
-      "name": "hush_alarm_prompt",
-      "description": "Hush an active alarm",
-      "template": "{action} the alarm on the {location} Nest Protect for {duration} minutes."
+      "name": "alarm_control",
+      "description": "Control alarm silencing and management",
+      "template": "{action} the {alarm_type} alarm on the {device_location} Nest Protect {duration}. {reason}",
+      "parameters": {
+        "action": {
+          "type": "string",
+          "description": "Action to take",
+          "enum": ["silence", "hush", "stop", "acknowledge"],
+          "default": "silence"
+        },
+        "alarm_type": {
+          "type": "string",
+          "description": "Type of alarm",
+          "enum": ["smoke", "carbon monoxide", "heat", "any active"],
+          "default": "any active"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location of the device",
+          "examples": ["living room", "master bedroom", "kitchen"]
+        },
+        "duration": {
+          "type": "string",
+          "description": "How long to silence",
+          "enum": ["for 5 minutes", "for 10 minutes", "until manually reset", "permanently"],
+          "default": "for 5 minutes"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for silencing",
+          "default": "Testing or false alarm."
+        }
+      }
     },
     {
-      "name": "get_battery_status_prompt",
-      "description": "Check battery status of devices",
-      "template": "Show me the battery status of {device_filter} devices, sorted by {sort_by}."
+      "name": "battery_monitoring",
+      "description": "Monitor and manage device battery levels",
+      "template": "Show me the battery status of {device_filter} Nest Protect devices, sorted by {sort_criteria}. {alert_preferences}",
+      "parameters": {
+        "device_filter": {
+          "type": "string",
+          "description": "Which devices to check",
+          "enum": ["all devices", "low battery devices", "critical battery devices", "specific device"],
+          "default": "all devices"
+        },
+        "sort_criteria": {
+          "type": "string",
+          "description": "How to sort results",
+          "enum": ["battery level (low to high)", "battery level (high to low)", "device name", "location"],
+          "default": "battery level (low to high)"
+        },
+        "alert_preferences": {
+          "type": "string",
+          "description": "Battery alert preferences",
+          "default": "Alert me when batteries need replacement."
+        }
+      }
     },
     {
-      "name": "get_device_history_prompt",
-      "description": "Get history of device events",
-      "template": "Show me {event_type} events for {device_name} from {start_time} to {end_time}."
+      "name": "device_history",
+      "description": "Get historical device events and activity",
+      "template": "Show me {event_type} events for {device_name} from {time_range}. Include {detail_level} information.",
+      "parameters": {
+        "event_type": {
+          "type": "string",
+          "description": "Type of events to show",
+          "enum": ["all events", "alarm events", "test events", "connectivity events", "battery events"],
+          "default": "all events"
+        },
+        "device_name": {
+          "type": "string",
+          "description": "Name or location of the device",
+          "examples": ["living room", "bedroom", "all devices"]
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time period to check",
+          "enum": ["last hour", "last 24 hours", "last week", "last month", "custom range"],
+          "default": "last 24 hours"
+        },
+        "detail_level": {
+          "type": "string",
+          "description": "Level of detail to include",
+          "enum": ["summary", "detailed", "technical details"],
+          "default": "summary"
+        }
+      }
     },
     {
-      "name": "check_connectivity_prompt",
-      "description": "Check device connectivity status",
-      "template": "Which Nest Protects are currently {status}? Show me {details}."
+      "name": "connectivity_status",
+      "description": "Check device connectivity and network status",
+      "template": "Which Nest Protect devices are currently {connection_status}? Show me {details} for {device_filter}.",
+      "parameters": {
+        "connection_status": {
+          "type": "string",
+          "description": "Connection status to check",
+          "enum": ["online", "offline", "connecting", "unknown"],
+          "default": "online"
+        },
+        "details": {
+          "type": "string",
+          "description": "Information to include",
+          "enum": ["basic status", "network details", "troubleshooting info", "full diagnostics"],
+          "default": "basic status"
+        },
+        "device_filter": {
+          "type": "string",
+          "description": "Which devices to check",
+          "enum": ["all devices", "problem devices", "specific device"],
+          "default": "all devices"
+        }
+      }
     },
     {
-      "name": "set_alert_preferences_prompt",
-      "description": "Configure alert preferences",
-      "template": "{action} {alert_type} alerts for {device_name} via {notification_method}."
+      "name": "environmental_monitoring",
+      "description": "Monitor environmental conditions and sensor readings",
+      "template": "What are the current {sensor_readings} from {device_filter}? Show {detail_level} information {time_period}.",
+      "parameters": {
+        "sensor_readings": {
+          "type": "string",
+          "description": "Which sensor readings to check",
+          "enum": ["temperature", "humidity", "air quality", "all sensors"],
+          "default": "all sensors"
+        },
+        "device_filter": {
+          "type": "string",
+          "description": "Which devices to check",
+          "enum": ["all devices", "specific room", "specific device"],
+          "default": "all devices"
+        },
+        "detail_level": {
+          "type": "string",
+          "description": "Level of detail to show",
+          "enum": ["current readings", "trends", "historical data"],
+          "default": "current readings"
+        },
+        "time_period": {
+          "type": "string",
+          "description": "Time period for readings",
+          "enum": ["current", "last hour", "last 24 hours", "last week"],
+          "default": "current"
+        }
+      }
     },
     {
-      "name": "get_device_info_prompt",
-      "description": "Get detailed device information",
-      "template": "Show me {details_level} information about the {location} Nest Protect."
+      "name": "device_maintenance",
+      "description": "Perform device maintenance and troubleshooting",
+      "template": "{maintenance_action} the {device_location} Nest Protect. {maintenance_details} {troubleshooting_steps}",
+      "parameters": {
+        "maintenance_action": {
+          "type": "string",
+          "description": "Maintenance action to perform",
+          "enum": ["clean", "reset", "restart", "calibrate", "diagnose"],
+          "default": "diagnose"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location of the device",
+          "examples": ["living room", "bedroom", "kitchen"]
+        },
+        "maintenance_details": {
+          "type": "string",
+          "description": "Specific maintenance details",
+          "default": "Perform standard maintenance procedures."
+        },
+        "troubleshooting_steps": {
+          "type": "string",
+          "description": "Troubleshooting guidance",
+          "default": "If issues persist, check connectivity and power source."
+        }
+      }
     },
     {
-      "name": "check_environment_prompt",
-      "description": "Check environmental readings",
-      "template": "What are the current {sensor_type} readings from {device_filter}?"
+      "name": "system_configuration",
+      "description": "Configure system settings and preferences",
+      "template": "{config_action} {setting_type} settings for {device_scope}. Set {setting_name} to {setting_value}. {additional_config}",
+      "parameters": {
+        "config_action": {
+          "type": "string",
+          "description": "Configuration action",
+          "enum": ["configure", "update", "reset", "enable", "disable"],
+          "default": "configure"
+        },
+        "setting_type": {
+          "type": "string",
+          "description": "Type of setting",
+          "enum": ["notification", "automation", "monitoring", "alert", "integration"],
+          "default": "notification"
+        },
+        "device_scope": {
+          "type": "string",
+          "description": "Scope of configuration",
+          "enum": ["all devices", "specific device", "device group"],
+          "default": "all devices"
+        },
+        "setting_name": {
+          "type": "string",
+          "description": "Name of the setting",
+          "examples": ["email notifications", "push notifications", "automation rules"]
+        },
+        "setting_value": {
+          "type": "string",
+          "description": "Value for the setting",
+          "examples": ["enabled", "disabled", "daily", "weekly"]
+        },
+        "additional_config": {
+          "type": "string",
+          "description": "Additional configuration details",
+          "default": "Apply changes immediately."
+        }
+      }
+    },
+    {
+      "name": "emergency_response",
+      "description": "Handle emergency situations and alarms",
+      "template": "{emergency_action} the {alarm_type} alarm emergency on {device_location}. {response_instructions} {contact_info}",
+      "parameters": {
+        "emergency_action": {
+          "type": "string",
+          "description": "Emergency response action",
+          "enum": ["acknowledge", "escalate", "call emergency services", "evacuate"],
+          "default": "acknowledge"
+        },
+        "alarm_type": {
+          "type": "string",
+          "description": "Type of emergency alarm",
+          "enum": ["smoke alarm", "carbon monoxide alarm", "heat alarm", "multiple alarms"],
+          "default": "smoke alarm"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location of the alarm",
+          "examples": ["living room", "bedroom", "kitchen", "entire house"]
+        },
+        "response_instructions": {
+          "type": "string",
+          "description": "Response instructions",
+          "default": "Evacuate immediately and call emergency services."
+        },
+        "contact_info": {
+          "type": "string",
+          "description": "Emergency contact information",
+          "default": "Call 911 or your local emergency number."
+        }
+      }
+    },
+    {
+      "name": "device_information",
+      "description": "Get detailed information about devices",
+      "template": "Show me {information_type} information about the {device_location} Nest Protect. Include {detail_categories}.",
+      "parameters": {
+        "information_type": {
+          "type": "string",
+          "description": "Type of information to show",
+          "enum": ["basic info", "technical specs", "installation details", "maintenance history"],
+          "default": "basic info"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location or name of the device",
+          "examples": ["living room", "bedroom", "kitchen"]
+        },
+        "detail_categories": {
+          "type": "string",
+          "description": "Specific categories of details",
+          "enum": ["hardware specs", "software version", "installation date", "warranty info", "all details"],
+          "default": "all details"
+        }
+      }
+    },
+    {
+      "name": "integration_setup",
+      "description": "Set up integrations with other smart home systems",
+      "template": "Set up integration with {integration_platform} for {device_scope}. Configure {integration_settings}. {integration_instructions}",
+      "parameters": {
+        "integration_platform": {
+          "type": "string",
+          "description": "Platform to integrate with",
+          "enum": ["Home Assistant", "SmartThings", "Alexa", "Google Home", "IFTTT"],
+          "default": "Home Assistant"
+        },
+        "device_scope": {
+          "type": "string",
+          "description": "Which devices to integrate",
+          "enum": ["all devices", "specific device", "device group"],
+          "default": "all devices"
+        },
+        "integration_settings": {
+          "type": "string",
+          "description": "Integration configuration settings",
+          "default": "Enable notifications and automation."
+        },
+        "integration_instructions": {
+          "type": "string",
+          "description": "Setup instructions",
+          "default": "Follow the platform's integration guide."
+        }
+      }
+    },
+    {
+      "name": "performance_analysis",
+      "description": "Analyze system performance and identify issues",
+      "template": "Analyze the performance of {device_scope} Nest Protect devices. Check for {performance_metrics}. {analysis_period}",
+      "parameters": {
+        "device_scope": {
+          "type": "string",
+          "description": "Which devices to analyze",
+          "enum": ["all devices", "specific device", "problem devices"],
+          "default": "all devices"
+        },
+        "performance_metrics": {
+          "type": "string",
+          "description": "Performance metrics to check",
+          "enum": ["response times", "connectivity stability", "sensor accuracy", "battery performance", "all metrics"],
+          "default": "all metrics"
+        },
+        "analysis_period": {
+          "type": "string",
+          "description": "Time period for analysis",
+          "enum": ["last hour", "last 24 hours", "last week", "last month"],
+          "default": "last 24 hours"
+        }
+      }
+    },
+    {
+      "name": "troubleshooting_assistance",
+      "description": "Get help with device issues and troubleshooting",
+      "template": "Help me troubleshoot {problem_type} with the {device_location} Nest Protect. {symptom_description} {attempted_solutions}",
+      "parameters": {
+        "problem_type": {
+          "type": "string",
+          "description": "Type of problem",
+          "enum": ["connectivity issues", "false alarms", "sensor problems", "battery issues", "setup problems"],
+          "default": "connectivity issues"
+        },
+        "device_location": {
+          "type": "string",
+          "description": "Location of the problematic device",
+          "examples": ["living room", "bedroom", "kitchen"]
+        },
+        "symptom_description": {
+          "type": "string",
+          "description": "Description of the symptoms",
+          "default": "Describe the specific issues you're experiencing."
+        },
+        "attempted_solutions": {
+          "type": "string",
+          "description": "Solutions already attempted",
+          "default": "List any troubleshooting steps you've already tried."
+        }
+      }
     }
   ],
 

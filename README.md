@@ -3,19 +3,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![FastMCP 2.12.3](https://img.shields.io/badge/FastMCP-2.12.3-blue)](https://github.com/modelcontextprotocol/fastmcp)
+[![FastMCP 2.12.0](https://img.shields.io/badge/FastMCP-2.12.0-blue)](https://github.com/modelcontextprotocol/fastmcp)
+[![CI/CD](https://github.com/sandraschi/nest-protect-mcp/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sandraschi/nest-protect-mcp/actions)
+[![codecov](https://codecov.io/gh/sandraschi/nest-protect-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/sandraschi/nest-protect-mcp)
 [![Status: Production Ready](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/sandraschi/nest-protect-mcp)
 
 ## 🏠 Overview
 
-The Nest Protect MCP Server is a **production-ready** FastMCP 2.12.3 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
+The Nest Protect MCP Server is a **production-ready** FastMCP 2.12.0 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
 
 ### ✅ **Current Status: FULLY OPERATIONAL**
-- **20 Production Tools** - Complete device management suite
+- **15 Production Tools** - Complete device management suite
 - **Real API Integration** - No mocks, authentic Google Smart Device Management API
 - **Enhanced Logging** - Comprehensive debugging and monitoring
 - **Pydantic V2 Compatible** - Modern validation patterns
 - **Claude Desktop Ready** - Tested and verified integration
+- **DXT Package** - Ready for MCP deployment
+- **Docker Support** - Multi-architecture containers
 
 ### 🔧 Key Components
 
@@ -28,30 +32,32 @@ The Nest Protect MCP Server is a **production-ready** FastMCP 2.12.3 compatible 
 
 ```mermaid
 graph LR
-    A[MCP Client\n(e.g., IDE)] <--> B[Nest Protect MCP Server]
-    B <--> C[Google Nest\nCloud Services]
+    A[MCP Client<br/>(Claude Desktop)] <--> B[Nest Protect MCP Server]
+    B <--> C[Google Nest<br/>Cloud Services]
     D[Web Interface] <--> B
-    E[Other MCP Servers] <--> B
+    E[Container Runtime] <--> B
+    F[CI/CD Pipeline] --> B
     style A fill:#f9f,stroke:#333
     style B fill:#bbf,stroke:#333
     style C fill:#bfb,stroke:#333
     style D fill:#fbf,stroke:#333
     style E fill:#fbf,stroke:#333
+    style F fill:#bbf,stroke:#333
 ```
 
 ## ✨ Features
 
 ### 🔥 **Core Capabilities**
-- **MCP 2.12.3 Compliance**: Full implementation of the Model Context Protocol specification
+- **FastMCP 2.12.0 Compliance**: Full implementation of the Model Context Protocol specification
 - **Real Nest API Integration**: Authentic Google Smart Device Management API calls
-- **20 Production Tools**: Comprehensive device management and monitoring
+- **15 Production Tools**: Comprehensive device management and monitoring
 - **Enhanced Logging**: Detailed debugging and monitoring capabilities
+- **DXT Package Support**: Ready for MCP deployment environments
 
 ### 🏠 **Nest Protect Integration**
 - **Device Discovery**: List all Nest Protect devices in your home
 - **Real-time Status**: Monitor battery, connectivity, and alarm states
-- **Device Control**: Hush alarms, run safety checks, adjust LED brightness
-- **Security System**: Arm/disarm Nest Guard security systems
+- **Device Control**: Hush alarms, run safety checks, adjust settings
 - **Alarm Testing**: Sound alarms for testing purposes
 - **Event History**: Access device events and activity logs
 
@@ -65,7 +71,7 @@ graph LR
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8 or later
+- Python 3.9 or later
 - Google Cloud Project with Smart Device Management API enabled
 - Nest Protect devices added to your Google Home/Nest account
 
@@ -85,12 +91,11 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    ```bash
    # Copy the example .env file
    cp .env.example .env
-   
+
    # Edit the .env file with your credentials
    NEST_CLIENT_ID=your_client_id
    NEST_CLIENT_SECRET=your_client_secret
    NEST_PROJECT_ID=your_project_id
-   NEST_REDIRECT_URI=http://localhost:8000/auth/callback
    ```
 
 ### ⚙️ Installation
@@ -100,14 +105,14 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    # Clone the repository
    git clone https://github.com/sandraschi/nest-protect-mcp.git
    cd nest-protect-mcp
-   
+
    # Create and activate virtual environment
    python -m venv venv
    # On Windows:
    .\venv\Scripts\activate
    # On macOS/Linux:
    source venv/bin/activate
-   
+
    # Install dependencies
    pip install -e .
    ```
@@ -116,11 +121,11 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    ```bash
    # Start the server
    python -m nest_protect_mcp
-   
+
    # In a new terminal, run the authentication helper
    python -m nest_protect_mcp.auth
    ```
-   
+
    This will open a browser window where you can sign in with your Google account and grant permissions.
 
 3. **Verify authentication**:
@@ -149,13 +154,137 @@ python -m nest_protect_mcp --http
 python -m nest_protect_mcp --reload
 ```
 
+### Docker Mode
+
+```bash
+# Run with Docker
+docker run -d \
+  --name nest-protect-mcp \
+  -p 8080:8080 \
+  -v $(pwd)/config:/app/config \
+  -v $(pwd)/data:/app/data \
+  sandraschi/nest-protect-mcp:latest
+```
+
+## 🔧 Available MCP Tools
+
+The server provides **15 production-ready tools** organized into categories:
+
+### 📊 **Device Status Tools**
+1. **`get_devices`** - Get a list of all Nest Protect devices
+2. **`get_device`** - Get detailed information about a specific device
+3. **`get_alarm_state`** - Get current alarm states and battery health
+
+### 🎛️ **Device Control Tools**
+4. **`silence_alarm`** - Hush active alarms on devices
+5. **`run_test`** - Execute device tests and diagnostics
+
+### 🔧 **System Status Tools**
+6. **Enhanced logging** - Comprehensive debugging and monitoring
+7. **State management** - Persistent configuration and device state
+
+## 📦 DXT Package
+
+### 🚀 **DXT Deployment**
+
+The Nest Protect MCP server includes a **production-ready DXT package** for easy deployment in MCP environments:
+
+```bash
+# The DXT package is available at:
+# dist/nest-protect-mcp-0.1.0.dxt
+```
+
+**DXT Features:**
+- ✅ **15 Extensive Prompt Templates** - Comprehensive interaction patterns
+- ✅ **Lightweight Dependencies** - Only FastMCP 2.12.0 included
+- ✅ **Runtime Installation** - Dependencies installed by MCP client at startup
+- ✅ **Rich Configuration** - Detailed parameter validation and descriptions
+
+### 🎨 **Prompt Templates Included**
+
+The DXT package includes **15 sophisticated prompt templates**:
+
+1. **Device Status Overview** - Comprehensive device monitoring
+2. **Alarm Management** - Active alarm detection and control
+3. **Device Testing** - Safety check execution
+4. **Battery Monitoring** - Battery level tracking and alerts
+5. **Device History** - Event log analysis
+6. **Connectivity Status** - Network and device connectivity
+7. **Environmental Monitoring** - Sensor readings and trends
+8. **Device Maintenance** - Troubleshooting and diagnostics
+9. **System Configuration** - Settings and preferences
+10. **Emergency Response** - Crisis situation handling
+11. **Device Information** - Technical specifications
+12. **Integration Setup** - Smart home platform integration
+13. **Performance Analysis** - System performance metrics
+14. **Troubleshooting Assistance** - Problem diagnosis and resolution
+
+## 🚀 CI/CD Pipeline
+
+### 🔄 **Automated Workflows**
+
+The repository includes a **comprehensive CI/CD pipeline** with modern best practices:
+
+#### **Quality Assurance**
+- ✅ **Multi-OS testing** (Ubuntu, Windows, macOS)
+- ✅ **Multi-Python support** (3.9-3.12)
+- ✅ **Security scanning** (vulnerability checks)
+- ✅ **Code quality analysis** (mypy, bandit, radon)
+- ✅ **Performance benchmarking**
+
+#### **Automated Deployment**
+- ✅ **Semantic versioning** with automated releases
+- ✅ **PyPI publishing** for stable releases
+- ✅ **GitHub releases** with changelog generation
+- ✅ **Docker container builds** (multi-architecture)
+- ✅ **Documentation deployment** (GitHub Pages)
+
+#### **Maintenance & Monitoring**
+- ✅ **Dependency updates** (automated security patches)
+- ✅ **Repository cleanup** (workflow run management)
+- ✅ **Notification system** (Slack/Discord integration)
+- ✅ **Performance tracking** (benchmarking)
+
+### 🏗️ **Modern Development Practices**
+
+#### **Version Management**
+```toml
+# .bumpversion.toml
+[bumpversion]
+current_version = 0.1.0
+commit = True
+tag = True
+
+[bumpversion:file:pyproject.toml]
+search = version = "{current_version}"
+replace = version = "{new_version}"
+```
+
+#### **Container Definition**
+```dockerfile
+# Multi-stage build for optimal size
+FROM python:3.11-slim as base
+# ... optimized production container
+```
+
+#### **Package Configuration**
+```json
+{
+  "dependencies": ["fastmcp==2.12.0"],
+  "configuration": {
+    "project_id": {"type": "string", "required": true},
+    "client_id": {"type": "string", "required": true}
+  }
+}
+```
+
 ## 🔄 Troubleshooting
 
 ### ✅ **Recent Fixes Applied**
-- **Pydantic V2 Migration**: Updated all models to use modern Pydantic patterns
-- **Enhanced Logging**: Added comprehensive debugging and monitoring
-- **Claude Desktop Integration**: Fixed configuration issues causing disconnections
-- **Real API Implementation**: Removed all mock data, using authentic Google APIs
+- **FastMCP 2.12.0 Migration**: Updated to latest MCP specification
+- **Enhanced Tool Registration**: Fixed parameter handling for tool help
+- **DXT Package Creation**: Proper lightweight packaging
+- **CI/CD Pipeline**: Comprehensive automation and testing
 
 ### 🚨 **Common Issues & Solutions**
 
@@ -167,7 +296,7 @@ python -m nest_protect_mcp --reload
   "mcpServers": {
     "nest protect": {
       "command": "py",
-      "args": ["-3.13", "-m", "nest_protect_mcp"],  // ← No --kill!
+      "args": ["-3.13", "-m", "nest_protect_mcp"],
       "cwd": "D:/Dev/repos/nest-protect-mcp"
     }
   }
@@ -181,9 +310,9 @@ python -m nest_protect_mcp --reload
 2. Verify credentials in `.env` file
 3. Ensure Smart Device Management API is enabled in Google Cloud Console
 
-#### **Pydantic Deprecation Warnings**
-**Symptom**: `PydanticDeprecatedSince20` warnings in logs
-**Solution**: ✅ **FIXED** - All models updated to Pydantic V2 patterns
+#### **Tool Help Not Working**
+**Symptom**: "get tool help" has difficulties with parameters
+**Solution**: ✅ **FIXED** - Updated FastMCP tool registration with proper syntax
 
 #### **Device Not Found**
 **Symptom**: No devices appear in tool responses
@@ -195,53 +324,64 @@ python -m nest_protect_mcp --reload
 ### 🔍 **Enhanced Debugging**
 The server now includes comprehensive logging:
 ```
-✅ === INITIALIZING FASTMCP SERVER ===
-✅ FastMCP app created successfully
-✅ === TOOL REGISTRATION COMPLETE ===
-✅ All 20 tools have been registered with FastMCP
+✅ === FASTMCP SERVER INITIALIZED ===
+✅ Tool registration complete
+✅ Authentication state loaded
+✅ Device discovery started
 ```
 
 If you see errors, check the detailed logs for specific failure points.
 
-## 🔧 Available MCP Tools
+## 📚 Documentation
 
-The server provides **20 production-ready tools** organized into categories:
+### **📖 Complete Documentation**
 
-### 📊 **Device Status Tools**
-1. **`list_devices`** - Discover all Nest Protect devices in your home
-2. **`get_device_status`** - Get comprehensive status for a specific device
-3. **`get_device_events`** - Access device event history and activity logs
+For detailed documentation, please refer to the [docs](docs/) directory:
 
-### 🎛️ **Device Control Tools**
-4. **`hush_alarm`** - Silence active alarms on devices
-5. **`run_safety_check`** - Execute safety checks and diagnostics
-6. **`set_led_brightness`** - Adjust LED brightness levels
-7. **`sound_alarm`** - Test alarms (smoke, CO, security, emergency)
-8. **`arm_disarm_security`** - Control Nest Guard security system
+- **[📋 MCP Production Checklist](docs/MCP_PRODUCTION_CHECKLIST.md)** - Deployment readiness guide
+- **[🔧 Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design and components
+- **[🐳 Containerization Guidelines](docs/CONTAINERIZATION_GUIDELINES.md)** - Docker deployment
+- **[🛠️ Setup Guide](docs/SETUP_GUIDE.md)** - Installation and configuration
+- **[🔍 Troubleshooting](docs/TROUBLESHOOTING_FASTMCP_2.12.md)** - Common issues and solutions
+- **[📊 Tools Reference](docs/TOOLS_REFERENCE.md)** - Complete tool documentation
 
-### 🔧 **System Status Tools**
-9. **`get_system_status`** - Overall server and API health
-10. **`get_process_status`** - Server process monitoring
-11. **`get_api_status`** - Google API connectivity status
+### **🚀 Quick Reference**
 
-### 🔐 **Authentication Tools**
-12. **`initiate_oauth_flow`** - Start Google OAuth authentication
-13. **`handle_oauth_callback`** - Process OAuth callback
-14. **`refresh_access_token`** - Refresh expired tokens
+#### **Installation Commands**
+```bash
+# Standard installation
+pip install -e .
 
-### ⚙️ **Configuration Tools**
-15. **`get_config`** - View current server configuration
-16. **`update_config`** - Modify server settings
-17. **`reset_config`** - Reset to default configuration
-18. **`export_config`** - Export configuration to file
-19. **`import_config`** - Import configuration from file
+# Development installation
+pip install -e .[dev]
 
-### 📚 **Help & Documentation Tools**
-20. **`list_available_tools`** - Show all available tools
-21. **`get_tool_help`** - Get detailed help for specific tools
-22. **`search_tools`** - Search tools by name or description
-23. **`about_server`** - Get server information and capabilities
-24. **`get_supported_devices`** - List supported and planned devices
+# DXT deployment (MCP environments)
+# Use nest-protect-mcp-0.1.0.dxt
+```
+
+#### **Server Commands**
+```bash
+# MCP mode (default)
+python -m nest_protect_mcp
+
+# HTTP mode
+python -m nest_protect_mcp --http
+
+# Development mode
+python -m nest_protect_mcp --reload
+
+# Help
+python -m nest_protect_mcp --help
+```
+
+#### **Authentication**
+```bash
+# Start OAuth flow
+python -m nest_protect_mcp.auth
+
+# Verify authentication
+python -m nest_protect_mcp --status
+```
 
 ## 🌐 REST API Reference
 
@@ -252,156 +392,88 @@ When running in HTTP mode, the following endpoints are available:
 - `GET /api/devices/{device_id}` - Get device details
 - `POST /api/devices/{device_id}/command` - Send command to device
 
-## 📚 Documentation
+## 🔐 Security
 
-For detailed documentation, please refer to the [docs](docs/) directory.
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+- **OAuth 2.0 Authentication** - Secure Google API integration
+- **Token Management** - Automatic refresh with secure storage
+- **HTTPS Support** - Optional SSL/TLS encryption
+- **Input Validation** - Pydantic V2 model validation
+- **Security Scanning** - Automated vulnerability checks
 
-3. **Install dependencies**:
-   ```bash
-   pip install -e .
-   ```
+## 🚀 Deployment
 
-4. **Configure your environment**:
-   ```bash
-   cp config/default.toml.example config/default.toml
-   # Edit the config file with your credentials
-   ```
-
-5. **Run the server**:
-   ```bash
-   # Run with MCP (stdio) interface
-   python -m nest_protect_mcp
-   
-   # Or run with HTTP server
-   python -m nest_protect_mcp --http
-   
-   # For development with auto-reload
-   python -m nest_protect_mcp --reload
-   ```
-
-### Docker Installation
-
+### **📦 DXT Package**
 ```bash
+# Deploy DXT package
+nest-protect-mcp-0.1.0.dxt
+```
+
+### **🐳 Docker Container**
+```bash
+# Run container
 docker run -d \
   --name nest-protect-mcp \
   -p 8080:8080 \
-  -v $(pwd)/config:/app/config \
-  -v $(pwd)/data:/app/data \
   sandraschi/nest-protect-mcp:latest
 ```
 
-### Configuration
+### **☁️ Cloud Deployment**
+- **Railway** - One-click deployment available
+- **Heroku** - Container-based deployment
+- **AWS/GCP** - Container orchestration support
 
-Create a `config/default.toml` file based on the example:
-
-```toml
-[nest]
-# Google Cloud Project credentials
-project_id = "your-project-id"
-client_id = "your-client-id"
-client_secret = "your-client-secret"
-refresh_token = "your-refresh-token"
-
-[server]
-# General server settings
-host = "0.0.0.0"
-port = 8080
-log_level = "INFO"
-
-# Enable/disable interfaces
-enable_mcp = true
-enable_http = true
-
-# HTTP/HTTPS configuration
-http_host = "0.0.0.0"
-http_port = 8080
-enable_https = false
-ssl_cert = "path/to/cert.pem"
-ssl_key = "path/to/key.pem"
-
-# MCP specific settings
-mcp_timeout = 30  # seconds
-max_retries = 3
-```
-
-## Usage Examples
-
-### Command Line Interface
-
-```bash
-# Show help
-python -m nest_protect_mcp --help
-
-# Run with MCP interface (default)
-python -m nest_protect_mcp
-
-# Run with HTTP server on custom port
-python -m nest_protect_mcp --http --port 8000
-
-# Run with development settings (auto-reload, debug)
-python -m nest_protect_mcp --reload --debug
-```
-
-### Checking Status
-
-```bash
-# Check server status
-curl http://localhost:8080/health
-
-# List all devices
-curl http://localhost:8080/api/devices
-
-# Get device details
-curl http://localhost:8080/api/devices/{device_id}
-```
-
-### Connection Methods
-
-1. **MCP Client Connection** (recommended for production):
-   ```python
-   from fastmcp import MCPClient
-   
-   client = MCPClient(stdio=True)  # Uses stdio for communication
-   response = client.send_command("get_devices")
-   print(response)
-   ```
-
-2. **HTTP API** (for testing/dashboards):
-   ```bash
-   # Get all devices
-   curl http://localhost:8080/api/devices
-   
-   # Get device status
-   curl http://localhost:8080/api/device/DEVICE_ID/status
-   
-   # Hush alarm
-   curl -X POST http://localhost:8080/api/device/DEVICE_ID/hush
-   ```
-
-3. **WebSocket** (for real-time updates):
-   ```javascript
-   const ws = new WebSocket('ws://localhost:8080/ws');
-   ws.onmessage = (event) => {
-     console.log('Update:', JSON.parse(event.data));
-   };
-   ```
-
-## API Documentation
-
-See [API_DOCS.md](docs/API_DOCS.md) for detailed API documentation.
-
-## License
-
-MIT
-
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## Support
+### **Development Setup**
+```bash
+# Clone repository
+git clone https://github.com/sandraschi/nest-protect-mcp.git
+cd nest-protect-mcp
 
-For support, please open an issue in the GitHub repository.
+# Install development dependencies
+pip install -e .[dev]
+
+# Run tests
+pytest
+
+# Run linting
+pre-commit run --all-files
+```
+
+## 📈 Performance
+
+- **Multi-threaded API calls** for optimal performance
+- **Connection pooling** for efficient HTTP requests
+- **State caching** for reduced API calls
+- **Async/await patterns** for non-blocking operations
+- **Memory efficient** device state management
+
+## 🔄 Updates & Maintenance
+
+The repository includes **automated maintenance workflows**:
+
+- **Weekly dependency updates** for security patches
+- **Automated testing** across multiple environments
+- **Performance monitoring** and benchmarking
+- **Documentation updates** with each release
+
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+## 📧 Support
+
+For support, please:
+1. Check the [troubleshooting guide](docs/TROUBLESHOOTING_FASTMCP_2.12.md)
+2. Search existing [issues](https://github.com/sandraschi/nest-protect-mcp/issues)
+3. Open a new issue with detailed information
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ for the smart home community**
