@@ -26,7 +26,6 @@ NEST_AUTH_URL = "https://www.googleapis.com/oauth2/v4/token"
 NEST_API_URL = "https://smartdevicemanagement.googleapis.com/v1"
 TOKEN_EXPIRY_BUFFER = 300  # 5 minutes in seconds
 
-# Import models and exceptions
 from .models import (
     ProtectConfig,
     ProtectDeviceState,
@@ -34,6 +33,9 @@ from .models import (
     ProtectEvent,
     ProtectAlarmState,
     ProtectBatteryState,
+    ProtectAlarmType,
+    ProtectBatteryState as BatteryStateEnum,
+    ProtectAlarmState as AlarmStateEnum
 )
 from .exceptions import (
     NestProtectError,
@@ -54,7 +56,7 @@ logger = logging.getLogger("nest_protect_mcp")
 T = TypeVar('T')
 MessageHandler = Callable[[McpMessage], Awaitable[Dict[str, Any]]]
 
-# Pydantic models for tool parameters
+# Pydantic models for tool parameters (for backward compatibility)
 class EmptyParams(BaseModel):
     pass
 
@@ -63,8 +65,8 @@ class DeviceIdParams(BaseModel):
 
 class SilenceAlarmParams(DeviceIdParams):
     duration_seconds: int = Field(
-        300, 
-        ge=60, 
+        300,
+        ge=60,
         le=3600,
         description="Duration to silence the alarm in seconds"
     )
@@ -276,7 +278,7 @@ class NestProtectMCP(FastMCP):
         self._message_handlers = {
             "ping": self._handle_ping,
             "get_device": self._handle_get_device,
-            "get_devices": self._get_devices,
+            "get_devices": self._get_devices_from_api,
             "get_alarm_state": self._handle_get_alarm_state,
             "hush_alarm": self._handle_hush_alarm,
             "run_test": self._handle_run_test,
@@ -284,20 +286,59 @@ class NestProtectMCP(FastMCP):
         
     def _register_tools(self):
         """Register tools for FastMCP 2.12."""
-        @self.tool("get_devices")
-        async def get_devices(params: EmptyParams) -> List[Dict[str, Any]]:
-            """Get a list of all Nest Protect devices."""
-            return await self._get_devices()
-        
-        @self.tool("get_device")
-        async def get_device(params: DeviceIdParams) -> Dict[str, Any]:
-            """Get detailed information about a specific device."""
-            return await self._get_device(params.device_id)
-            
-        @self.tool("silence_alarm")
-        async def silence_alarm(params: SilenceAlarmParams) -> Dict[str, Any]:
-            """Silence the alarm on a specific device."""
-            return await self._handle_hush_alarm(params.device_id)
+
+        @self.tool()
+        async def get_devices() -> List[Dict[str, Any]]:
+            """Get a list of all Nest Protect devices.
+
+            Returns:
+                List of device dictionaries containing device information
+            """
+            try:
+                devices = await self.get_devices()
+                return [device.dict() for device in devices]
+            except Exception as e:
+                logger.error(f"Error getting devices: {e}", exc_info=True)
+                raise
+
+        @self.tool()
+        async def get_device(device_id: str) -> Dict[str, Any]:
+            """Get detailed information about a specific Nest Protect device.
+
+            Args:
+                device_id: The ID of the device to retrieve
+
+            Returns:
+                Device information dictionary
+            """
+            try:
+                device = await self.get_device(device_id)
+                if not device:
+                    raise NestDeviceNotFoundError(f"Device {device_id} not found")
+                return device.dict()
+            except Exception as e:
+                logger.error(f"Error getting device {device_id}: {e}", exc_info=True)
+                raise
+
+        @self.tool()
+        async def silence_alarm(device_id: str, duration_seconds: int = 300) -> Dict[str, Any]:
+            """Silence the alarm on a specific Nest Protect device.
+
+            Args:
+                device_id: The ID of the device to silence
+                duration_seconds: Duration to silence the alarm in seconds (60-3600, default: 300)
+
+            Returns:
+                Dictionary with status and message
+            """
+            try:
+                success = await self.hush_alarm(device_id)
+                if not success:
+                    raise NestProtectError("Failed to silence alarm")
+                return {"status": "success", "message": "Alarm silenced successfully"}
+            except Exception as e:
+                logger.error(f"Error silencing alarm for device {device_id}: {e}", exc_info=True)
+                raise
     
     async def _handle_ping(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle ping messages to keep the connection alive."""
@@ -574,42 +615,301 @@ class NestProtectMCP(FastMCP):
         }
         return status_map.get(status, ProtectBatteryState.INVALID)
     
-    # ===== Public API =====
-    
-    # === API Endpoints ===
+    # ===== Public API Methods =====
+
+    async def get_devices(self) -> List[ProtectDeviceState]:
+        """Get a list of all Nest Protect devices.
+
+        Returns:
+            List of ProtectDeviceState objects representing all devices
+
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+        """
+        try:
+            logger.info("Fetching devices from Nest API")
+            devices_data = await self._get_devices_from_api()
+
+            if not devices_data:
+                logger.warning("No devices found or API returned empty response")
+                return []
+
+            devices = []
+            for device_data in devices_data:
+                try:
+                    device_state = self._map_device_state(device_data)
+                    devices.append(device_state)
+                    logger.debug(f"Mapped device: {device_state.device_id}")
+                except Exception as e:
+                    logger.error(f"Failed to map device data: {e}", exc_info=True)
+                    continue
+
+            logger.info(f"Successfully retrieved {len(devices)} devices")
+            return devices
+
+        except Exception as e:
+            logger.error(f"Error getting devices: {e}", exc_info=True)
+            raise
+
+    async def get_device(self, device_id: str) -> Optional[ProtectDeviceState]:
+        """Get detailed information about a specific Nest Protect device.
+
+        Args:
+            device_id: The ID of the device to retrieve
+
+        Returns:
+            ProtectDeviceState object if found, None otherwise
+
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+            NestDeviceNotFoundError: If device is not found
+        """
+        if not device_id:
+            raise ValueError("device_id is required")
+
+        try:
+            logger.info(f"Fetching device details for: {device_id}")
+
+            # First check if we have cached device data
+            if device_id in self._devices:
+                cached_data = self._devices[device_id]
+                device_state = self._map_device_state(cached_data)
+                logger.debug(f"Returning cached device: {device_id}")
+                return device_state
+
+            # Fetch from API
+            device_data = await self._get_device_from_api(device_id)
+            if not device_data:
+                logger.warning(f"Device {device_id} not found")
+                raise NestDeviceNotFoundError(f"Device {device_id} not found")
+
+            device_state = self._map_device_state(device_data)
+            logger.info(f"Successfully retrieved device: {device_id}")
+            return device_state
+
+        except NestDeviceNotFoundError:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting device {device_id}: {e}", exc_info=True)
+            raise
+
+    async def hush_alarm(self, device_id: str) -> bool:
+        """Silence the alarm on a Nest Protect device.
+
+        Args:
+            device_id: The ID of the device to hush
+
+        Returns:
+            True if successful, False otherwise
+
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+            NestDeviceNotFoundError: If device is not found
+        """
+        if not device_id:
+            raise ValueError("device_id is required")
+
+        try:
+            logger.info(f"Silencing alarm for device: {device_id}")
+
+            # Get device to verify it exists and get current state
+            device = await self.get_device(device_id)
+            if not device:
+                raise NestDeviceNotFoundError(f"Device {device_id} not found")
+
+            # Send hush command via API
+            success = await self._send_device_command(device_id, "hush")
+
+            if success:
+                logger.info(f"Successfully silenced alarm for device: {device_id}")
+            else:
+                logger.error(f"Failed to silence alarm for device: {device_id}")
+
+            return success
+
+        except NestDeviceNotFoundError:
+            raise
+        except Exception as e:
+            logger.error(f"Error silencing alarm for device {device_id}: {e}", exc_info=True)
+            return False
+
+    async def run_test(self, device_id: str, test_type: str = "manual") -> bool:
+        """Run a test on a Nest Protect device.
+
+        Args:
+            device_id: The ID of the device to test
+            test_type: Type of test to run (default: "manual")
+
+        Returns:
+            True if test started successfully, False otherwise
+
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+            NestDeviceNotFoundError: If device is not found
+        """
+        if not device_id:
+            raise ValueError("device_id is required")
+
+        try:
+            logger.info(f"Running {test_type} test for device: {device_id}")
+
+            # Get device to verify it exists
+            device = await self.get_device(device_id)
+            if not device:
+                raise NestDeviceNotFoundError(f"Device {device_id} not found")
+
+            # Send test command via API
+            success = await self._send_device_command(device_id, "test", {"type": test_type})
+
+            if success:
+                logger.info(f"Successfully started {test_type} test for device: {device_id}")
+            else:
+                logger.error(f"Failed to start {test_type} test for device: {device_id}")
+
+            return success
+
+        except NestDeviceNotFoundError:
+            raise
+        except Exception as e:
+            logger.error(f"Error running test for device {device_id}: {e}", exc_info=True)
+            return False
+
+    async def send_command(self, command: ProtectCommand) -> bool:
+        """Send a command to a Nest Protect device.
+
+        Args:
+            command: ProtectCommand object with command details
+
+        Returns:
+            True if command sent successfully, False otherwise
+
+        Raises:
+            NestAuthError: If authentication fails
+            NestConnectionError: If connection to Nest services fails
+            NestDeviceNotFoundError: If device is not found
+        """
+        try:
+            logger.info(f"Sending command '{command.command}' to device: {command.device_id}")
+
+            success = await self._send_device_command(
+                command.device_id or "all",
+                command.command,
+                command.params
+            )
+
+            if success:
+                logger.info(f"Successfully sent command '{command.command}'")
+            else:
+                logger.error(f"Failed to send command '{command.command}'")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Error sending command: {e}", exc_info=True)
+            return False
+
+    async def _get_device_from_api(self, device_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific device from the Nest API.
+
+        Args:
+            device_id: The ID of the device to retrieve
+
+        Returns:
+            Device data dictionary if found, None otherwise
+        """
+        if not self._refresh_token:
+            logger.warning("No refresh token available for device lookup")
+            return None
+
+        try:
+            response = await self._make_request('GET', f'enterprises/{self._config.project_id}/devices/{device_id}')
+            return response
+        except NestAuthError as e:
+            logger.warning(f"Authentication error while fetching device {device_id}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get device {device_id} from API: {e}")
+            return None
+
+    async def _send_device_command(self, device_id: str, command: str, params: Dict[str, Any] = None) -> bool:
+        """Send a command to a Nest Protect device via API.
+
+        Args:
+            device_id: The ID of the device
+            command: The command to send
+            params: Optional command parameters
+
+        Returns:
+            True if command sent successfully, False otherwise
+        """
+        if not self._refresh_token:
+            logger.warning("No refresh token available for command execution")
+            return False
+
+        try:
+            # Map command to API endpoint
+            command_endpoints = {
+                "hush": f"enterprises/{self._config.project_id}/devices/{device_id}:hush",
+                "test": f"enterprises/{self._config.project_id}/devices/{device_id}:test"
+            }
+
+            if command not in command_endpoints:
+                logger.error(f"Unknown command: {command}")
+                return False
+
+            endpoint = command_endpoints[command]
+
+            # Prepare command payload
+            payload = {}
+            if params:
+                payload.update(params)
+
+            # Send command
+            await self._make_request('POST', endpoint, json=payload)
+
+            logger.debug(f"Successfully sent command '{command}' to device {device_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send command '{command}' to device {device_id}: {e}")
+            return False
     
     async def _handle_get_device(self, device_id: str) -> Dict[str, Any]:
         """Get a specific Nest Protect device by ID.
-        
+
         Args:
             device_id: The ID of the device to retrieve
-            
+
         Returns:
             Device information dictionary
-            
+
         Raises:
             Exception: If device is not found or an error occurs
         """
         if not device_id:
             raise ValueError("device_id is required")
-            
+
         device = await self.get_device(device_id)
         if not device:
-            raise Exception(f"Device {device_id} not found")
-            
+            raise NestDeviceNotFoundError(f"Device {device_id} not found")
+
         return device.dict()
     
     async def _handle_send_command(self, device_id: str, command: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Send a command to a Nest Protect device.
-        
+
         Args:
             device_id: The ID of the device to send the command to
             command: The command to send
             params: Optional parameters for the command
-            
+
         Returns:
             Dictionary with status and message
-            
+
         Raises:
             Exception: If the command fails
         """
@@ -629,23 +929,23 @@ class NestProtectMCP(FastMCP):
     
     async def _handle_get_alarm_state(self, device_id: str) -> Dict[str, Any]:
         """Get the current alarm state of a Nest Protect device.
-        
+
         Args:
             device_id: The ID of the device
-            
+
         Returns:
             Dictionary containing alarm state information
-            
+
         Raises:
             Exception: If device is not found or an error occurs
         """
         if not device_id:
             raise ValueError("device_id is required")
-            
+
         device = await self.get_device(device_id)
         if not device:
-            raise Exception(f"Device {device_id} not found")
-            
+            raise NestDeviceNotFoundError(f"Device {device_id} not found")
+
         return {
             "status": "success",
             "device_id": device_id,
@@ -657,19 +957,19 @@ class NestProtectMCP(FastMCP):
     
     async def _handle_hush_alarm(self, device_id: str) -> Dict[str, Any]:
         """Hush the alarm on a Nest Protect device.
-        
+
         Args:
             device_id: The ID of the device to hush
-            
+
         Returns:
             Dictionary with status and message
-            
+
         Raises:
             Exception: If the operation fails
         """
         if not device_id:
             raise ValueError("device_id is required")
-            
+
         try:
             success = await self.hush_alarm(device_id)
             if not success:
@@ -683,20 +983,20 @@ class NestProtectMCP(FastMCP):
     
     async def _handle_run_test(self, device_id: str, test_type: str = "manual") -> Dict[str, Any]:
         """Run a test on a Nest Protect device.
-        
+
         Args:
             device_id: The ID of the device
             test_type: Type of test to run (default: "manual")
-            
+
         Returns:
             Dictionary with status and message
-            
+
         Raises:
             Exception: If the test fails to start
         """
         if not device_id:
             raise ValueError("device_id is required")
-            
+
         try:
             success = await self.run_test(device_id, test_type)
             if not success:

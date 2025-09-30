@@ -241,3 +241,4 @@
 ---
 
 **Pro Tip**: Start with `about_server` to get oriented, then use `list_available_tools` to explore what's possible with your specific setup! 🎯
+

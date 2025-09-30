@@ -5,7 +5,37 @@ All notable changes to the Nest Protect MCP project will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2025-09-20
+
+### 🎉 **Production Release**
+
+### Added
+- **Enhanced Logging System**: Comprehensive debugging and monitoring capabilities
+- **Pydantic V2 Migration**: Complete migration to modern Pydantic patterns
+- **Production Stability**: Server runs without crashes or disconnections
+- **Claude Desktop Integration**: Fixed configuration issues for stable operation
+
+### Changed
+- **BREAKING**: Updated all Pydantic models to V2 patterns (`field_validator`, `ConfigDict`)
+- **BREAKING**: Enhanced logging format with detailed startup/shutdown tracking
+- **BREAKING**: Removed `--kill` argument from production configuration
+- Updated FastMCP to version 2.12.3
+- Improved error handling with detailed stack traces
+- Enhanced tool registration logging
+
+### Fixed
+- **Critical**: Eliminated `PydanticDeprecatedSince20` warnings
+- **Critical**: Fixed server disconnection issues in Claude Desktop
+- **Critical**: Resolved configuration problems causing immediate shutdowns
+- Fixed import errors in Pydantic model definitions
+- Fixed JSON encoder deprecation warnings
+- Improved server lifecycle management
+
+### Security
+- Enhanced error handling to prevent information leakage
+- Improved authentication flow stability
+
+## [0.2.0] - 2025-09-19
 
 ### Added
 - Initial implementation of the Nest Protect MCP server
@@ -14,10 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device state management and event system
 - Command support for hushing alarms and running tests
 - Comprehensive documentation and setup guide
-
-### Changed
-- Updated build system to use pyproject.toml
-- Improved error handling and logging
 - Enhanced configuration management
 
 ### Fixed
