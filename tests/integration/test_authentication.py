@@ -1,14 +1,14 @@
 """
 Comprehensive tests for authentication and OAuth flows.
 """
-import pytest
+
 import asyncio
 import time
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timezone
+from unittest.mock import AsyncMock, patch
 
-from nest_protect_mcp.server import NestProtectMCP, NEST_AUTH_URL
-from nest_protect_mcp.models import ProtectConfig
+import pytest
+from nest_protect_mcp.server import NEST_AUTH_URL, NestProtectMCP
+
 from nest_protect_mcp.exceptions import NestAuthError, NestConnectionError
 
 
@@ -26,10 +26,10 @@ class TestOAuthAuthentication:
             "access_token": "new-access-token",
             "refresh_token": "new-refresh-token",
             "expires_in": 3600,
-            "token_type": "Bearer"
+            "token_type": "Bearer",
         }
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = token_response
@@ -52,7 +52,7 @@ class TestOAuthAuthentication:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "invalid-refresh-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             response = AsyncMock()
             response.status = 400
@@ -77,12 +77,9 @@ class TestOAuthAuthentication:
         server._refresh_token = "valid-refresh-token"
 
         # Mock successful refresh
-        token_response = {
-            "access_token": "fresh-token",
-            "expires_in": 3600
-        }
+        token_response = {"access_token": "fresh-token", "expires_in": 3600}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = token_response
@@ -112,7 +109,7 @@ class TestOAuthAuthentication:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "test-refresh-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.side_effect = Exception("Network error")
             mock_session.return_value = mock_session_instance
@@ -212,7 +209,7 @@ class TestTokenValidation:
         server._token_expires_at = time.time() + 240
 
         # Mock refresh
-        with patch.object(server, '_refresh_access_token') as mock_refresh:
+        with patch.object(server, "_refresh_access_token") as mock_refresh:
             mock_refresh.return_value = None
 
             token = await server.access_token
@@ -226,7 +223,7 @@ class TestTokenValidation:
         server = NestProtectMCP(sample_config)
         server._refresh_token = None
 
-        with patch.object(server, '_refresh_access_token') as mock_refresh:
+        with patch.object(server, "_refresh_access_token") as mock_refresh:
             mock_refresh.return_value = None
 
             token = await server.access_token
@@ -249,7 +246,7 @@ class TestTokenValidation:
         """Test _get_access_token when no token available."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, '_refresh_access_token') as mock_refresh:
+        with patch.object(server, "_refresh_access_token") as mock_refresh:
             mock_refresh.return_value = None
 
             with pytest.raises(NestAuthError, match="No access token available"):
@@ -265,7 +262,7 @@ class TestAuthenticationErrorScenarios:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "test-refresh-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.side_effect = Exception("Connection refused")
             mock_session.return_value = mock_session_instance
@@ -279,7 +276,7 @@ class TestAuthenticationErrorScenarios:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "test-refresh-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             response = AsyncMock()
             response.status = 200
@@ -302,7 +299,7 @@ class TestAuthenticationErrorScenarios:
             # Missing access_token and expires_in
         }
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = malformed_response
@@ -320,22 +317,16 @@ class TestAuthenticationErrorScenarios:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "test-refresh-token"
 
-        token_response = {
-            "access_token": "concurrent-token",
-            "expires_in": 3600
-        }
+        token_response = {"access_token": "concurrent-token", "expires_in": 3600}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = token_response
             mock_session.return_value = mock_session_instance
 
             # Run multiple concurrent token refreshes
-            tasks = [
-                server._refresh_access_token()
-                for _ in range(3)
-            ]
+            tasks = [server._refresh_access_token() for _ in range(3)]
 
             results = await asyncio.gather(*tasks)
 
@@ -356,21 +347,21 @@ class TestAuthenticationIntegration:
 
         response_data = {"devices": []}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.request.return_value.__aenter__.return_value.status = 200
             mock_session_instance.request.return_value.__aenter__.return_value.json.return_value = response_data
             mock_session.return_value = mock_session_instance
 
             # Make API request
-            result = await server._make_request('GET', 'test/endpoint')
+            result = await server._make_request("GET", "test/endpoint")
 
             assert result == response_data
 
             # Verify auth header was included
             call_args = mock_session_instance.request.call_args
-            headers = call_args[1]['headers']
-            assert headers['Authorization'] == "Bearer test-token"
+            headers = call_args[1]["headers"]
+            assert headers["Authorization"] == "Bearer test-token"
 
     @pytest.mark.asyncio
     async def test_auth_integration_with_state_persistence(self, sample_config):
@@ -406,12 +397,13 @@ class TestAuthenticationIntegration:
 
         # Check token expiry buffer
         from nest_protect_mcp.server import TOKEN_EXPIRY_BUFFER
+
         assert TOKEN_EXPIRY_BUFFER == 300
 
         # Check state keys are properly initialized
-        assert 'access_token' in server._state_keys
-        assert 'refresh_token' in server._state_keys
-        assert 'token_expires_at' in server._state_keys
+        assert "access_token" in server._state_keys
+        assert "refresh_token" in server._state_keys
+        assert "token_expires_at" in server._state_keys
 
 
 class TestErrorRecoveryMechanisms:
@@ -424,7 +416,7 @@ class TestErrorRecoveryMechanisms:
         server._refresh_token = "test-refresh-token"
 
         # Simulate auth failure
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             response = AsyncMock()
             response.status = 401
@@ -465,6 +457,7 @@ class TestErrorRecoveryMechanisms:
 
         # Mock initial failure then success
         call_count = 0
+
         def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -476,11 +469,11 @@ class TestErrorRecoveryMechanisms:
                 response.status = 200  # Success
                 response.json.return_value = {
                     "access_token": "retry-token",
-                    "expires_in": 3600
+                    "expires_in": 3600,
                 }
             return response
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.side_effect = mock_post
             mock_session.return_value = mock_session_instance

@@ -1,13 +1,13 @@
 """
 Integration tests for Nest Protect server functionality.
 """
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timezone
 
-from nest_protect_mcp.server import NestProtectMCP, NEST_API_URL, NEST_AUTH_URL
-from nest_protect_mcp.models import ProtectConfig, ProtectDeviceState
+import asyncio
+from unittest.mock import patch
+
+import pytest
+from nest_protect_mcp.server import NEST_API_URL, NEST_AUTH_URL, NestProtectMCP
+
 from nest_protect_mcp.exceptions import NestProtectError
 
 
@@ -24,14 +24,11 @@ class TestNestProtectMCPServer:
         assert server._config.project_id == sample_config["project_id"]
         assert server._config.client_id == sample_config["client_id"]
         assert server._config.update_interval == sample_config["update_interval"]
-        assert hasattr(server, '_state_manager')
+        assert hasattr(server, "_state_manager")
 
     def test_server_initialization_with_dict_config(self):
         """Test server initialization with dictionary config."""
-        config_dict = {
-            "project_id": "test-project",
-            "client_id": "test-client-id"
-        }
+        config_dict = {"project_id": "test-project", "client_id": "test-client-id"}
         server = NestProtectMCP(config_dict)
         assert server._config.project_id == "test-project"
         assert server._config.client_id == "test-client-id"
@@ -52,23 +49,18 @@ class TestNestProtectMCPServer:
                     "name": "Test Device",
                     "type": "sdm.devices.types.SMOKE_ALARM",
                     "traits": {
-                        "sdm.devices.traits.Connectivity": {
-                            "status": "ONLINE"
-                        },
-                        "sdm.devices.traits.Info": {
-                            "customName": "Test Smoke Alarm"
-                        }
-                    }
+                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                        "sdm.devices.traits.Info": {"customName": "Test Smoke Alarm"},
+                    },
                 }
             ]
         }
 
         mock_aiohttp_session.set_response(
-            f"{NEST_API_URL}/enterprises/test-project/devices",
-            data=devices_data
+            f"{NEST_API_URL}/enterprises/test-project/devices", data=devices_data
         )
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             devices = await server.get_devices()
 
         assert len(devices) == 1
@@ -78,37 +70,34 @@ class TestNestProtectMCPServer:
     async def test_get_devices_api_error(self, server, mock_aiohttp_session):
         """Test get_devices with API error."""
         mock_aiohttp_session.set_response(
-            f"{NEST_API_URL}/enterprises/test-project/devices",
-            status=401
+            f"{NEST_API_URL}/enterprises/test-project/devices", status=401
         )
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             with pytest.raises(NestProtectError):
                 await server.get_devices()
 
     @pytest.mark.asyncio
-    async def test_get_device_success(self, server, mock_aiohttp_session, sample_device_data):
+    async def test_get_device_success(
+        self, server, mock_aiohttp_session, sample_device_data
+    ):
         """Test get_device with successful response."""
         device_id = "test-device-123"
         device_data = {
             "name": "Test Device",
             "type": "sdm.devices.types.SMOKE_ALARM",
             "traits": {
-                "sdm.devices.traits.Connectivity": {
-                    "status": "ONLINE"
-                },
-                "sdm.devices.traits.Info": {
-                    "customName": "Test Smoke Alarm"
-                }
-            }
+                "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                "sdm.devices.traits.Info": {"customName": "Test Smoke Alarm"},
+            },
         }
 
         mock_aiohttp_session.set_response(
             f"{NEST_API_URL}/enterprises/test-project/devices/{device_id}",
-            data=device_data
+            data=device_data,
         )
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             device = await server.get_device(device_id)
 
         assert device.name == "Test Smoke Alarm"
@@ -119,11 +108,10 @@ class TestNestProtectMCPServer:
         device_id = "nonexistent-device"
 
         mock_aiohttp_session.set_response(
-            f"{NEST_API_URL}/enterprises/test-project/devices/{device_id}",
-            status=404
+            f"{NEST_API_URL}/enterprises/test-project/devices/{device_id}", status=404
         )
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             with pytest.raises(NestProtectError):
                 await server.get_device(device_id)
 
@@ -134,15 +122,12 @@ class TestNestProtectMCPServer:
         token_data = {
             "access_token": "new-access-token",
             "expires_in": 3600,
-            "token_type": "Bearer"
+            "token_type": "Bearer",
         }
 
-        mock_aiohttp_session.set_response(
-            NEST_AUTH_URL,
-            data=token_data
-        )
+        mock_aiohttp_session.set_response(NEST_AUTH_URL, data=token_data)
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             # The authentication should happen during API calls
             # We'll test that the token refresh logic works
             assert server._config.client_id == "test-client-id"
@@ -157,10 +142,10 @@ class TestNestProtectMCPServer:
     async def test_server_session_management(self, server):
         """Test server session lifecycle."""
         # Test that session is created when needed
-        assert hasattr(server, '_session')
+        assert hasattr(server, "_session")
 
         # Test session cleanup
-        if hasattr(server, '_session') and server._session:
+        if hasattr(server, "_session") and server._session:
             await server._session.close()
 
     def test_server_constants(self):
@@ -184,8 +169,8 @@ class TestServerIntegration:
                     "type": "sdm.devices.types.SMOKE_ALARM",
                     "traits": {
                         "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
-                        "sdm.devices.traits.Info": {"customName": "Test Smoke Alarm"}
-                    }
+                        "sdm.devices.traits.Info": {"customName": "Test Smoke Alarm"},
+                    },
                 }
             ]
         }
@@ -197,20 +182,19 @@ class TestServerIntegration:
             "traits": {
                 "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
                 "sdm.devices.traits.Info": {"customName": "Test Smoke Alarm"},
-                "sdm.devices.traits.Settings": {}
-            }
+                "sdm.devices.traits.Settings": {},
+            },
         }
 
         mock_aiohttp_session.set_response(
-            f"{NEST_API_URL}/enterprises/test-project/devices",
-            data=devices_list
+            f"{NEST_API_URL}/enterprises/test-project/devices", data=devices_list
         )
         mock_aiohttp_session.set_response(
             f"{NEST_API_URL}/enterprises/test-project/devices/Test Device",
-            data=device_detail
+            data=device_detail,
         )
 
-        with patch('aiohttp.ClientSession', return_value=mock_aiohttp_session):
+        with patch("aiohttp.ClientSession", return_value=mock_aiohttp_session):
             # Get all devices
             devices = await server.get_devices()
             assert len(devices) == 1
@@ -222,6 +206,7 @@ class TestServerIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_integration(self, server, mock_aiohttp_session):
         """Test error handling across different scenarios."""
+
         # Test network timeout
         class TimeoutSession:
             async def get(self, url, **kwargs):
@@ -241,16 +226,16 @@ class TestServerIntegration:
 
         timeout_session = TimeoutSession()
 
-        with patch('aiohttp.ClientSession', return_value=timeout_session):
+        with patch("aiohttp.ClientSession", return_value=timeout_session):
             with pytest.raises(NestProtectError):
                 await server.get_devices()
 
     def test_server_state_manager_integration(self, server):
         """Test integration with state manager."""
         # Test that state manager is accessible
-        assert hasattr(server, '_state_manager')
+        assert hasattr(server, "_state_manager")
         assert server._state_manager is not None
 
         # Test that state manager has expected methods
-        assert hasattr(server._state_manager, 'get_device_state')
-        assert hasattr(server._state_manager, 'update_device_state')
+        assert hasattr(server._state_manager, "get_device_state")
+        assert hasattr(server._state_manager, "update_device_state")

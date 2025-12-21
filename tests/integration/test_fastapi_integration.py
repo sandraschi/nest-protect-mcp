@@ -1,12 +1,12 @@
 """
 Integration tests for FastAPI app and MCP protocol functionality.
 """
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from fastapi.testclient import TestClient
 
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 from nest_protect_mcp.server import create_app, create_server
-from nest_protect_mcp.models import ProtectConfig
 
 
 class TestFastAPIIntegration:
@@ -16,7 +16,7 @@ class TestFastAPIIntegration:
         """Test FastAPI app creation."""
         app = create_app()
         assert app is not None
-        assert hasattr(app, 'routes')
+        assert hasattr(app, "routes")
 
     def test_app_routes_registered(self):
         """Test that expected routes are registered."""
@@ -58,7 +58,7 @@ class TestFastAPIIntegration:
         # Test that lifespan context manager works
         async with app.router.lifespan_context(app):
             # App should be in lifespan context
-            assert hasattr(app.state, 'server')
+            assert hasattr(app.state, "server")
 
     @pytest.mark.asyncio
     async def test_app_lifespan_shutdown(self):
@@ -75,10 +75,7 @@ class TestCreateServerFunction:
 
     def test_create_server_with_config(self):
         """Test creating server with configuration."""
-        config = {
-            "project_id": "test-project",
-            "client_id": "test-client-id"
-        }
+        config = {"project_id": "test-project", "client_id": "test-client-id"}
 
         server = create_server(config)
         assert isinstance(server, NestProtectMCP)
@@ -108,7 +105,7 @@ class TestMCPProtocolIntegration:
 
         # Tools should be registered with FastMCP
         # This is hard to test directly, but we can check the method exists
-        assert hasattr(server, '_register_tools')
+        assert hasattr(server, "_register_tools")
 
     def test_message_handler_registration(self, sample_config):
         """Test that message handlers are properly registered."""
@@ -116,8 +113,12 @@ class TestMCPProtocolIntegration:
         server._register_message_handlers()
 
         expected_handlers = [
-            "ping", "get_device", "get_devices",
-            "get_alarm_state", "hush_alarm", "run_test"
+            "ping",
+            "get_device",
+            "get_devices",
+            "get_alarm_state",
+            "hush_alarm",
+            "run_test",
         ]
 
         for handler_name in expected_handlers:
@@ -130,23 +131,20 @@ class TestMCPProtocolIntegration:
         server = NestProtectMCP(sample_config)
 
         # Mock the underlying method
-        with patch.object(server, '_get_devices') as mock_get_devices:
+        with patch.object(server, "_get_devices") as mock_get_devices:
             mock_get_devices.return_value = [
                 {
                     "id": "device1",
                     "name": "Test Device",
                     "type": "smoke_alarm",
-                    "online": True
+                    "online": True,
                 }
             ]
 
             # Execute tool through message handling
             from fastmcp.client.messages import Message
-            message = Message(
-                method="get_devices",
-                params={},
-                id="test-1"
-            )
+
+            message = Message(method="get_devices", params={}, id="test-1")
 
             result = await server.handle_message(message)
 
@@ -181,13 +179,13 @@ class TestErrorHandlingIntegration:
         server = NestProtectMCP(sample_config)
         server._access_token = "test-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.request.side_effect = Exception("Network error")
             mock_session.return_value = mock_session_instance
 
             with pytest.raises(NestConnectionError):
-                await server._make_request('GET', 'test/endpoint')
+                await server._make_request("GET", "test/endpoint")
 
     @pytest.mark.asyncio
     async def test_device_mapping_error_handling(self, sample_config):
@@ -229,7 +227,7 @@ class TestErrorHandlingIntegration:
         server = NestProtectMCP(sample_config)
 
         # Test with invalid command
-        with patch.object(server, 'send_command') as mock_send:
+        with patch.object(server, "send_command") as mock_send:
             mock_send.return_value = True
 
             # This should be handled by the command validation
@@ -274,7 +272,11 @@ class TestServerStateManagement:
 
     def test_server_constants(self, sample_config):
         """Test server constants are properly defined."""
-        from nest_protect_mcp.server import NEST_AUTH_URL, NEST_API_URL, TOKEN_EXPIRY_BUFFER
+        from nest_protect_mcp.server import (
+            NEST_API_URL,
+            NEST_AUTH_URL,
+            TOKEN_EXPIRY_BUFFER,
+        )
 
         assert NEST_AUTH_URL == "https://www.googleapis.com/oauth2/v4/token"
         assert NEST_API_URL == "https://smartdevicemanagement.googleapis.com/v1"
@@ -292,17 +294,14 @@ class TestPerformanceAndEdgeCases:
 
         response_data = {"test": "data"}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.request.return_value.__aenter__.return_value.status = 200
             mock_session_instance.request.return_value.__aenter__.return_value.json.return_value = response_data
             mock_session.return_value = mock_session_instance
 
             # Make multiple concurrent requests
-            tasks = [
-                server._make_request('GET', 'test/endpoint')
-                for _ in range(5)
-            ]
+            tasks = [server._make_request("GET", "test/endpoint") for _ in range(5)]
 
             results = await asyncio.gather(*tasks)
 
@@ -324,14 +323,14 @@ class TestPerformanceAndEdgeCases:
                     "type": "sdm.devices.types.SMOKE_ALARM",
                     "traits": {
                         "sdm.devices.traits.Info": {"customName": f"Device {i}"},
-                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"}
-                    }
+                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                    },
                 }
                 for i in range(100)
             ]
         }
 
-        with patch.object(server, '_make_request') as mock_request:
+        with patch.object(server, "_make_request") as mock_request:
             mock_request.return_value = large_device_list
 
             devices = await server._get_devices_from_api()
@@ -348,7 +347,7 @@ class TestPerformanceAndEdgeCases:
 
         # Shutdown should clean up
         # This is hard to test directly, but we can verify the method exists
-        assert hasattr(server, 'shutdown')
+        assert hasattr(server, "shutdown")
 
     @pytest.mark.asyncio
     async def test_rate_limiting_simulation(self, sample_config):
@@ -357,13 +356,13 @@ class TestPerformanceAndEdgeCases:
 
         # This is hard to test directly without real API calls
         # But we can verify the request method exists and handles rate limiting
-        assert hasattr(server, '_make_request')
+        assert hasattr(server, "_make_request")
 
         # Test that requests are made through the proper method
-        with patch.object(server, '_make_request') as mock_request:
+        with patch.object(server, "_make_request") as mock_request:
             mock_request.return_value = {"test": "data"}
 
-            result = await server._make_request('GET', 'test/endpoint')
+            result = await server._make_request("GET", "test/endpoint")
 
             assert result == {"test": "data"}
             mock_request.assert_called_once()
@@ -387,7 +386,7 @@ class TestBackwardCompatibility:
         server._setup_routes()
 
         # Should still have message handlers
-        assert hasattr(server, '_message_handlers')
+        assert hasattr(server, "_message_handlers")
 
     def test_create_app_compatibility(self):
         """Test create_app function availability."""
@@ -395,5 +394,5 @@ class TestBackwardCompatibility:
         assert app is not None
 
         # Should have the expected structure
-        assert hasattr(app, 'routes')
-        assert hasattr(app, 'state')
+        assert hasattr(app, "routes")
+        assert hasattr(app, "state")

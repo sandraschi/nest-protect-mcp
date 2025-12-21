@@ -1,0 +1,318 @@
+{
+  "examples": [
+    {
+      "title": "Device Inventory Check",
+      "description": "Get a complete list of all Nest Protect devices",
+      "user_query": "Show me all my Nest Protect devices",
+      "tool_calls": [
+        {
+          "tool_name": "list_devices",
+          "parameters": {},
+          "description": "Retrieve comprehensive device inventory"
+        }
+      ],
+      "expected_output": "List of all devices with IDs, names, locations, and basic status"
+    },
+    {
+      "title": "Device Status Monitoring",
+      "description": "Check detailed status of a specific device",
+      "user_query": "How is my kitchen smoke detector?",
+      "tool_calls": [
+        {
+          "tool_name": "get_device_status",
+          "parameters": {
+            "device_id": "kitchen-smoke-detector-id"
+          },
+          "description": "Get comprehensive device information including battery, connectivity, and sensor status"
+        }
+      ],
+      "expected_output": "Detailed device status including battery level, connectivity, last test date, and current readings"
+    },
+    {
+      "title": "Alarm Response",
+      "description": "Handle an active alarm situation",
+      "user_query": "The smoke alarm is going off in the bedroom!",
+      "tool_calls": [
+        {
+          "tool_name": "get_device_status",
+          "parameters": {
+            "device_id": "bedroom-smoke-detector-id"
+          },
+          "description": "Confirm alarm type and device status"
+        },
+        {
+          "tool_name": "hush_alarm",
+          "parameters": {
+            "device_id": "bedroom-smoke-detector-id",
+            "duration_seconds": 180
+          },
+          "description": "Silence the alarm for 3 minutes to investigate"
+        }
+      ],
+      "expected_output": "Confirmation of alarm silencing and investigation guidance"
+    },
+    {
+      "title": "Safety Testing",
+      "description": "Perform routine safety checks on devices",
+      "user_query": "Test all my smoke detectors",
+      "tool_calls": [
+        {
+          "tool_name": "list_devices",
+          "parameters": {},
+          "description": "Get all device IDs for testing"
+        },
+        {
+          "tool_name": "run_safety_check",
+          "parameters": {
+            "device_id": "device-id-1",
+            "test_type": "smoke"
+          },
+          "description": "Test smoke detection functionality"
+        },
+        {
+          "tool_name": "run_safety_check",
+          "parameters": {
+            "device_id": "device-id-1",
+            "test_type": "co"
+          },
+          "description": "Test carbon monoxide detection"
+        }
+      ],
+      "expected_output": "Test results for each device with pass/fail status"
+    },
+    {
+      "title": "Event History Review",
+      "description": "Check recent device activity and events",
+      "user_query": "What happened with my devices last week?",
+      "tool_calls": [
+        {
+          "tool_name": "get_device_events",
+          "parameters": {
+            "device_id": "device-id",
+            "limit": 20
+          },
+          "description": "Retrieve recent activity logs"
+        }
+      ],
+      "expected_output": "Chronological list of device events including tests, alarms, and status changes"
+    },
+    {
+      "title": "Battery Monitoring",
+      "description": "Check battery levels across all devices",
+      "user_query": "Which devices need new batteries?",
+      "tool_calls": [
+        {
+          "tool_name": "list_devices",
+          "parameters": {},
+          "description": "Get all devices with current status"
+        }
+      ],
+      "expected_output": "List of devices with battery levels, highlighting any below 20%"
+    },
+    {
+      "title": "Device Configuration",
+      "description": "Adjust device settings",
+      "user_query": "Make the LEDs dimmer at night",
+      "tool_calls": [
+        {
+          "tool_name": "set_led_brightness",
+          "parameters": {
+            "device_id": "living-room-detector-id",
+            "brightness": 30
+          },
+          "description": "Reduce LED brightness to 30%"
+        }
+      ],
+      "expected_output": "Confirmation of brightness adjustment"
+    },
+    {
+      "title": "Authentication Setup",
+      "description": "Set up Google Nest API authentication",
+      "user_query": "Set up my Nest Protect integration",
+      "tool_calls": [
+        {
+          "tool_name": "initiate_oauth_flow",
+          "parameters": {},
+          "description": "Start OAuth authentication process"
+        },
+        {
+          "tool_name": "get_api_status",
+          "parameters": {},
+          "description": "Verify API connectivity after authentication"
+        }
+      ],
+      "expected_output": "OAuth setup instructions and connectivity confirmation"
+    },
+    {
+      "title": "System Health Check",
+      "description": "Comprehensive system status assessment",
+      "user_query": "Is everything working properly?",
+      "tool_calls": [
+        {
+          "tool_name": "get_system_status",
+          "parameters": {},
+          "description": "Check overall system health"
+        },
+        {
+          "tool_name": "get_api_status",
+          "parameters": {},
+          "description": "Verify API connectivity"
+        },
+        {
+          "tool_name": "list_devices",
+          "parameters": {},
+          "description": "Confirm all devices are accessible"
+        }
+      ],
+      "expected_output": "Comprehensive health report with any issues highlighted"
+    },
+    {
+      "title": "Emergency Test",
+      "description": "Test alarm responsiveness (use responsibly)",
+      "user_query": "Test the alarm system",
+      "tool_calls": [
+        {
+          "tool_name": "sound_alarm",
+          "parameters": {
+            "device_id": "test-device-id",
+            "alarm_type": "smoke",
+            "duration_seconds": 5
+          },
+          "description": "Brief alarm test to verify system functionality"
+        }
+      ],
+      "expected_output": "Alarm test confirmation with safety warnings"
+    },
+    {
+      "title": "Configuration Backup",
+      "description": "Save current configuration",
+      "user_query": "Backup my settings",
+      "tool_calls": [
+        {
+          "tool_name": "export_config",
+          "parameters": {
+            "file_path": "nest_config_backup.json"
+          },
+          "description": "Export current configuration to file"
+        }
+      ],
+      "expected_output": "Configuration backup file created successfully"
+    },
+    {
+      "title": "Tool Help",
+      "description": "Get detailed information about available tools",
+      "user_query": "What can you help me with?",
+      "tool_calls": [
+        {
+          "tool_name": "list_available_tools",
+          "parameters": {},
+          "description": "Show all available MCP tools"
+        },
+        {
+          "tool_name": "about_server",
+          "parameters": {},
+          "description": "Get comprehensive server information"
+        }
+      ],
+      "expected_output": "Complete list of tools and server capabilities"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "Daily Safety Check",
+      "description": "Routine daily monitoring workflow",
+      "steps": [
+        {
+          "tool": "list_devices",
+          "purpose": "Get overview of all devices"
+        },
+        {
+          "tool": "get_device_events",
+          "purpose": "Check for any unusual activity",
+          "parameters": {"limit": 10}
+        }
+      ]
+    },
+    {
+      "name": "Monthly Maintenance",
+      "description": "Complete monthly device maintenance",
+      "steps": [
+        {
+          "tool": "list_devices",
+          "purpose": "Identify all devices needing testing"
+        },
+        {
+          "tool": "run_safety_check",
+          "purpose": "Test each device functionality",
+          "repeat": "for_each_device"
+        },
+        {
+          "tool": "get_device_events",
+          "purpose": "Review test results and activity",
+          "parameters": {"limit": 20}
+        }
+      ]
+    },
+    {
+      "name": "Emergency Response",
+      "description": "Coordinated emergency alarm response",
+      "steps": [
+        {
+          "tool": "get_device_status",
+          "purpose": "Confirm alarm details and device status"
+        },
+        {
+          "tool": "hush_alarm",
+          "purpose": "Silence alarm to reduce panic",
+          "parameters": {"duration_seconds": 300}
+        },
+        {
+          "tool": "get_device_events",
+          "purpose": "Document incident for records",
+          "parameters": {"limit": 5}
+        }
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "error": "No refresh token available",
+      "solution": [
+        {
+          "tool": "initiate_oauth_flow",
+          "description": "Start new OAuth authentication"
+        },
+        {
+          "tool": "refresh_access_token",
+          "description": "Obtain new access tokens"
+        }
+      ]
+    },
+    {
+      "error": "Device not found",
+      "solution": [
+        {
+          "tool": "list_devices",
+          "description": "Verify device exists and get correct ID"
+        },
+        {
+          "tool": "get_device_status",
+          "description": "Check device connectivity and status"
+        }
+      ]
+    },
+    {
+      "error": "API connection failed",
+      "solution": [
+        {
+          "tool": "get_api_status",
+          "description": "Check API connectivity status"
+        },
+        {
+          "tool": "refresh_access_token",
+          "description": "Refresh authentication if needed"
+        }
+      ]
+    }
+  ]
+}

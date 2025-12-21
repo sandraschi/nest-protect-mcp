@@ -1,14 +1,15 @@
 """
 Integration tests for MCP server and device communication functionality.
 """
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from datetime import datetime, timezone
 
+import asyncio
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from nest_protect_mcp.server import NestProtectMCP
-from nest_protect_mcp.models import ProtectConfig, ProtectDeviceState, ProtectCommand
+
 from nest_protect_mcp.exceptions import NestDeviceNotFoundError
+from nest_protect_mcp.models import ProtectCommand, ProtectDeviceState
 
 
 class TestMCPDeviceOperations:
@@ -20,7 +21,7 @@ class TestMCPDeviceOperations:
         server = NestProtectMCP(sample_config)
 
         # Mock the underlying method
-        with patch.object(server, '_get_devices') as mock_get_devices:
+        with patch.object(server, "_get_devices") as mock_get_devices:
             mock_get_devices.return_value = [
                 {
                     "id": "device1",
@@ -29,7 +30,7 @@ class TestMCPDeviceOperations:
                     "online": True,
                     "battery_state": "ok",
                     "alarm_state": "ok",
-                    "last_connection": "2023-01-01T12:00:00Z"
+                    "last_connection": "2023-01-01T12:00:00Z",
                 },
                 {
                     "id": "device2",
@@ -38,8 +39,8 @@ class TestMCPDeviceOperations:
                     "online": False,
                     "battery_state": "replace_soon",
                     "alarm_state": "warning",
-                    "last_connection": "2023-01-01T11:00:00Z"
-                }
+                    "last_connection": "2023-01-01T11:00:00Z",
+                },
             ]
 
             # Test through message handler
@@ -64,10 +65,10 @@ class TestMCPDeviceOperations:
             "last_connection": "2023-01-01T12:00:00Z",
             "battery_level": 85,
             "temperature": 22.5,
-            "humidity": 45.0
+            "humidity": 45.0,
         }
 
-        with patch.object(server, 'get_device') as mock_get_device:
+        with patch.object(server, "get_device") as mock_get_device:
             mock_get_device.return_value = device_data
 
             result = await server._handle_get_device("device1")
@@ -81,7 +82,7 @@ class TestMCPDeviceOperations:
         """Test get_device handler when device not found."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'get_device') as mock_get_device:
+        with patch.object(server, "get_device") as mock_get_device:
             mock_get_device.return_value = None
 
             with pytest.raises(Exception, match="Device nonexistent not found"):
@@ -109,10 +110,10 @@ class TestMCPDeviceOperations:
             co_alarm_state="ok",
             smoke_alarm_state="warning",
             heat_alarm_state="ok",
-            online=True
+            online=True,
         )
 
-        with patch.object(server, 'get_device') as mock_get_device:
+        with patch.object(server, "get_device") as mock_get_device:
             mock_get_device.return_value = device_data
 
             result = await server._handle_get_alarm_state("device1")
@@ -128,7 +129,7 @@ class TestMCPDeviceOperations:
         """Test hush_alarm through message handler."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'hush_alarm') as mock_hush:
+        with patch.object(server, "hush_alarm") as mock_hush:
             mock_hush.return_value = True
 
             result = await server._handle_hush_alarm("device1")
@@ -142,7 +143,7 @@ class TestMCPDeviceOperations:
         """Test run_test through message handler."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'run_test') as mock_run_test:
+        with patch.object(server, "run_test") as mock_run_test:
             mock_run_test.return_value = True
 
             result = await server._handle_run_test("device1", "manual")
@@ -160,7 +161,7 @@ class TestDeviceCommandOperations:
         """Test command sending with validation."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'send_command') as mock_send:
+        with patch.object(server, "send_command") as mock_send:
             mock_send.return_value = True
 
             result = await server._handle_send_command("device1", "hush")
@@ -173,10 +174,12 @@ class TestDeviceCommandOperations:
         """Test command sending with parameters."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'send_command') as mock_send:
+        with patch.object(server, "send_command") as mock_send:
             mock_send.return_value = True
 
-            result = await server._handle_send_command("device1", "test", {"duration": 30})
+            result = await server._handle_send_command(
+                "device1", "test", {"duration": 30}
+            )
 
             assert result["status"] == "success"
             mock_send.assert_called_once()
@@ -200,7 +203,7 @@ class TestDeviceCommandOperations:
         """Test command sending when device not found."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'send_command') as mock_send:
+        with patch.object(server, "send_command") as mock_send:
             mock_send.side_effect = NestDeviceNotFoundError("Device not found")
 
             with pytest.raises(Exception, match="Device not found"):
@@ -211,7 +214,7 @@ class TestDeviceCommandOperations:
         """Test command sending when execution fails."""
         server = NestProtectMCP(sample_config)
 
-        with patch.object(server, 'send_command') as mock_send:
+        with patch.object(server, "send_command") as mock_send:
             mock_send.return_value = False
 
             with pytest.raises(Exception, match="Failed to send command"):
@@ -236,12 +239,12 @@ class TestDeviceStateManagement:
                 "type": "sdm.devices.types.SMOKE_ALARM",
                 "traits": {
                     "sdm.devices.traits.Info": {"customName": "Test Device"},
-                    "sdm.devices.traits.Connectivity": {"status": "ONLINE"}
-                }
+                    "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                },
             }
         ]
 
-        with patch.object(server, '_get_devices_from_api') as mock_api:
+        with patch.object(server, "_get_devices_from_api") as mock_api:
             mock_api.return_value = devices_data
 
             # This should trigger caching
@@ -277,13 +280,15 @@ class TestErrorScenarioHandling:
         server = NestProtectMCP(sample_config)
         server._access_token = "test-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
-            mock_session_instance.request.side_effect = asyncio.TimeoutError("Request timed out")
+            mock_session_instance.request.side_effect = asyncio.TimeoutError(
+                "Request timed out"
+            )
             mock_session.return_value = mock_session_instance
 
             with pytest.raises(Exception):  # Should raise appropriate error
-                await server._make_request('GET', 'test/endpoint')
+                await server._make_request("GET", "test/endpoint")
 
     @pytest.mark.asyncio
     async def test_malformed_api_response(self, sample_config):
@@ -291,16 +296,18 @@ class TestErrorScenarioHandling:
         server = NestProtectMCP(sample_config)
         server._access_token = "test-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             response = AsyncMock()
             response.status = 200
             response.json.side_effect = Exception("Invalid JSON")
-            mock_session_instance.request.return_value.__aenter__.return_value = response
+            mock_session_instance.request.return_value.__aenter__.return_value = (
+                response
+            )
             mock_session.return_value = mock_session_instance
 
             with pytest.raises(Exception):
-                await server._make_request('GET', 'test/endpoint')
+                await server._make_request("GET", "test/endpoint")
 
     @pytest.mark.asyncio
     async def test_device_mapping_edge_cases(self, sample_config):
@@ -310,14 +317,16 @@ class TestErrorScenarioHandling:
         # Test with minimal device data
         minimal_device = {
             "name": "enterprises/test-project/devices/minimal",
-            "type": "sdm.devices.types.SMOKE_ALARM"
+            "type": "sdm.devices.types.SMOKE_ALARM",
             # No traits
         }
 
         device_state = server._map_device_state(minimal_device)
 
         assert device_state.device_id == "minimal"
-        assert device_state.name == "enterprises/test-project/devices/minimal"  # Fallback to full name
+        assert (
+            device_state.name == "enterprises/test-project/devices/minimal"
+        )  # Fallback to full name
         assert device_state.online is False  # Default
 
     @pytest.mark.asyncio
@@ -326,18 +335,15 @@ class TestErrorScenarioHandling:
         server = NestProtectMCP(sample_config)
 
         # Mock device operations
-        with patch.object(server, 'get_device') as mock_get_device:
+        with patch.object(server, "get_device") as mock_get_device:
             mock_get_device.return_value = {
                 "id": "device1",
                 "name": "Test Device",
-                "online": True
+                "online": True,
             }
 
             # Run multiple concurrent operations
-            tasks = [
-                server._handle_get_device("device1")
-                for _ in range(5)
-            ]
+            tasks = [server._handle_get_device("device1") for _ in range(5)]
 
             results = await asyncio.gather(*tasks)
 
@@ -490,15 +496,15 @@ class TestIntegrationWorkflows:
         server = NestProtectMCP(sample_config)
 
         # 1. Get devices
-        with patch.object(server, '_get_devices_from_api') as mock_api:
+        with patch.object(server, "_get_devices_from_api") as mock_api:
             mock_api.return_value = [
                 {
                     "name": "enterprises/test-project/devices/device1",
                     "type": "sdm.devices.types.SMOKE_ALARM",
                     "traits": {
                         "sdm.devices.traits.Info": {"customName": "Test Device"},
-                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"}
-                    }
+                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                    },
                 }
             ]
 
@@ -506,13 +512,13 @@ class TestIntegrationWorkflows:
             assert len(devices) == 1
 
         # 2. Get specific device
-        with patch.object(server, 'get_device') as mock_get_device:
+        with patch.object(server, "get_device") as mock_get_device:
             device_data = {
                 "id": "device1",
                 "name": "Test Device",
                 "online": True,
                 "battery_state": "ok",
-                "alarm_state": "ok"
+                "alarm_state": "ok",
             }
             mock_get_device.return_value = device_data
 
@@ -524,7 +530,7 @@ class TestIntegrationWorkflows:
         assert alarm_state["device_id"] == "device1"
 
         # 4. Send command
-        with patch.object(server, 'hush_alarm') as mock_hush:
+        with patch.object(server, "hush_alarm") as mock_hush:
             mock_hush.return_value = True
 
             result = await server._handle_hush_alarm("device1")
@@ -536,7 +542,7 @@ class TestIntegrationWorkflows:
         server = NestProtectMCP(sample_config)
 
         # Simulate API failure
-        with patch.object(server, '_get_devices_from_api') as mock_api:
+        with patch.object(server, "_get_devices_from_api") as mock_api:
             mock_api.side_effect = Exception("API Error")
 
             # Should handle API errors gracefully

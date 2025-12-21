@@ -1,13 +1,15 @@
 """
 Unit tests for state manager functionality.
 """
-import pytest
+
 import asyncio
 import json
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
+
+import pytest
 
 from nest_protect_mcp.state_manager import StateManager, state_manager
 
@@ -18,7 +20,7 @@ class TestStateManager:
     @pytest.fixture
     def temp_state_file(self):
         """Create a temporary state file for testing."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"test_key": "test_value"}, f)
             temp_file = f.name
         yield temp_file
@@ -73,7 +75,7 @@ class TestStateManager:
     @pytest.mark.asyncio
     async def test_load_state_corrupted_file(self):
         """Test loading corrupted state file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("invalid json content")
             temp_file = f.name
 
@@ -146,7 +148,9 @@ class TestStateManager:
         await state_manager_instance.set("key1", "value1")
         await state_manager_instance.set("key2", "value2")
 
-        assert len(await state_manager_instance.get_all()) == 3  # Including loaded test_key
+        assert (
+            len(await state_manager_instance.get_all()) == 3
+        )  # Including loaded test_key
 
         await state_manager_instance.clear()
         assert len(await state_manager_instance.get_all()) == 0
@@ -180,7 +184,9 @@ class TestStateManager:
 
         async def increment_counter():
             for _ in range(100):
-                await state_manager_instance.update("counter", lambda x: (x or 0) + 1, 0)
+                await state_manager_instance.update(
+                    "counter", lambda x: (x or 0) + 1, 0
+                )
 
         # Run multiple concurrent operations
         tasks = [increment_counter() for _ in range(5)]
@@ -203,7 +209,7 @@ class TestStateManager:
             await manager._save_state()
 
             assert state_file.exists()
-            with open(state_file, 'r') as f:
+            with open(state_file) as f:
                 saved_data = json.load(f)
             assert saved_data == {"test": "data"}
 
@@ -213,7 +219,7 @@ class TestStateManager:
         await state_manager_instance.initialize()
 
         # Mock a file system error
-        with patch('builtins.open', side_effect=PermissionError("Access denied")):
+        with patch("builtins.open", side_effect=PermissionError("Access denied")):
             # Should not raise an exception, just log it
             await state_manager_instance.set("test_key", "test_value")
 
@@ -263,7 +269,11 @@ class TestAppStateLegacy:
 
     def test_initialize_app_state(self):
         """Test initialize_app_state function."""
-        from nest_protect_mcp.state_manager import initialize_app_state, get_app_state, _app_state
+        from nest_protect_mcp.state_manager import (
+            _app_state,
+            get_app_state,
+            initialize_app_state,
+        )
 
         # Clear any existing state
         _app_state = None
@@ -276,7 +286,7 @@ class TestAppStateLegacy:
 
     def test_get_app_state_auto_init(self):
         """Test get_app_state auto-initialization."""
-        from nest_protect_mcp.state_manager import get_app_state, _app_state
+        from nest_protect_mcp.state_manager import _app_state, get_app_state
 
         # Clear any existing state
         _app_state = None

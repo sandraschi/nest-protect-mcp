@@ -4,6 +4,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![FastMCP 2.12.0](https://img.shields.io/badge/FastMCP-2.12.0-blue)](https://github.com/modelcontextprotocol/fastmcp)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![CI/CD](https://github.com/sandraschi/nest-protect-mcp/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sandraschi/nest-protect-mcp/actions)
 [![codecov](https://codecov.io/gh/sandraschi/nest-protect-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/sandraschi/nest-protect-mcp)
 [![Status: Production Ready](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/sandraschi/nest-protect-mcp)
@@ -13,13 +14,14 @@
 The Nest Protect MCP Server is a **production-ready** FastMCP 2.12.0 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
 
 ### ✅ **Current Status: FULLY OPERATIONAL**
-- **15 Production Tools** - Complete device management suite
+- **20 Production Tools** - Complete device management suite
 - **Real API Integration** - No mocks, authentic Google Smart Device Management API
 - **Enhanced Logging** - Comprehensive debugging and monitoring
 - **Pydantic V2 Compatible** - Modern validation patterns
 - **Claude Desktop Ready** - Tested and verified integration
-- **DXT Package** - Ready for MCP deployment
+- **MCPB Package** - Ready for MCP deployment
 - **Docker Support** - Multi-architecture containers
+- **Ruff Linted** - Code quality verified (formatting applied)
 
 ### 🔧 Key Components
 
@@ -100,30 +102,53 @@ Before using the Nest Protect MCP server, you need to set up authentication with
 
 ### ⚙️ Installation
 
+#### **Option 1: Claude Desktop (MCPB) - Recommended**
+
+1. **Download the `.mcpb` package** from [GitHub Releases](https://github.com/sandraschi/nest-protect-mcp/releases)
+2. **Drag the `.mcpb` file** into Claude Desktop settings
+3. **Install Python dependencies** (run in terminal):
+   ```bash
+   pip install fastmcp>=2.13.0 pydantic>=2.0.0 aiohttp>=3.8.0 httpx>=0.24.0 websockets>=11.0.0 python-dotenv>=1.0.0 tomli>=0.10.2 python-dateutil>=2.8.2 anyio>=4.5.0 structlog>=23.1.0
+   ```
+4. **Configure Google Nest API** credentials in Claude Desktop settings:
+   - `nest_client_id`: Your Google OAuth Client ID
+   - `nest_client_secret`: Your Google OAuth Client Secret
+   - `nest_project_id`: Your Google Cloud Project ID
+   - `nest_refresh_token`: Your OAuth refresh token
+5. **Start using** - Claude will automatically connect to your Nest Protect devices
+
+#### **Option 2: Manual Installation (Other MCP Clients)**
+
 1. **Clone and set up the repository**:
    ```bash
    # Clone the repository
    git clone https://github.com/sandraschi/nest-protect-mcp.git
    cd nest-protect-mcp
 
-   # Create and activate virtual environment
-   python -m venv venv
-   # On Windows:
-   .\venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-
    # Install dependencies
    pip install -e .
    ```
 
-2. **Run the authentication flow**:
+2. **Configure environment variables**:
    ```bash
-   # Start the server
-   python -m nest_protect_mcp
+   # Copy and edit the example config
+   cp .env.example .env
+   # Edit .env with your Google Nest API credentials
+   ```
 
-   # In a new terminal, run the authentication helper
-   python -m nest_protect_mcp.auth
+3. **Add to your MCP client configuration**:
+   ```json
+   {
+     "mcpServers": {
+       "nest-protect": {
+         "command": "python",
+         "args": ["-m", "nest_protect_mcp"],
+         "env": {
+           "PYTHONPATH": "path/to/nest-protect-mcp/src"
+         }
+       }
+     }
+   }
    ```
 
    This will open a browser window where you can sign in with your Google account and grant permissions.

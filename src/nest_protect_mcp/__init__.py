@@ -8,20 +8,13 @@ Nest Protect smoke and carbon monoxide detectors.
 __version__ = "0.1.0"
 __author__ = "Sandra Schiessl"
 __email__ = "sandra.schiessl@example.com"
-__all__ = [
-    "NestProtectMCP",
-    "create_server",
-    "create_app",
-    "ProtectConfig",
-    "ProtectDeviceState",
-    "ProtectCommand"
-]
-
-from .server import NestProtectMCP, create_server, create_app
-from .models import ProtectConfig, ProtectDeviceState, ProtectCommand
+__all__ = ["app", "ProtectConfig", "ProtectDeviceState", "ProtectCommand"]
 
 # Initialize logging
 import logging
+
+from .fastmcp_server import app
+from .models import ProtectCommand, ProtectConfig, ProtectDeviceState
 
 logging.basicConfig(
     level=logging.INFO,

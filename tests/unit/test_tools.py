@@ -1,19 +1,20 @@
 """
 Unit tests for Nest Protect tools.
 """
+
 import pytest
 from pydantic import ValidationError
 
 from nest_protect_mcp.tools import (
-    DeviceType,
     AlarmState,
     BatteryState,
     DeviceInfo,
+    DeviceType,
+    GetDeviceHistoryTool,
     GetDevicesTool,
     GetDeviceTool,
     SilenceAlarmTool,
-    GetDeviceHistoryTool,
-    tool_schemas
+    tool_schemas,
 )
 
 
@@ -62,7 +63,7 @@ class TestDeviceInfo:
             online=True,
             battery_state=BatteryState.NORMAL,
             alarm_state=AlarmState.OK,
-            last_connection="2023-01-01T12:00:00Z"
+            last_connection="2023-01-01T12:00:00Z",
         )
         assert device.id == "device-123"
         assert device.name == "Test Device"
@@ -73,10 +74,7 @@ class TestDeviceInfo:
     def test_device_info_optional_fields(self):
         """Test device info with optional fields."""
         device = DeviceInfo(
-            id="device-456",
-            name="Minimal Device",
-            type=DeviceType.CAMERA,
-            online=False
+            id="device-456", name="Minimal Device", type=DeviceType.CAMERA, online=False
         )
         assert device.battery_state is None
         assert device.alarm_state is None
@@ -154,7 +152,7 @@ class TestGetDeviceHistoryTool:
             device_id="device-123",
             start_time="2023-01-01T00:00:00Z",
             end_time="2023-01-02T00:00:00Z",
-            max_results=50
+            max_results=50,
         )
         assert tool.start_time == "2023-01-01T00:00:00Z"
         assert tool.end_time == "2023-01-02T00:00:00Z"
@@ -215,7 +213,10 @@ class TestToolSchemas:
     def test_get_device_schema_details(self):
         """Test get_device schema details."""
         schema = tool_schemas["get_device"]
-        assert schema["description"] == "Get detailed information about a specific Nest Protect device"
+        assert (
+            schema["description"]
+            == "Get detailed information about a specific Nest Protect device"
+        )
 
         params = schema["parameters"]
         assert params["type"] == "object"

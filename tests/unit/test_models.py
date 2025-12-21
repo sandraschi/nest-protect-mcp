@@ -1,19 +1,20 @@
 """
 Unit tests for Nest Protect models.
 """
-import pytest
+
 from datetime import datetime, timezone
+
+import pytest
 from pydantic import ValidationError
 
 from nest_protect_mcp.models import (
-    ProtectConfig,
-    ProtectDeviceState,
-    ProtectCommand,
-    ProtectEvent,
     ProtectAlarmState,
     ProtectAlarmType,
     ProtectBatteryState,
-    ProtectHushState
+    ProtectCommand,
+    ProtectConfig,
+    ProtectDeviceState,
+    ProtectEvent,
 )
 
 
@@ -91,8 +92,8 @@ class TestProtectConfig:
         """Test environment variable prefix configuration."""
         config = ProtectConfig()
         # The env_prefix should be configured in model_config
-        assert hasattr(config, 'model_config')
-        assert config.model_config.get('env_prefix') == "NEST_PROTECT_"
+        assert hasattr(config, "model_config")
+        assert config.model_config.get("env_prefix") == "NEST_PROTECT_"
 
 
 class TestProtectDeviceState:
@@ -121,7 +122,7 @@ class TestProtectDeviceState:
                 co_alarm_state="ok",
                 smoke_alarm_state="ok",
                 heat_alarm_state="ok",
-                battery_level=150  # Invalid: > 100
+                battery_level=150,  # Invalid: > 100
             )
 
         # Test invalid humidity
@@ -135,7 +136,7 @@ class TestProtectDeviceState:
                 co_alarm_state="ok",
                 smoke_alarm_state="ok",
                 heat_alarm_state="ok",
-                humidity=150  # Invalid: > 100
+                humidity=150,  # Invalid: > 100
             )
 
     def test_optional_fields(self):
@@ -148,7 +149,7 @@ class TestProtectDeviceState:
             battery_health="ok",
             co_alarm_state="ok",
             smoke_alarm_state="ok",
-            heat_alarm_state="ok"
+            heat_alarm_state="ok",
         )
         assert device.battery_level is None
         assert device.co_ppm is None
@@ -168,10 +169,7 @@ class TestProtectCommand:
         assert command.params == {}
 
         # Test test command with parameters
-        command = ProtectCommand(
-            command="test",
-            params={"duration": 30}
-        )
+        command = ProtectCommand(command="test", params={"duration": 30})
         assert command.command == "test"
         assert command.params == {"duration": 30}
 
@@ -195,7 +193,7 @@ class TestProtectEvent:
             event_id="event-123",
             device_id="device-456",
             event_type="alarm_triggered",
-            event_data={"alarm_type": "smoke"}
+            event_data={"alarm_type": "smoke"},
         )
         assert event.event_id == "event-123"
         assert event.device_id == "device-456"
@@ -210,16 +208,14 @@ class TestProtectEvent:
             event_id="event-123",
             device_id="device-456",
             timestamp=custom_time,
-            event_type="device_connected"
+            event_type="device_connected",
         )
         assert event.timestamp == custom_time
 
     def test_event_default_timestamp(self):
         """Test event with default timestamp."""
         event = ProtectEvent(
-            event_id="event-456",
-            device_id="device-789",
-            event_type="alarm_triggered"
+            event_id="event-456", device_id="device-789", event_type="alarm_triggered"
         )
         # The timestamp should be set automatically
         assert isinstance(event.timestamp, datetime)

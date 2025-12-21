@@ -1,0 +1,36 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["sandraschi"],
+  "name": "nest-protect-mcp",
+  "description": "FastMCP 2.12.0 server for Google Nest Protect smoke and carbon monoxide detector management. 15 tools with Google Smart Device Management API integration. Beta status.",
+  "type": "mcp_server",
+  "status": "beta",
+  "framework": "FastMCP 2.12.0",
+  "tools": 15,
+  "transport": ["stdio"],
+  "keywords": [
+    "nest",
+    "nest-protect",
+    "smoke-detector",
+    "carbon-monoxide",
+    "home-security",
+    "google",
+    "mcp-server",
+    "fastmcp",
+    "iot"
+  ],
+  "features": {
+    "device_management": {
+      "enabled": true,
+      "devices": ["smoke_detectors", "co_detectors"]
+    },
+    "api_integration": {
+      "enabled": true,
+      "api": "Google Smart Device Management API"
+    },
+    "monitoring": {
+      "enabled": true
+    }
+  }
+}
+

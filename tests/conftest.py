@@ -1,15 +1,17 @@
 """
 Pytest configuration for Nest Protect MCP tests.
 """
-import pytest
+
 import asyncio
-from typing import AsyncGenerator, Generator
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
+
 
 # Test configuration
 @pytest.fixture(scope="session")
@@ -19,6 +21,7 @@ def event_loop():
     yield loop
     loop.close()
 
+
 @pytest.fixture
 def sample_config():
     """Sample configuration for testing."""
@@ -27,14 +30,17 @@ def sample_config():
         "client_id": "test-client-id",
         "client_secret": "test-client-secret",
         "refresh_token": "test-refresh-token",
-        "update_interval": 30
+        "update_interval": 30,
     }
+
 
 @pytest.fixture
 def sample_device_data():
     """Sample device data for testing."""
     from datetime import datetime, timezone
-    from nest_protect_mcp.models import ProtectBatteryState, ProtectAlarmState
+
+    from nest_protect_mcp.models import ProtectAlarmState, ProtectBatteryState
+
     return {
         "device_id": "test-device-123",
         "name": "Test Smoke Alarm",
@@ -52,12 +58,14 @@ def sample_device_data():
         "last_connection": datetime.now(timezone.utc),
         "software_version": "1.2.3",
         "wifi_ip": "192.168.1.100",
-        "wifi_ssid": "TestNetwork"
+        "wifi_ssid": "TestNetwork",
     }
+
 
 @pytest.fixture
 def mock_aiohttp_session():
     """Mock aiohttp session for testing."""
+
     class MockResponse:
         def __init__(self, status=200, data=None):
             self.status = status

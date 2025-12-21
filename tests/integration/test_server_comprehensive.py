@@ -1,15 +1,17 @@
 """
 Comprehensive integration tests for Nest Protect server functionality.
 """
-import pytest
-import asyncio
-import time
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from datetime import datetime, timezone
 
-from nest_protect_mcp.server import NestProtectMCP, NEST_API_URL, NEST_AUTH_URL
-from nest_protect_mcp.models import ProtectConfig, ProtectDeviceState, ProtectCommand
-from nest_protect_mcp.exceptions import NestProtectError, NestAuthError, NestConnectionError
+import time
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from nest_protect_mcp.server import NestProtectMCP
+
+from nest_protect_mcp.exceptions import (
+    NestConnectionError,
+)
+from nest_protect_mcp.models import ProtectDeviceState
 
 
 class TestServerInitialization:
@@ -32,11 +34,11 @@ class TestServerInitialization:
     def test_server_state_keys_initialization(self, sample_config):
         """Test that state keys are properly initialized."""
         server = NestProtectMCP(sample_config)
-        assert hasattr(server, '_state_keys')
-        assert 'access_token' in server._state_keys
-        assert 'refresh_token' in server._state_keys
-        assert 'token_expires_at' in server._state_keys
-        assert 'devices' in server._state_keys
+        assert hasattr(server, "_state_keys")
+        assert "access_token" in server._state_keys
+        assert "refresh_token" in server._state_keys
+        assert "token_expires_at" in server._state_keys
+        assert "devices" in server._state_keys
 
     def test_server_session_initialization(self, sample_config):
         """Test that session is properly initialized."""
@@ -47,6 +49,7 @@ class TestServerInitialization:
         """Test that server properly inherits from FastMCP."""
         server = NestProtectMCP(sample_config)
         from fastmcp import FastMCP
+
         assert isinstance(server, FastMCP)
 
 
@@ -63,10 +66,10 @@ class TestServerAuthentication:
         token_response = {
             "access_token": "new-access-token",
             "refresh_token": "new-refresh-token",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = token_response
@@ -84,7 +87,7 @@ class TestServerAuthentication:
         server = NestProtectMCP(sample_config)
         server._refresh_token = "invalid-refresh-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 401
             mock_session.return_value = mock_session_instance
@@ -116,12 +119,9 @@ class TestServerAuthentication:
         server._token_expires_at = time.time() - 600  # Expired 10 minutes ago
 
         # Mock successful token refresh
-        token_response = {
-            "access_token": "new-access-token",
-            "expires_in": 3600
-        }
+        token_response = {"access_token": "new-access-token", "expires_in": 3600}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.post.return_value.__aenter__.return_value.status = 200
             mock_session_instance.post.return_value.__aenter__.return_value.json.return_value = token_response
@@ -142,7 +142,7 @@ class TestServerAuthentication:
             "access_token": "stored-access-token",
             "refresh_token": "stored-refresh-token",
             "token_expires_at": str(time.time() + 3600),
-            "devices": {"device1": "data"}
+            "devices": {"device1": "data"},
         }
 
         await server._load_auth_state()
@@ -181,19 +181,19 @@ class TestServerAPIRequests:
 
         response_data = {"test": "data"}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.request.return_value.__aenter__.return_value.status = 200
             mock_session_instance.request.return_value.__aenter__.return_value.json.return_value = response_data
             mock_session.return_value = mock_session_instance
 
-            result = await server._make_request('GET', 'test/endpoint')
+            result = await server._make_request("GET", "test/endpoint")
 
             assert result == response_data
             # Verify headers were set correctly
             call_args = mock_session_instance.request.call_args
-            headers = call_args[1]['headers']
-            assert headers['Authorization'] == "Bearer test-token"
+            headers = call_args[1]["headers"]
+            assert headers["Authorization"] == "Bearer test-token"
 
     @pytest.mark.asyncio
     async def test_make_request_unauthorized_retry(self, sample_config):
@@ -204,19 +204,17 @@ class TestServerAPIRequests:
         server._refresh_token = "test-refresh-token"
 
         # Mock token refresh response
-        refresh_response = {
-            "access_token": "new-access-token",
-            "expires_in": 3600
-        }
+        refresh_response = {"access_token": "new-access-token", "expires_in": 3600}
 
         # Mock API response data
         api_response = {"test": "data"}
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
 
             # First call (unauthorized) -> refresh -> second call (success)
             calls = []
+
             def mock_request(*args, **kwargs):
                 call_count = len(calls)
                 calls.append(kwargs)
@@ -244,12 +242,12 @@ class TestServerAPIRequests:
             mock_session_instance.post = mock_post
             mock_session.return_value = mock_session_instance
 
-            result = await server._make_request('GET', 'test/endpoint')
+            result = await server._make_request("GET", "test/endpoint")
 
             assert result == api_response
             assert len(calls) == 2  # Should have made 2 API calls
             # Second call should use new token
-            assert calls[1]['headers']['Authorization'] == "Bearer new-access-token"
+            assert calls[1]["headers"]["Authorization"] == "Bearer new-access-token"
 
     @pytest.mark.asyncio
     async def test_make_request_network_error(self, sample_config):
@@ -257,13 +255,13 @@ class TestServerAPIRequests:
         server = NestProtectMCP(sample_config)
         server._access_token = "test-token"
 
-        with patch('aiohttp.ClientSession') as mock_session:
+        with patch("aiohttp.ClientSession") as mock_session:
             mock_session_instance = AsyncMock()
             mock_session_instance.request.side_effect = Exception("Network error")
             mock_session.return_value = mock_session_instance
 
             with pytest.raises(NestConnectionError):
-                await server._make_request('GET', 'test/endpoint')
+                await server._make_request("GET", "test/endpoint")
 
 
 class TestServerDeviceManagement:
@@ -281,25 +279,23 @@ class TestServerDeviceManagement:
                     "name": "enterprises/test-project/devices/device1",
                     "type": "sdm.devices.types.SMOKE_ALARM",
                     "traits": {
-                        "sdm.devices.traits.Info": {
-                            "customName": "Test Device 1"
-                        },
-                        "sdm.devices.traits.Connectivity": {
-                            "status": "ONLINE"
-                        }
-                    }
+                        "sdm.devices.traits.Info": {"customName": "Test Device 1"},
+                        "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                    },
                 }
             ]
         }
 
-        with patch.object(server, '_make_request') as mock_request:
+        with patch.object(server, "_make_request") as mock_request:
             mock_request.return_value = devices_response
 
             devices = await server._get_devices_from_api()
 
             assert len(devices) == 1
             assert devices[0]["name"] == "enterprises/test-project/devices/device1"
-            mock_request.assert_called_once_with('GET', 'enterprises/test-project/devices')
+            mock_request.assert_called_once_with(
+                "GET", "enterprises/test-project/devices"
+            )
 
     @pytest.mark.asyncio
     async def test_get_devices_from_api_no_token(self, sample_config):
@@ -323,26 +319,18 @@ class TestServerDeviceManagement:
                 "sdm.devices.traits.Info": {
                     "customName": "Test Smoke Alarm",
                     "model": "Nest Protect",
-                    "serialNumber": "123456789"
+                    "serialNumber": "123456789",
                 },
-                "sdm.devices.traits.Connectivity": {
-                    "status": "ONLINE"
-                },
-                "sdm.devices.traits.Smoke": {
-                    "alarmState": "ALARM_STATE_OFF"
-                },
+                "sdm.devices.traits.Connectivity": {"status": "ONLINE"},
+                "sdm.devices.traits.Smoke": {"alarmState": "ALARM_STATE_OFF"},
                 "sdm.devices.traits.Battery": {
                     "batteryStatus": "BATTERY_STATUS_NORMAL",
-                    "batteryLevel": 85
+                    "batteryLevel": 85,
                 },
-                "sdm.devices.traits.Temperature": {
-                    "ambientTemperatureCelsius": 22.5
-                },
-                "sdm.devices.traits.Humidity": {
-                    "ambientHumidityPercent": 45.0
-                }
+                "sdm.devices.traits.Temperature": {"ambientTemperatureCelsius": 22.5},
+                "sdm.devices.traits.Humidity": {"ambientHumidityPercent": 45.0},
             },
-            "lastEventTime": "2023-01-01T12:00:00Z"
+            "lastEventTime": "2023-01-01T12:00:00Z",
         }
 
         device_state = server._map_device_state(device_data)
@@ -375,7 +363,9 @@ class TestServerDeviceManagement:
         # Test various battery states
         assert server._map_battery_state("BATTERY_STATUS_NORMAL").value == "ok"
         assert server._map_battery_state("BATTERY_STATUS_LOW").value == "replace_soon"
-        assert server._map_battery_state("BATTERY_STATUS_CRITICAL").value == "replace_now"
+        assert (
+            server._map_battery_state("BATTERY_STATUS_CRITICAL").value == "replace_now"
+        )
         assert server._map_battery_state("BATTERY_STATUS_MISSING").value == "missing"
         assert server._map_battery_state(None).value == "invalid"
         assert server._map_battery_state("UNKNOWN_STATUS").value == "invalid"
@@ -390,8 +380,12 @@ class TestServerMessageHandling:
         server._register_message_handlers()
 
         expected_handlers = [
-            "ping", "get_device", "get_devices",
-            "get_alarm_state", "hush_alarm", "run_test"
+            "ping",
+            "get_device",
+            "get_devices",
+            "get_alarm_state",
+            "hush_alarm",
+            "run_test",
         ]
 
         for handler in expected_handlers:
@@ -419,7 +413,7 @@ class TestServerMessageHandling:
         message.params = {"timestamp": 1234567890}
         message.id = "test-id"
 
-        with patch.object(server, '_handle_ping') as mock_ping:
+        with patch.object(server, "_handle_ping") as mock_ping:
             mock_ping.return_value = {"pong": True}
 
             result = await server.handle_message(message)
@@ -455,7 +449,7 @@ class TestServerMessageHandling:
         message.params = {}
         message.id = "test-id"
 
-        with patch.object(server, '_handle_ping') as mock_ping:
+        with patch.object(server, "_handle_ping") as mock_ping:
             mock_ping.side_effect = Exception("Test error")
 
             result = await server.handle_message(message)
@@ -476,7 +470,7 @@ class TestServerToolRegistration:
 
         # Check that tools were registered (FastMCP should have them)
         # This is hard to test directly, but we can check the method exists
-        assert hasattr(server, '_register_tools')
+        assert hasattr(server, "_register_tools")
 
     def test_tool_schemas_available(self, sample_config):
         """Test that tool schemas are available."""
@@ -484,6 +478,7 @@ class TestServerToolRegistration:
 
         # Tool schemas should be available
         from nest_protect_mcp.tools import tool_schemas
+
         assert "get_devices" in tool_schemas
         assert "get_device" in tool_schemas
         assert "silence_alarm" in tool_schemas
@@ -543,7 +538,7 @@ class TestServerErrorHandling:
         server._setup_routes()
 
         # Should have message handlers registered
-        assert hasattr(server, '_message_handlers')
+        assert hasattr(server, "_message_handlers")
 
 
 class TestServerLifecycle:
@@ -555,7 +550,7 @@ class TestServerLifecycle:
         server = NestProtectMCP(sample_config)
 
         # Mock successful initialization
-        with patch.object(server, 'initialize') as mock_init:
+        with patch.object(server, "initialize") as mock_init:
             mock_init.return_value = None
 
             result = await server.startup_event()
@@ -570,13 +565,14 @@ class TestServerLifecycle:
 
         # Mock initialization to fail twice then succeed
         call_count = 0
+
         def mock_init():
             nonlocal call_count
             call_count += 1
             if call_count < 3:
                 raise Exception(f"Attempt {call_count} failed")
 
-        with patch.object(server, 'initialize') as mock_init_patched:
+        with patch.object(server, "initialize") as mock_init_patched:
             mock_init_patched.side_effect = mock_init
 
             result = await server.startup_event()
@@ -590,7 +586,7 @@ class TestServerLifecycle:
         server = NestProtectMCP(sample_config)
 
         # Mock shutdown
-        with patch.object(server, 'shutdown') as mock_shutdown:
+        with patch.object(server, "shutdown") as mock_shutdown:
             mock_shutdown.return_value = None
 
             await server.shutdown_event()
@@ -603,7 +599,7 @@ class TestServerLifecycle:
         server = NestProtectMCP(sample_config)
         server._active_connections = [AsyncMock(), AsyncMock()]
 
-        with patch.object(server, 'shutdown') as mock_shutdown:
+        with patch.object(server, "shutdown") as mock_shutdown:
             mock_shutdown.return_value = None
 
             await server.shutdown_event()
