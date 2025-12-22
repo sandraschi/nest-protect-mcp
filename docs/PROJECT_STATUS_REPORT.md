@@ -8,7 +8,7 @@
 
 ## 📋 Executive Summary
 
-The **🔥 nest-protect** MCP (Message Control Protocol) server is a **production-ready** FastMCP 2.12.3 server that provides comprehensive integration with Google Nest Protect smoke and carbon monoxide detectors. The project has successfully completed all development phases and is now **fully operational** with 20 production tools, real API integration, enhanced logging, and perfect Claude Desktop compatibility.
+The **🔥 nest-protect** MCP (Message Control Protocol) server is a **production-ready** FastMCP 2.13.0 server that provides comprehensive integration with Google Nest Protect smoke and carbon monoxide detectors. The project has successfully completed all development phases and is now **fully operational** with 20 production tools, real API integration, enhanced logging, and perfect Claude Desktop compatibility.
 
 ### 🎉 **Major Milestone Achieved**
 - **✅ Production Status**: Server is stable and operational
@@ -22,7 +22,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 
 | Goal | Status | Notes |
 |------|--------|-------|
-| ✅ FastMCP 2.12.3 Integration | **COMPLETE** | Fully compatible, all tools registered |
+| ✅ FastMCP 2.13.0 Integration | **COMPLETE** | Fully compatible, all tools registered |
 | ✅ Real Nest API Integration | **COMPLETE** | No mock data, real HTTP calls via aiohttp |
 | ✅ Claude Desktop Support | **COMPLETE** | STDIO transport, emoji icon, enhanced descriptions |
 | ✅ Comprehensive Tool Set | **COMPLETE** | 20 tools across 6 categories |
@@ -73,7 +73,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 
 1. **FastMCP Server** (`fastmcp_server.py`)
    - Main application entry point
-   - 24 tools with enhanced decorators
+   - 20 tools with enhanced decorators
    - Centralized tool registration
    - **Status**: ✅ Fully functional
 
@@ -87,7 +87,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
    - Device status and control
    - Authentication and configuration
    - Help and documentation system
-   - **Status**: ✅ All 24 tools working
+   - **Status**: ✅ All 20 tools working
 
 4. **Models & Configuration** (`models.py`)
    - Pydantic data models
@@ -150,8 +150,8 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 - ✅ **Claude Desktop Optimization** - Fire emoji (🔥) icon and improved UX
 
 ### **Key Technical Wins**
-- ✅ **Import Error Resolution** - Fixed FastMCP 2.12 compatibility issues
-- ✅ **Tool Registration** - All 24 tools properly registered and functional
+- ✅ **Import Error Resolution** - Fixed FastMCP 2.13 compatibility issues
+- ✅ **Tool Registration** - All 20 tools properly registered and functional
 - ✅ **Error Handling** - Robust exception handling and graceful degradation
 - ✅ **Documentation** - Self-documenting tools with enhanced descriptions
 
@@ -231,7 +231,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 
 | Metric | Current Status | Target | Notes |
 |--------|----------------|--------|-------|
-| **Tool Coverage** | 24/24 (100%) | 100% | All planned tools implemented |
+| **Tool Coverage** | 20/20 (100%) | 100% | All planned tools implemented |
 | **API Integration** | 100% Real | 100% | No mock data remaining |
 | **Error Handling** | 95% | 99% | Robust error handling implemented |
 | **Documentation** | 90% | 95% | Self-documenting tools, need API docs |
@@ -265,7 +265,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 ## 🎯 Success Criteria Met
 
 ✅ **Functional Requirements**
-- All 24 tools working with real API integration
+- All 20 tools working with real API integration
 - Claude Desktop compatibility achieved
 - OAuth authentication flow complete
 - Comprehensive error handling implemented
@@ -308,7 +308,7 @@ The **🔥 nest-protect** MCP (Message Control Protocol) server is a **productio
 
 ## 📝 Notes for Claude
 
-This MCP server is **production-ready** and represents a **complete, working implementation** of a FastMCP 2.12 server with real-world device integration. The codebase demonstrates:
+This MCP server is **production-ready** and represents a **complete, working implementation** of a FastMCP 2.13 server with real-world device integration. The codebase demonstrates:
 
 - **Modern Python practices** with async/await and Pydantic v2
 - **Professional error handling** and state management

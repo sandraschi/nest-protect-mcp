@@ -1538,7 +1538,7 @@ jobs:
           
           ### Dependencies
           - FastMCP 2.10.1+ (bundled)
-          - Python 3.8+ (built into Claude Desktop)
+          - Python 3.10+ (built into Claude Desktop)
           
           ### What's New
           See the auto-generated release notes below.

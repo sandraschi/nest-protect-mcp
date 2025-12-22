@@ -1,10 +1,10 @@
-# 🔧 FastMCP 2.12 Troubleshooting Guide
+# 🔧 FastMCP 2.13 Troubleshooting Guide
 
-**Based on Real-World Debugging Experience**  
-**Project**: nest-protect MCP Server  
-**Timeline**: September 17-20, 2025  
-**Framework**: FastMCP 2.12.3  
-**Status**: ✅ **PRODUCTION READY**
+**Based on Real-World Debugging Experience**
+**Project**: nest-protect MCP Server
+**Timeline**: September 17-20, 2025 (FastMCP 2.12) → December 21, 2025 (FastMCP 2.13 SOTA Upgrade)
+**Framework**: FastMCP 2.13.0 (Latest)
+**Status**: ✅ **PRODUCTION READY - SOTA UPGRADE COMPLETE**
 
 This guide documents the **complete debugging journey** from a broken MCP server to a production-ready system. Use this to troubleshoot similar issues in other MCP projects like avatarmcp, local llms, and tapo.
 

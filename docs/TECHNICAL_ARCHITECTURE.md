@@ -1,9 +1,9 @@
 # 🏗️ Nest Protect MCP Server - Technical Architecture
 
-**Last Updated**: September 20, 2025  
-**Version**: 1.0.0 (Production)  
-**Framework**: FastMCP 2.12.3  
-**Status**: ✅ **PRODUCTION READY**
+**Last Updated**: December 21, 2025
+**Version**: 1.0.0 (Production)
+**Framework**: FastMCP 2.13.0
+**Status**: ✅ **PRODUCTION READY - SOTA UPGRADE COMPLETE**
 
 ---
 
@@ -80,7 +80,7 @@ The Nest Protect MCP Server follows a **modular, layered architecture** designed
 **Purpose**: Central application orchestrator and tool registry
 
 **Key Features**:
-- **Tool Registration**: 24 tools registered with enhanced decorators
+- **Tool Registration**: 20 tools registered with enhanced decorators
 - **Type Safety**: Full Pydantic model integration
 - **Error Handling**: Centralized exception management
 - **STDIO Transport**: Optimized for Claude Desktop communication
@@ -320,7 +320,7 @@ logger.info("Device status retrieved",
 - **API Connectivity**: Regular Google API health checks
 - **Token Validity**: Automatic token validation
 - **System Resources**: Memory and CPU monitoring
-- **Tool Availability**: Ensure all 24 tools are functional
+- **Tool Availability**: Ensure all 20 tools are functional
 
 ---
 

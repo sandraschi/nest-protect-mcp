@@ -1,6 +1,6 @@
 # 🔧 Nest Protect MCP Server - Tools Reference Guide
 
-**Quick Reference**: All 24 available tools organized by category for easy lookup.
+**Quick Reference**: All 20 available tools organized by category for easy lookup.
 
 ---
 

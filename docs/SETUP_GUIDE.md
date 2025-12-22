@@ -13,7 +13,7 @@ This guide will walk you through setting up the Nest Protect MCP server with rea
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - A Google account
 - One or more Nest Protect devices connected to your Nest/Google Home account
 - Basic familiarity with command line and Python

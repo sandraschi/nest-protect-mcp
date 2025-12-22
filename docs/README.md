@@ -8,7 +8,7 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 
 ### **🚀 Get Started Fast**
 - 📋 **[PROJECT_STATUS_REPORT.md](PROJECT_STATUS_REPORT.md)** - Complete project overview and current status
-- 🔧 **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** - Quick reference for all 24 available tools
+- 🔧 **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** - Quick reference for all 20 available tools
 - 📖 **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Installation and configuration instructions
 
 ### **🏗️ Technical Deep Dive**
@@ -17,7 +17,7 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 - 📊 **[PRD.md](PRD.md)** - Product Requirements Document and specifications
 
 ### **🔧 Debugging & Troubleshooting**
-- 🐛 **[TROUBLESHOOTING_FASTMCP_2.12.md](TROUBLESHOOTING_FASTMCP_2.12.md)** - Complete FastMCP 2.12 debugging guide
+- 🐛 **[TROUBLESHOOTING_FASTMCP_2.12.md](TROUBLESHOOTING_FASTMCP_2.12.md)** - Complete FastMCP 2.13 debugging guide (includes 2.12 legacy info)
 - 🔍 **[CLAUDE_DESKTOP_DEBUGGING.md](CLAUDE_DESKTOP_DEBUGGING.md)** - Why Claude "kills" servers and how to fix it  
 - 🎓 **[DEBUGGING_LESSONS_LEARNED.md](DEBUGGING_LESSONS_LEARNED.md)** - Real-world debugging experience and patterns
 
@@ -43,7 +43,7 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 - ✅ Success criteria and quality metrics
 
 **Then Reference**: [TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)
-- 🔧 All 24 tools organized by category
+- 🔧 All 20 tools organized by category
 - 📝 Quick parameter reference and examples
 - ⚠️ Safety notes for alarm testing tools
 - 🚀 Quick start examples for common tasks
@@ -113,7 +113,7 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 | **Documentation** | ✅ Comprehensive | Sept 19, 2025 |
 
 **Current Version**: 0.2.0 (Beta)  
-**Framework**: FastMCP 2.12.3  
+**Framework**: FastMCP 2.13.0  
 **Python**: 3.9+ Compatible
 
 ---
@@ -184,7 +184,7 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 
 ### **Production Quality**
 - ✅ **Real API Integration** - No mock data, actual Nest device control
-- ✅ **Comprehensive Tool Suite** - 24 tools covering all essential functions
+- ✅ **Comprehensive Tool Suite** - 20 tools covering all essential functions
 - ✅ **Robust Error Handling** - Graceful degradation and helpful error messages
 - ✅ **Security First** - OAuth 2.0, secure token management, input validation
 

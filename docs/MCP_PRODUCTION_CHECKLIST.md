@@ -5,11 +5,11 @@ Use this checklist to audit any MCP server repo before marking it production-rea
 ## 🏗️ CORE MCP ARCHITECTURE
 
 - [ ] **🔥 DUAL INTERFACE MANDATORY** - Both MCP and FastAPI interfaces implemented
-- [ ] **FastMCP 2.12+ framework** implemented with:
+- [ ] **FastMCP 2.13+ framework** implemented with:
   - [ ] `from fastmcp import FastMCP` import
   - [ ] Proper MCP and FastAPI app initialization
   - [ ] Unified tool registration system
-- [ ] **FastMCP 2.12 Repository Structure:**
+- [ ] **FastMCP 2.13 Repository Structure:**
   - [ ] `src/mcp/` directory containing main MCP server code
   - [ ] `tools/` directory with organized tool modules (**CRITICAL: NO monster `server.py`**)
   - [ ] **Tool organization:** Each category in separate subdirectory (e.g., `tools/containers/`, `tools/images/`)
@@ -34,7 +34,7 @@ Use this checklist to audit any MCP server repo before marking it production-rea
 
 ## ✨ CODE QUALITY
 
-- [ ] **FastMCP 2.12+ Modular Architecture (ANTI-MONSTER SERVER.PY):**
+- [ ] **FastMCP 2.13+ Modular Architecture (ANTI-MONSTER SERVER.PY):**
   - [ ] **Thin server.py** < 150 lines (only FastMCP init + tool imports)
   - [ ] **NO monster server.py** with hundreds of tool implementations
   - [ ] **Proper tools/ directory structure:**
