@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![FastMCP 2.13.0](https://img.shields.io/badge/FastMCP-2.13.0-blue)](https://github.com/modelcontextprotocol/fastmcp)
+[![FastMCP 3.1](https://img.shields.io/badge/FastMCP-3.1-blue)](https://github.com/PrefectHQ/fastmcp)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![CI/CD](https://github.com/sandraschi/nest-protect-mcp/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sandraschi/nest-protect-mcp/actions)
 [![codecov](https://codecov.io/gh/sandraschi/nest-protect-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/sandraschi/nest-protect-mcp)
@@ -11,12 +11,12 @@
 
 ## 🏠 Overview
 
-The Nest Protect MCP Server is a **production-ready** FastMCP 2.13.0 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
+The Nest Protect MCP Server is a **production-ready** FastMCP 3.1 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
 
 ### ✅ **Current Status: FULLY OPERATIONAL - SOTA UPGRADE COMPLETE**
 - **20 Production Tools** - Complete device management suite
 - **Real API Integration** - No mocks, authentic Google Smart Device Management API v1
-- **FastMCP 2.13.0** - Latest MCP specification compliance
+- **FastMCP 3.1** - Sampling, agentic workflows, prompts (skills)
 - **MCPB Packaging** - Claude Desktop optimized deployment
 - **Python 3.10+** - Modern baseline requirements
 - **OAuth 2.0 Security** - Complete authentication flow with token management
@@ -50,7 +50,7 @@ graph LR
 ## ✨ Features
 
 ### 🔥 **Core Capabilities**
-- **FastMCP 2.13.0 Compliance**: Latest Model Context Protocol specification implementation
+- **FastMCP 3.1 Compliance**: Sampling, agentic workflows, prompts (skills)
 - **Real Nest API Integration**: Authentic Google Smart Device Management API v1 calls with OAuth 2.0
 - **20 Production Tools**: Complete device management and control suite
 - **MCPB Packaging**: Claude Desktop optimized deployment with comprehensive assets
@@ -100,8 +100,28 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    NEST_PROJECT_ID=your_project_id
    ```
 
-### ⚙️ Installation
+## 🚀 Installation
 
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
+
+### 📦 Quick Start
+Run immediately via `uvx`:
+```bash
+uvx nest-protect-mcp
+```
+
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "nest-protect-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/nest-protect-mcp", "run", "nest-protect-mcp"]
+  }
+}
+```
 #### **Option 1: Claude Desktop (MCPB) - Recommended**
 
 1. **Download the `.mcpb` package** from [GitHub Releases](https://github.com/sandraschi/nest-protect-mcp/releases)
@@ -117,45 +137,28 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    - `nest_refresh_token`: Your OAuth refresh token
 5. **Start using** - Claude will automatically connect to your Nest Protect devices
 
-#### **Option 2: Manual Installation (Other MCP Clients)**
+## 🚀 Installation
 
-1. **Clone and set up the repository**:
-   ```bash
-   # Clone the repository
-   git clone https://github.com/sandraschi/nest-protect-mcp.git
-   cd nest-protect-mcp
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
 
-   # Install dependencies
-   pip install -e .
-   ```
+### 📦 Quick Start
+Run immediately via `uvx`:
+```bash
+uvx nest-protect-mcp
+```
 
-2. **Configure environment variables**:
-   ```bash
-   # Copy and edit the example config
-   cp .env.example .env
-   # Edit .env with your Google Nest API credentials
-   ```
-
-3. **Add to your MCP client configuration**:
-   ```json
-   {
-     "mcpServers": {
-       "nest-protect": {
-         "command": "python",
-         "args": ["-m", "nest_protect_mcp"],
-         "env": {
-           "PYTHONPATH": "path/to/nest-protect-mcp/src"
-         }
-       }
-     }
-   }
-   ```
-
-   This will open a browser window where you can sign in with your Google account and grant permissions.
-
-3. **Verify authentication**:
-   After successful authentication, the server will automatically save your credentials and connect to your Nest devices.
-
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "nest-protect-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/nest-protect-mcp", "run", "nest-protect-mcp"]
+  }
+}
+```
 ## 🏃 Running the Server
 
 ### MCP Mode (Recommended for IDE Integration)
@@ -301,7 +304,7 @@ FROM python:3.11-slim as base
 #### **Package Configuration**
 ```json
 {
-  "dependencies": ["fastmcp>=2.13.0,<3.0.0"],
+  "dependencies": ["fastmcp>=3.1.0,<4.0.0"],
   "configuration": {
     "nest_client_id": {"type": "string", "required": true},
     "nest_client_secret": {"type": "string", "required": true, "secret": true},
@@ -313,13 +316,10 @@ FROM python:3.11-slim as base
 
 ## 🔄 Troubleshooting
 
-### ✅ **Recent Fixes Applied**
-- **FastMCP 2.13.0 Migration**: Updated to latest MCP specification
-- **MCPB Packaging**: Complete transformation from DXT to Claude Desktop optimized
-- **Python 3.10+ Baseline**: Modern requirements and dependency management
-- **20 Production Tools**: Enhanced device management capabilities
-- **OAuth 2.0 Security**: Complete authentication flow implementation
-- **22KB Assets**: Comprehensive prompt templates and documentation
+### **Recent Fixes Applied**
+- **FastMCP 3.1**: Sampling, agentic workflows, prompts (skills); see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) for auth.
+- **MCPB Packaging**: Claude Desktop optimized; run `scripts/get_nest_refresh_token.py` for refresh token.
+- **Webapp**: Onboarding page and Help modal with setup steps.
 
 ### 🚨 **Common Issues & Solutions**
 
@@ -341,8 +341,8 @@ FROM python:3.11-slim as base
 #### **Authentication Issues**
 **Symptom**: "No refresh token available" or authentication errors
 **Solution**:
-1. Complete OAuth flow: `python -m nest_protect_mcp.auth`
-2. Verify credentials in `.env` file
+1. Get a refresh token: run `python scripts/get_nest_refresh_token.py` (see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md))
+2. Put `NEST_CLIENT_ID`, `NEST_CLIENT_SECRET`, `NEST_PROJECT_ID`, `NEST_REFRESH_TOKEN` in `.env` in the repo root
 3. Ensure Smart Device Management API is enabled in Google Cloud Console
 
 #### **Tool Help Not Working**
@@ -373,27 +373,38 @@ If you see errors, check the detailed logs for specific failure points.
 
 For detailed documentation, please refer to the [docs](docs/) directory:
 
-- **[📋 MCP Production Checklist](docs/MCP_PRODUCTION_CHECKLIST.md)** - Deployment readiness guide
-- **[🔧 Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design and components
-- **[🐳 Containerization Guidelines](docs/CONTAINERIZATION_GUIDELINES.md)** - Docker deployment
-- **[🛠️ Setup Guide](docs/SETUP_GUIDE.md)** - Installation and configuration
-- **[🔍 Troubleshooting](docs/TROUBLESHOOTING_FASTMCP_2.12.md)** - Common issues and solutions
-- **[📊 Tools Reference](docs/TOOLS_REFERENCE.md)** - Complete tool documentation
+- **[AUTH_SETUP](docs/AUTH_SETUP.md)** - Auth and refresh token (quick reference); also in webapp **Setup & auth** and Help modal
+- **[Setup Guide](docs/SETUP_GUIDE.md)** - Full installation and configuration
+- **[Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design, FastMCP 3.1, tools and prompts
+- **[MCP Production Checklist](docs/MCP_PRODUCTION_CHECKLIST.md)** - Deployment readiness
+- **[Containerization Guidelines](docs/CONTAINERIZATION_GUIDELINES.md)** - Docker deployment
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Tools Reference](docs/TOOLS_REFERENCE.md)** - Complete tool documentation
 
 ### **🚀 Quick Reference**
 
-#### **Installation Commands**
+## 🚀 Installation
+
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
+
+### 📦 Quick Start
+Run immediately via `uvx`:
 ```bash
-# Standard installation
-pip install -e .
-
-# Development installation
-pip install -e .[dev]
-
-# MCPB deployment (Claude Desktop)
-# Use nest-protect-mcp-1.0.0.mcpb
+uvx nest-protect-mcp
 ```
 
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "nest-protect-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/nest-protect-mcp", "run", "nest-protect-mcp"]
+  }
+}
+```
 #### **Server Commands**
 ```bash
 # MCP mode (default)
@@ -468,7 +479,7 @@ git clone https://github.com/sandraschi/nest-protect-mcp.git
 cd nest-protect-mcp
 
 # Install development dependencies
-pip install -e .[dev]
+uv pip install -e .[dev]
 
 # Run tests
 pytest
@@ -501,7 +512,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 ## 📧 Support
 
 For support, please:
-1. Check the [troubleshooting guide](docs/TROUBLESHOOTING_FASTMCP_2.12.md)
+1. Check the [troubleshooting guide](docs/TROUBLESHOOTING.md)
 2. Search existing [issues](https://github.com/sandraschi/nest-protect-mcp/issues)
 3. Open a new issue with detailed information
 

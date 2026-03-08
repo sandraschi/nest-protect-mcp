@@ -5,9 +5,22 @@ All notable changes to the Nest Protect MCP project will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **FastMCP 3.1** - Upgraded from 2.x; sampling, agentic workflows, prompts (skills).
+- **Prompts (skills)** - `nest_protect_setup`, `nest_protect_safety_check`, `nest_protect_overview` for agentic flows.
+- **Webapp onboarding** - `/onboarding` page with full auth/setup steps (Google Cloud, refresh token script, .env).
+- **Webapp help** - Topbar Help opens modal with setup summary and link to onboarding; sidebar "Setup & auth" link.
+- **Auth docs** - [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) and [scripts/get_nest_refresh_token.py](scripts/get_nest_refresh_token.py) for obtaining refresh token.
+
+### Changed
+- **Dependencies** - `fastmcp>=3.1.0,<4.0.0`; `websockets` constraint relaxed for 3.1 compatibility.
+- **README** - Version references updated to FastMCP 3.1; auth troubleshooting points to script and AUTH_SETUP.
+
 ## [1.0.0] - 2025-12-21
 
-### 🔥 **SOTA Upgrade - FastMCP 2.13.0 & MCPB Packaging**
+### **SOTA Upgrade - FastMCP 2.13.0 & MCPB Packaging**
 
 ### 🎯 **State of the Art Modernization**
 - **FastMCP 2.13.0 Migration** - Latest MCP specification compliance with enhanced tool registration

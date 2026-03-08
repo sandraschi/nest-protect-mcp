@@ -1,0 +1,25 @@
+{
+  "name": "nest-protect-mcp-webapp",
+  "version": "1.0.0",
+  "description": "Beautiful MCP Testing Webapp for Nest Protect Devices",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"python backend/main.py\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "python backend/main.py",
+    "build": "npm run build --prefix frontend",
+    "install:all": "npm install && pip install -r backend/requirements.txt",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "keywords": [
+    "mcp",
+    "testing",
+    "webapp",
+    "nest-protect",
+    "fastmcp-2.14.3"
+  ],
+  "author": "FlowEngineer",
+  "license": "MIT"
+}

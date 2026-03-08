@@ -2,6 +2,8 @@
 
 This guide will walk you through setting up the Nest Protect MCP server with real Nest Protect devices.
 
+**Quick reference:** For a short auth-focused guide (refresh token, .env, troubleshooting), see [AUTH_SETUP.md](AUTH_SETUP.md). The webapp also has an **Setup & auth** onboarding page and Help modal with the same steps.
+
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Google Cloud Project Setup](#google-cloud-project-setup)

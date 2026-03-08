@@ -16,8 +16,8 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 - 🔌 **[NEST_API_REFERENCE.md](NEST_API_REFERENCE.md)** - Google Nest API integration details
 - 📊 **[PRD.md](PRD.md)** - Product Requirements Document and specifications
 
-### **🔧 Debugging & Troubleshooting**
-- 🐛 **[TROUBLESHOOTING_FASTMCP_2.12.md](TROUBLESHOOTING_FASTMCP_2.12.md)** - Complete FastMCP 2.13 debugging guide (includes 2.12 legacy info)
+### **Debugging & Troubleshooting**
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - FastMCP debugging guide (3.1; includes legacy 2.12/2.13 notes)
 - 🔍 **[CLAUDE_DESKTOP_DEBUGGING.md](CLAUDE_DESKTOP_DEBUGGING.md)** - Why Claude "kills" servers and how to fix it  
 - 🎓 **[DEBUGGING_LESSONS_LEARNED.md](DEBUGGING_LESSONS_LEARNED.md)** - Real-world debugging experience and patterns
 
@@ -70,11 +70,11 @@ Welcome to the comprehensive documentation for the **🔥 nest-protect** MCP ser
 
 ### **For Troubleshooting & Debugging**
 
-**FastMCP Issues**: [TROUBLESHOOTING_FASTMCP_2.12.md](TROUBLESHOOTING_FASTMCP_2.12.md)
-- 🔧 Import errors and tool registration fixes
-- 🎯 Common FastMCP 2.12 migration issues
-- 🛠️ Step-by-step debugging process
-- 📋 Systematic error pattern analysis
+**FastMCP Issues**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- Import errors and tool registration fixes
+- Common FastMCP migration issues (2.12/2.13 and 3.1)
+- Step-by-step debugging process
+- Systematic error pattern analysis
 
 **Claude Desktop Issues**: [CLAUDE_DESKTOP_DEBUGGING.md](CLAUDE_DESKTOP_DEBUGGING.md)
 - 🎭 Why servers "start then die" mystery solved

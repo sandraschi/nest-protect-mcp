@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "nest-protect-mcp"
 version = "0.1.0"
-description = "🔥 Production-ready FastMCP server for Google Nest Protect devices with real-time monitoring, device control, and alarm management"
+description = "ðŸ”¥ Production-ready FastMCP server for Google Nest Protect devices with real-time monitoring, device control, and alarm management"
 readme = "README.md"
 authors = [
     {name = "Sandra Schiessl", email = "sandra.schiessl@example.com"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -38,30 +38,25 @@ keywords = [
     "google", "nest-api", "device-control", "monitoring"
 ]
 dependencies = [
-    # Core MCP framework
-    "fastmcp>=2.13.0,<3.0.0",
+    # Core MCP framework (3.1: sampling, agentic workflows, prompts/skills)
+    "fastmcp>=3.1.0,<4.0.0",
     "pydantic>=2.0.0,<3.0.0",
-    
     # HTTP and networking
     "aiohttp>=3.8.0,<4.0.0",
     "httpx>=0.24.0,<1.0.0",
-    "websockets>=11.0.0,<12.0.0",
-    
+    "websockets>=11.0.0",
     # Web framework (for potential future REST API)
     "fastapi>=0.95.0,<1.0.0",
     "uvicorn[standard]>=0.21.0,<1.0.0",
-    
     # Configuration and utilities
     "python-dotenv>=1.0.0,<2.0.0",
     "toml>=0.10.2",
     "python-dateutil>=2.8.2,<3.0.0",
     "anyio>=4.5.0,<5.0.0",
-    
     # Logging and debugging
     "structlog>=23.1.0,<24.0.0",
-    
     # Type hints support
-    "typing-extensions>=4.5.0,<5.0.0"
+    "typing-extensions>=4.5.0,<5.0.0",
 ]
 
 [project.urls]

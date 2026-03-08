@@ -1,9 +1,9 @@
 # 🏗️ Nest Protect MCP Server - Technical Architecture
 
-**Last Updated**: December 21, 2025
+**Last Updated**: March 2026
 **Version**: 1.0.0 (Production)
-**Framework**: FastMCP 2.13.0
-**Status**: ✅ **PRODUCTION READY - SOTA UPGRADE COMPLETE**
+**Framework**: FastMCP 3.1
+**Status**: **PRODUCTION READY** (3.1: sampling, agentic workflows, prompts/skills)
 
 ---
 
@@ -28,10 +28,11 @@ The Nest Protect MCP Server follows a **modular, layered architecture** designed
 │                FastMCP Server                               │
 │              (fastmcp_server.py)                            │
 │  ┌─────────────────────────────────────────────────────────┤
-│  │ Tool Registry (20 tools)                                │
+│  │ Tool Registry (20 tools) + Prompts (skills)              │
 │  │ • Device Status     • Authentication                    │
 │  │ • Device Control    • Configuration                     │
 │  │ • System Status     • Help & Documentation             │
+│  │ • Prompts: nest_protect_setup, safety_check, overview   │
 │  └─────────────────────────────────────────────────────────┤
 └─────────────────────┬───────────────────────────────────────┘
                       │

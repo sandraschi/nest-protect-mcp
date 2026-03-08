@@ -1,0 +1,217 @@
+{
+  "manifest_version": "0.2",
+  "name": "nest-protect-mcp",
+  "version": "1.1.0",
+  "description": "🔥 Production-ready FastMCP 2.14.3 server for Google Nest Protect devices with conversational AI, sampling capabilities, real-time monitoring, intelligent device control, and advanced AI orchestration",
+  "author": {
+    "name": "Sandra Schiessl",
+    "email": "sandra.schiessl@example.com"
+  },
+  "homepage": "https://github.com/sandraschi/nest-protect-mcp",
+  "license": "MIT",
+  "server": {
+    "type": "python",
+    "entry_point": "src/nest_protect_mcp/__main__.py",
+    "mcp_config": {
+      "command": "python",
+      "args": ["-m", "nest_protect_mcp"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1",
+        "NEST_CLIENT_ID": "${NEST_CLIENT_ID}",
+        "NEST_CLIENT_SECRET": "${NEST_CLIENT_SECRET}",
+        "NEST_PROJECT_ID": "${NEST_PROJECT_ID}",
+        "NEST_REFRESH_TOKEN": "${NEST_REFRESH_TOKEN}",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  },
+  "user_config": {
+    "nest_client_id": {
+      "type": "string",
+      "title": "Nest OAuth Client ID",
+      "description": "Google Cloud OAuth 2.0 Client ID for Nest API",
+      "required": true,
+      "default": ""
+    },
+    "nest_client_secret": {
+      "type": "string",
+      "title": "Nest OAuth Client Secret",
+      "description": "Google Cloud OAuth 2.0 Client Secret for Nest API",
+      "required": true,
+      "default": ""
+    },
+    "nest_project_id": {
+      "type": "string",
+      "title": "Google Cloud Project ID",
+      "description": "Google Cloud Project ID with Smart Device Management API enabled",
+      "required": true,
+      "default": ""
+    },
+    "nest_refresh_token": {
+      "type": "string",
+      "title": "Nest OAuth Refresh Token",
+      "description": "OAuth 2.0 refresh token for Nest API authentication",
+      "required": true,
+      "default": ""
+    },
+    "log_level": {
+      "type": "string",
+      "title": "Log Level",
+      "description": "Logging verbosity level",
+      "default": "INFO"
+    },
+    "request_timeout": {
+      "type": "number",
+      "title": "API Request Timeout (seconds)",
+      "description": "Timeout for Nest API requests",
+      "default": 30
+    }
+  },
+  "tools": [
+    {
+      "name": "list_devices",
+      "description": "List all Nest Protect devices in your account with current status"
+    },
+    {
+      "name": "get_device_status",
+      "description": "Get detailed status information for a specific Nest Protect device"
+    },
+    {
+      "name": "get_device_events",
+      "description": "Retrieve recent events and activity for a Nest Protect device"
+    },
+    {
+      "name": "hush_alarm",
+      "description": "Silence an active alarm on a Nest Protect device"
+    },
+    {
+      "name": "run_safety_check",
+      "description": "Execute a safety check test on a Nest Protect device"
+    },
+    {
+      "name": "set_led_brightness",
+      "description": "Adjust the LED brightness level on a Nest Protect device"
+    },
+    {
+      "name": "sound_alarm",
+      "description": "Sound alarm tones for testing purposes (use responsibly)"
+    },
+    {
+      "name": "arm_disarm_security",
+      "description": "Arm or disarm Nest security system (Nest Guard/Secure)"
+    },
+    {
+      "name": "get_system_status",
+      "description": "Get overall system status and health information"
+    },
+    {
+      "name": "get_process_status",
+      "description": "Check the status of the Nest Protect MCP process"
+    },
+    {
+      "name": "get_api_status",
+      "description": "Check the status of Google Nest API connectivity"
+    },
+    {
+      "name": "list_available_tools",
+      "description": "List all available MCP tools with descriptions"
+    },
+    {
+      "name": "get_tool_help",
+      "description": "Get detailed help and usage information for a specific tool"
+    },
+    {
+      "name": "search_tools",
+      "description": "Search for tools by keyword or description"
+    },
+    {
+      "name": "about_server",
+      "description": "Get comprehensive information about the Nest Protect MCP server"
+    },
+    {
+      "name": "get_supported_devices",
+      "description": "Get information about supported Nest Protect device types"
+    },
+    {
+      "name": "initiate_oauth_flow",
+      "description": "Start OAuth 2.0 authentication flow with Google"
+    },
+    {
+      "name": "handle_oauth_callback",
+      "description": "Process OAuth 2.0 callback and obtain access tokens"
+    },
+    {
+      "name": "refresh_access_token",
+      "description": "Refresh OAuth 2.0 access token when expired"
+    },
+    {
+      "name": "get_config",
+      "description": "Get current server configuration settings"
+    },
+    {
+      "name": "update_config",
+      "description": "Update server configuration settings"
+    },
+    {
+      "name": "reset_config",
+      "description": "Reset configuration to default values"
+    },
+    {
+      "name": "export_config",
+      "description": "Export current configuration to a file"
+    },
+    {
+      "name": "import_config",
+      "description": "Import configuration from a file"
+    },
+    {
+      "name": "assess_home_safety",
+      "description": "AI-powered comprehensive home safety assessment with intelligent recommendations"
+    },
+    {
+      "name": "coordinate_emergency_response",
+      "description": "Coordinate emergency response using AI orchestration for safety incidents"
+    },
+    {
+      "name": "predict_maintenance_needs",
+      "description": "Predict future maintenance needs using AI analysis and pattern recognition"
+    },
+    {
+      "name": "setup_smart_automation",
+      "description": "Set up intelligent automation that learns user patterns and adapts"
+    }
+  ],
+  "keywords": [
+    "nest",
+    "protect",
+    "smoke-detector",
+    "carbon-monoxide",
+    "home-automation",
+    "smart-home",
+    "google-nest",
+    "device-control",
+    "monitoring",
+    "alarm-system",
+    "fastmcp-2.14.3",
+    "conversational-ai",
+    "sampling-capabilities",
+    "ai-orchestration",
+    "intelligent-safety",
+    "predictive-maintenance",
+    "emergency-response"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -240,5 +240,15 @@
 
 ---
 
-**Pro Tip**: Start with `about_server` to get oriented, then use `list_available_tools` to explore what's possible with your specific setup! 🎯
+## Prompts (skills, FastMCP 3.1)
+
+Available prompts for agentic workflows:
+
+- **nest_protect_setup** - Guide to one-time Google OAuth and refresh token setup.
+- **nest_protect_safety_check** - How to run a safety test (run_safety_check tool).
+- **nest_protect_overview** - Overview of tools; use list_devices first for device IDs.
+
+---
+
+**Pro Tip**: Start with `about_server` to get oriented, then use `list_available_tools` to explore what's possible with your specific setup.
 
