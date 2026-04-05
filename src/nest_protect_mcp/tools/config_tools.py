@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import toml
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 class ConfigSectionParams(BaseModel):
     """Parameters for getting config section."""
 
-    section: Optional[str] = Field(
+    section: str | None = Field(
         None, description="Specific section to retrieve (optional)"
     )
 
@@ -19,7 +19,7 @@ class ConfigSectionParams(BaseModel):
 class UpdateConfigParams(BaseModel):
     """Parameters for updating config."""
 
-    updates: Dict[str, Any] = Field(
+    updates: dict[str, Any] = Field(
         ..., description="Dictionary of configuration updates"
     )
     save_to_file: bool = Field(
@@ -51,7 +51,7 @@ class ImportConfigParams(BaseModel):
     )
 
 
-async def get_config(section: Optional[str] = None) -> Dict[str, Any]:
+async def get_config(section: str | None = None) -> dict[str, Any]:
     """Get current configuration or a specific section."""
     from ..state_manager import get_app_state
 
@@ -62,12 +62,12 @@ async def get_config(section: Optional[str] = None) -> Dict[str, Any]:
             return {"status": "success", "config": {section: config.get(section, {})}}
         return {"status": "success", "config": config}
     except Exception as e:
-        return {"status": "error", "message": f"Failed to get config: {str(e)}"}
+        return {"status": "error", "message": f"Failed to get config: {e!s}"}
 
 
 async def update_config(
-    updates: Dict[str, Any], save_to_file: bool = True
-) -> Dict[str, Any]:
+    updates: dict[str, Any], save_to_file: bool = True
+) -> dict[str, Any]:
     """Update configuration values."""
     from ..state_manager import get_app_state
 
@@ -106,10 +106,10 @@ async def update_config(
             "saved_to_file": save_to_file,
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to update config: {str(e)}"}
+        return {"status": "error", "message": f"Failed to update config: {e!s}"}
 
 
-async def reset_config(confirm: bool = False) -> Dict[str, Any]:
+async def reset_config(confirm: bool = False) -> dict[str, Any]:
     """Reset configuration to default values."""
     if not confirm:
         return {
@@ -132,12 +132,12 @@ async def reset_config(confirm: bool = False) -> Dict[str, Any]:
 
         return {"status": "success", "message": "Configuration reset to defaults"}
     except Exception as e:
-        return {"status": "error", "message": f"Failed to reset config: {str(e)}"}
+        return {"status": "error", "message": f"Failed to reset config: {e!s}"}
 
 
 async def export_config(
     file_path: str = "config/exported_config.toml", format: str = "toml"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Export current configuration to a file."""
     from ..state_manager import get_app_state
 
@@ -160,10 +160,10 @@ async def export_config(
             "format": format,
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to export config: {str(e)}"}
+        return {"status": "error", "message": f"Failed to export config: {e!s}"}
 
 
-async def import_config(file_path: str, merge: bool = True) -> Dict[str, Any]:
+async def import_config(file_path: str, merge: bool = True) -> dict[str, Any]:
     """Import configuration from a file."""
     from ..models import ProtectConfig
     from ..state_manager import get_app_state
@@ -214,4 +214,4 @@ async def import_config(file_path: str, merge: bool = True) -> Dict[str, Any]:
             "merged": merge,
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to import config: {str(e)}"}
+        return {"status": "error", "message": f"Failed to import config: {e!s}"}

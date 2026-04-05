@@ -1,6 +1,6 @@
 """Help tools for Nest Protect MCP."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -53,8 +53,8 @@ def _get_tool_category(tool_name: str) -> str:
 
 
 def _generate_usage_examples(
-    tool_name: str, parameters: Dict[str, Any]
-) -> List[Dict[str, Any]]:
+    tool_name: str, parameters: dict[str, Any]
+) -> list[dict[str, Any]]:
     """Generate usage examples for a tool based on its parameters."""
     examples = []
 
@@ -99,9 +99,9 @@ def _generate_usage_examples(
                 elif "device" in param_name.lower():
                     advanced_example["parameters"][param_name] = "device-456"
                 else:
-                    advanced_example["parameters"][param_name] = (
-                        f"advanced_{param_name}"
-                    )
+                    advanced_example["parameters"][
+                        param_name
+                    ] = f"advanced_{param_name}"
             elif param_info["type"] == "integer":
                 advanced_example["parameters"][param_name] = param_info.get(
                     "maximum", 100
@@ -123,12 +123,12 @@ class SearchToolsParams(BaseModel):
     """Parameters for searching tools."""
 
     query: str = Field(..., description="Search query")
-    search_in: List[str] = Field(
+    search_in: list[str] = Field(
         ["name", "description"], description="Fields to search in"
     )
 
 
-async def list_available_tools() -> Dict[str, Any]:
+async def list_available_tools() -> dict[str, Any]:
     """List all available tools with their descriptions."""
     # Import here to avoid circular imports
     from ..fastmcp_server import app
@@ -181,10 +181,10 @@ async def list_available_tools() -> Dict[str, Any]:
             "tools": sorted(tools, key=lambda x: x["name"]),
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to list tools: {str(e)}"}
+        return {"status": "error", "message": f"Failed to list tools: {e!s}"}
 
 
-async def get_tool_help(tool_name: str) -> Dict[str, Any]:
+async def get_tool_help(tool_name: str) -> dict[str, Any]:
     """Get detailed help for a specific tool with comprehensive information."""
     from ..fastmcp_server import app
 
@@ -250,16 +250,18 @@ async def get_tool_help(tool_name: str) -> Dict[str, Any]:
     except Exception as e:
         return {
             "status": "error",
-            "message": f"Failed to get help for tool '{tool_name}': {str(e)}",
+            "message": f"Failed to get help for tool '{tool_name}': {e!s}",
         }
 
 
 async def search_tools(
-    query: str, search_in: List[str] = ["name", "description"]
-) -> Dict[str, Any]:
+    query: str, search_in: list[str] | None = None
+) -> dict[str, Any]:
     """Search for tools by keyword or description with advanced filtering."""
     from ..fastmcp_server import app
 
+    if search_in is None:
+        search_in = ["name", "description"]
     try:
         query = query.lower()
         results = []
@@ -350,4 +352,4 @@ async def search_tools(
             "results": results,
         }
     except Exception as e:
-        return {"status": "error", "message": f"Search failed: {str(e)}"}
+        return {"status": "error", "message": f"Search failed: {e!s}"}

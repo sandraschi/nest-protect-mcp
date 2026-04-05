@@ -6,10 +6,26 @@ Tools, prompts (skills), sampling and agentic workflows.
 
 import logging
 import sys
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
-from fastmcp import FastMCP
+from fastmcp.apps import FastMCPApp
+from fastmcp.tools import ToolResult
 from pydantic import BaseModel, Field
+
+try:
+    from prefab_ui.app import PrefabApp
+    from prefab_ui.components import (
+        Card,
+        CardContent,
+        CardHeader,
+        CardTitle,
+        Image,
+        Text,
+    )
+except ImportError:
+    PrefabApp = None
+    Card = CardContent = CardHeader = CardTitle = Text = Image = None
+
 from .transport import run_server
 
 # Configure enhanced logging
@@ -22,13 +38,13 @@ logger = logging.getLogger("nest_protect_mcp")
 logger.info("=== INITIALIZING FASTMCP SERVER ===")
 logger.info("Loading FastMCP framework...")
 
-# Create the FastMCP app with emoji icon
+# Create the FastMCPApp with emoji icon
 try:
-    logger.info("Creating FastMCP app instance...")
-    app = FastMCP("🔥 nest-protect", version="1.0.0")
-    logger.info("FastMCP app created successfully")
+    logger.info("Creating FastMCPApp instance...")
+    app = FastMCPApp("🔥 nest-protect", version="1.0.0")
+    logger.info("FastMCPApp created successfully")
 except Exception as e:
-    logger.error(f"Failed to create FastMCP app: {e}", exc_info=True)
+    logger.error(f"Failed to create FastMCPApp: {e}", exc_info=True)
     raise
 
 # ===== Pydantic Models for Tool Parameters =====
@@ -83,7 +99,7 @@ class LedBrightnessParams(BaseModel):
 class ProcessStatusParams(BaseModel):
     """Parameters for process status."""
 
-    pid: Optional[int] = Field(
+    pid: int | None = Field(
         None, description="Process ID to check (default: current process)"
     )
 
@@ -98,7 +114,7 @@ class SearchToolsParams(BaseModel):
     """Parameters for searching tools."""
 
     query: str = Field(..., description="Search query")
-    search_in: List[str] = Field(
+    search_in: list[str] = Field(
         ["name", "description"], description="Fields to search in"
     )
 
@@ -109,7 +125,7 @@ class OAuthFlowParams(BaseModel):
     redirect_uri: str = Field(
         "http://localhost:8000/auth/callback", description="Redirect URI for auth code"
     )
-    state: Optional[str] = Field(None, description="CSRF protection state")
+    state: str | None = Field(None, description="CSRF protection state")
     open_browser: bool = Field(True, description="Open auth URL in browser")
 
 
@@ -118,7 +134,7 @@ class OAuthCallbackParams(BaseModel):
 
     code: str = Field(..., description="Auth code from OAuth callback")
     state: str = Field(..., description="State param from OAuth")
-    expected_state: Optional[str] = Field(None, description="Expected CSRF state")
+    expected_state: str | None = Field(None, description="Expected CSRF state")
     redirect_uri: str = Field(
         "http://localhost:8000/auth/callback",
         description="Redirect URI used in auth request",
@@ -134,7 +150,7 @@ class RefreshTokenParams(BaseModel):
 class ConfigSectionParams(BaseModel):
     """Parameters for getting config section."""
 
-    section: Optional[str] = Field(
+    section: str | None = Field(
         None, description="Specific section to retrieve (optional)"
     )
 
@@ -142,7 +158,7 @@ class ConfigSectionParams(BaseModel):
 class UpdateConfigParams(BaseModel):
     """Parameters for updating config."""
 
-    updates: Dict[str, Any] = Field(
+    updates: dict[str, Any] = Field(
         ..., description="Dictionary of configuration updates"
     )
     save_to_file: bool = Field(
@@ -189,14 +205,14 @@ class SoundAlarmParams(BaseModel):
     )
 
 
-class ArmDisarmParams(BaseModel):
+class ArmDisarmSecurityParams(BaseModel):
     """Parameters for arming/disarming security system."""
 
     device_id: str = Field(..., description="ID of the security device (Nest Guard)")
     action: Literal["arm_home", "arm_away", "disarm"] = Field(
         ..., description="Security action to perform"
     )
-    passcode: Optional[str] = Field(
+    passcode: str | None = Field(
         None, description="Security passcode (required for disarm)"
     )
 
@@ -212,125 +228,143 @@ class AboutParams(BaseModel):
 # ===== Device Status Tools =====
 
 
-@app.tool(
-    name="list_devices",
-    description="""
-    🔥 **Discover Your Nest Protect Devices**
-    
-    Get a comprehensive list of all Nest Protect smoke and CO detectors in your home.
-    
-    **Returns:**
-    • Device IDs and friendly names
-    • Device models (1st Gen, 2nd Gen, etc.)
-    • Room locations and assignments
-    • Online/offline status
-    • Last activity timestamps
-    
-    Perfect for getting an overview of your entire Nest Protect ecosystem.
-    """,
-)
-async def list_devices() -> Dict[str, Any]:
-    """Get a list of all Nest Protect devices."""
+@app.tool(name="list_nest_devices", app=True)
+async def list_devices() -> ToolResult:
+    """Discover Nest Protect Devices.
+
+    List all detectors, room locations, and online status with rich UI cards for home safety overview.
+    """
     try:
-        logger.debug("=== LIST_DEVICES TOOL CALLED ===")
-        logger.debug("Importing device_status.list_devices...")
         from .tools.device_status import list_devices as tool_func
 
-        logger.debug("Successfully imported device_status.list_devices")
-
-        logger.debug("Calling list_devices tool function...")
         result = await tool_func()
-        logger.debug(f"list_devices returned: {result}")
-        return result
+
+        if PrefabApp and "devices" in result:
+            with Card(css_class="max-w-lg mb-4") as view:
+                with CardHeader():
+                    CardTitle("🏠 Your Nest Protect Devices")
+                with CardContent():
+                    for dev in result.get("devices", []):
+                        name = dev.get("name", "Unknown Device")
+                        status = "✅ Online" if dev.get("online") else "❌ Offline"
+                        room = dev.get("where", "Unknown Location")
+                        Text(f"• **{name}** ({room}) — {status}")
+
+            return ToolResult(
+                content=f"Found {len(result['devices'])} Nest Protect devices.",
+                structured_content=PrefabApp(view=view, title="Device List"),
+            )
+
+        return ToolResult(content=str(result))
     except Exception as e:
-        logger.error("=== ERROR IN LIST_DEVICES ===", exc_info=True)
-        logger.error(f"Error type: {type(e).__name__}")
-        logger.error(f"Error message: {e}")
-        return {"error": f"Failed to list devices: {e}", "status": "error"}
+        logger.error(f"Error in list_devices: {e}", exc_info=True)
+        return ToolResult(content=f"Failed to list devices: {e}", is_error=True)
 
 
-@app.tool(
-    name="get_device_status",
-    description="""
-    📊 **Get Real-Time Device Status**
-    
-    Get comprehensive status information for a specific Nest Protect device.
-    
-    **What You'll See:**
-    • 🔋 Battery level and health status
-    • 💨 Smoke detector status and sensitivity
-    • ☁️ Carbon monoxide sensor readings
-    • 📶 Wi-Fi connectivity and signal strength
-    • 🔧 Device health and diagnostic info
-    • 📅 Last test date and maintenance alerts
-    
-    Essential for monitoring device health and troubleshooting issues.
-    
-    **Parameters:**
-    • device_id: Full device ID (format: enterprises/project-id/devices/device-id)
-    """,
-)
-async def get_device_status(device_id: str) -> Dict[str, Any]:
-    """Get status of a specific Nest Protect device."""
-    from .tools.device_status import get_device_status as tool_func
+@app.tool(name="get_device_health", app=True)
+async def get_device_status(device_id: str) -> ToolResult:
+    """Get Device Health Status.
 
-    return await tool_func(device_id)
+    Real-time battery, smoke, CO, and connectivity metrics with visual health indicators in chat.
+    """
+    try:
+        from .tools.device_status import get_device_status as tool_func
+
+        result = await tool_func(device_id)
+
+        if PrefabApp and "error" not in result:
+            with Card(css_class="max-w-md border-l-4 border-green-500") as view:
+                with CardHeader():
+                    CardTitle(f"📊 Status: {result.get('name', 'Device')}")
+                with CardContent():
+                    battery = result.get("battery_level", "Unknown")
+                    smoke = result.get("smoke_status", "Healthy")
+                    co = result.get("co_status", "Healthy")
+                    Text(f"🔋 **Battery**: {battery}")
+                    Text(f"💨 **Smoke**: {smoke}")
+                    Text(f"☁️ **CO**: {co}")
+                    Text(f"📶 **Signal**: {result.get('wifi_signal', 'Good')}")
+
+            return ToolResult(
+                content=f"Status for {result.get('name')}: Battery {battery}, Smoke {smoke}, CO {co}.",
+                structured_content=PrefabApp(view=view, title="Device Health"),
+            )
+
+        return ToolResult(content=str(result))
+    except Exception as e:
+        return ToolResult(content=f"Error getting status: {e}", is_error=True)
 
 
-@app.tool("get_device_events")
-async def get_device_events(params: DeviceEventsParams) -> Dict[str, Any]:
-    """Get recent events for a Nest Protect device."""
+@app.tool(name="get_nest_events")
+async def get_device_events(params: DeviceEventsParams) -> ToolResult:
+    """Get Recent Device Events.
+
+    Retrieve a list of recent smoke, CO, or connectivity events for a specific device.
+    """
     from .tools.device_status import get_device_events as tool_func
 
-    return await tool_func(params.device_id, params.limit)
+    result = await tool_func(params.device_id, params.limit)
+    return ToolResult(content=str(result))
 
 
 # ===== Device Control Tools =====
 
 
-@app.tool("hush_alarm")
-async def hush_alarm(params: HushAlarmParams) -> Dict[str, Any]:
-    """Silence an active alarm on a Nest Protect device."""
+@app.tool(name="hush_active_alarm")
+async def hush_alarm(params: HushAlarmParams) -> ToolResult:
+    """Silence Active Alarm Device.
+
+    Temporarily hush smoke or CO alarms for maintenance or false triggers (30-300 seconds).
+    """
     from .tools.device_control import hush_alarm as tool_func
 
-    return await tool_func(params.device_id, params.duration_seconds)
+    result = await tool_func(params.device_id, params.duration_seconds)
+    return ToolResult(content=str(result))
 
 
-@app.tool("run_safety_check")
-async def run_safety_check(params: SafetyCheckParams) -> Dict[str, Any]:
-    """Run a safety check on a Nest Protect device."""
+@app.tool(name="run_safety_test")
+async def run_safety_check(params: SafetyCheckParams) -> ToolResult:
+    """Execute Device Safety Test.
+
+    Trigger full, smoke, or CO self-tests on the device to verify alarm functionality.
+    """
     from .tools.device_control import run_safety_check as tool_func
 
-    return await tool_func(params.device_id, params.test_type)
+    result = await tool_func(params.device_id, params.test_type)
+    return ToolResult(content=str(result))
 
 
-@app.tool("set_led_brightness")
-async def set_led_brightness(params: LedBrightnessParams) -> Dict[str, Any]:
-    """Set LED brightness for a Nest Protect device."""
+@app.tool(name="set_device_led")
+async def set_led_brightness(params: LedBrightnessParams) -> ToolResult:
+    """Set Device LED Brightness.
+
+    Adjust the brightness level (0-100) of the Nest Protect status light ring.
+    """
     from .tools.device_control import set_led_brightness as tool_func
 
-    return await tool_func(params.device_id, params.brightness)
+    result = await tool_func(params.device_id, params.brightness)
+    return ToolResult(content=str(result))
 
 
 @app.tool(
     name="sound_alarm",
     description="""
     🚨 **Test Alarm Systems (Use Responsibly!)**
-    
+
     Trigger real alarm sounds on your Nest Protect devices for testing purposes.
-    
+
     **⚠️ IMPORTANT SAFETY NOTES:**
     • Only use for testing and maintenance
     • Warn household members before testing
     • Verify alarms work properly in emergencies
     • Keep duration short to avoid false emergency responses
-    
+
     **Alarm Types:**
     • 🔥 **Smoke**: Fire detection alarm (loud, pulsing)
     • ☁️ **CO**: Carbon monoxide alarm (distinct pattern)
     • 🔒 **Security**: Intrusion/breach alarm (continuous)
     • 🆘 **Emergency**: Panic button (immediate response)
-    
+
     **Parameters:**
     • device_id: Target Nest Protect device ID (enterprises/project-id/devices/device-id)
     • alarm_type: Type of alarm (smoke, co, security, emergency) - default: smoke
@@ -338,371 +372,307 @@ async def set_led_brightness(params: LedBrightnessParams) -> Dict[str, Any]:
     • volume: Alarm volume percentage (50-100%) - default: 100
     """,
 )
+@app.tool(name="trigger_test_alarm")
 async def sound_alarm(
     device_id: str,
     alarm_type: str = "smoke",
     duration_seconds: int = 10,
     volume: int = 100,
-) -> Dict[str, Any]:
-    """Sound an alarm on a Nest device for testing purposes."""
+) -> ToolResult:
+    """Trigger Test Alarm Ring.
+
+    Sound a simulated smoke, CO, or security alarm for system testing and maintenance.
+    """
     from .tools.device_control import sound_alarm as tool_func
 
-    return await tool_func(device_id, alarm_type, duration_seconds, volume)
+    result = await tool_func(device_id, alarm_type, duration_seconds, volume)
+    return ToolResult(content=str(result))
 
 
-@app.tool("arm_disarm_security")
-async def arm_disarm_security(params: ArmDisarmParams) -> Dict[str, Any]:
-    """Arm or disarm Nest security system (Nest Guard/Secure)."""
+@app.tool(name="set_security_mode")
+async def arm_disarm_security(params: ArmDisarmSecurityParams) -> ToolResult:
+    """Set Guard Security Mode.
+
+    Arm (home/away) or disarm the Nest security system using an optional passcode.
+    """
     from .tools.device_control import arm_disarm_security as tool_func
 
-    return await tool_func(params.device_id, params.action, params.passcode)
+    result = await tool_func(params.device_id, params.action, params.passcode)
+    return ToolResult(content=str(result))
 
 
 # ===== System Status Tools =====
 
 
-@app.tool("get_system_status")
-async def get_system_status(params: EmptyParams) -> Dict[str, Any]:
-    """Get system status and metrics."""
+@app.tool(name="get_server_status")
+async def get_system_status(params: EmptyParams) -> ToolResult:
+    """Get Server System Status.
+
+    Retrieve host CPU, memory, and disk usage metrics for the MCP server process.
+    """
     from .tools.system_status import get_system_status as tool_func
 
-    return await tool_func()
+    result = await tool_func()
+    return ToolResult(content=str(result))
 
 
-@app.tool("get_process_status")
-async def get_process_status(params: ProcessStatusParams) -> Dict[str, Any]:
-    """Get status of the Nest Protect MCP process."""
+@app.tool(name="get_mcp_process")
+async def get_process_status(params: ProcessStatusParams) -> ToolResult:
+    """Get MCP Process Metrics.
+
+    Retrieve detailed memory and CPU consumption for the specific Nest Protect MCP process.
+    """
     from .tools.system_status import get_process_status as tool_func
 
-    return await tool_func(params.pid)
+    result = await tool_func(params.pid)
+    return ToolResult(content=str(result))
 
 
-@app.tool("get_api_status")
-async def get_api_status(params: EmptyParams) -> Dict[str, Any]:
-    """Get status of the Nest API connection."""
+@app.tool(name="check_api_connectivity")
+async def get_api_status(params: EmptyParams) -> ToolResult:
+    """Check API Connection Health.
+
+    Verify real-time connectivity and latency to the Google Smart Device Management API.
+    """
     from .tools.system_status import get_api_status as tool_func
 
-    return await tool_func()
+    result = await tool_func()
+    return ToolResult(content=str(result))
 
 
 # ===== Help Tools =====
 
 
-@app.tool("list_available_tools")
-async def list_available_tools(params: EmptyParams) -> Dict[str, Any]:
-    """List all available tools with their descriptions."""
+@app.tool(name="list_server_tools")
+async def list_available_tools(params: EmptyParams) -> ToolResult:
+    """List Available MCP Tools.
+
+    Retrieve a comprehensive list of all registered tools and their functional descriptions.
+    """
     from .tools.help_tool import list_available_tools as tool_func
 
-    return await tool_func()
+    result = await tool_func()
+    return ToolResult(content=str(result))
 
 
-@app.tool("get_tool_help")
-async def get_tool_help(params: ToolHelpParams) -> Dict[str, Any]:
-    """Get detailed help for a specific tool."""
+@app.tool(name="get_tool_details")
+async def get_tool_help(params: ToolHelpParams) -> ToolResult:
+    """Get Tool Practical Help.
+
+    Retrieve detailed parameters, usage examples, and safety constraints for a specific tool.
+    """
     from .tools.help_tool import get_tool_help as tool_func
 
-    return await tool_func(params.tool_name)
+    result = await tool_func(params.tool_name)
+    return ToolResult(content=str(result))
 
 
-@app.tool("search_tools")
-async def search_tools(params: SearchToolsParams) -> Dict[str, Any]:
-    """Search for tools by keyword or description."""
+@app.tool(name="search_mcp_tools")
+async def search_tools(params: SearchToolsParams) -> ToolResult:
+    """Search Tools by Keyword.
+
+    Discovery helper to find relevant tools based on name, description, or capability keywords.
+    """
     from .tools.help_tool import search_tools as tool_func
 
-    return await tool_func(params.query, params.search_in)
+    result = await tool_func(params.query, params.search_in)
+    return ToolResult(content=str(result))
 
 
 # ===== Authentication Tools =====
 
 
-@app.tool("initiate_oauth_flow")
-async def initiate_oauth_flow(params: OAuthFlowParams) -> Dict[str, Any]:
-    """Start OAuth 2.0 flow for Nest API."""
+@app.tool(name="start_google_oauth")
+async def initiate_oauth_flow(params: OAuthFlowParams) -> ToolResult:
+    """Initiate Google OAuth Flow.
+
+    Start the secure OAuth 2.0 authorization process to link your Nest account.
+    """
     from .tools.auth_tools import initiate_oauth_flow as tool_func
 
-    return await tool_func(params.redirect_uri, params.state, params.open_browser)
+    result = await tool_func(params.redirect_uri, params.state, params.open_browser)
+    return ToolResult(content=str(result))
 
 
-@app.tool("handle_oauth_callback")
-async def handle_oauth_callback(params: OAuthCallbackParams) -> Dict[str, Any]:
-    """Handle OAuth 2.0 callback from Nest API."""
+@app.tool(name="finish_google_oauth")
+async def handle_oauth_callback(params: OAuthCallbackParams) -> ToolResult:
+    """Complete Google OAuth Callback.
+
+    Process the authorization code and exchange it for persistent access and refresh tokens.
+    """
     from .tools.auth_tools import handle_oauth_callback as tool_func
 
-    return await tool_func(
+    result = await tool_func(
         params.code, params.state, params.expected_state, params.redirect_uri
     )
+    return ToolResult(content=str(result))
 
 
-@app.tool("refresh_access_token")
-async def refresh_access_token(params: RefreshTokenParams) -> Dict[str, Any]:
-    """Refresh OAuth 2.0 access token."""
+@app.tool(name="refresh_nest_token")
+async def refresh_access_token(params: RefreshTokenParams) -> ToolResult:
+    """Refresh Nest Access Token.
+
+    Force or verify the renewal of the current OAuth 2.0 access token for API calls.
+    """
     from .tools.auth_tools import refresh_access_token as tool_func
 
-    return await tool_func(params.force)
+    result = await tool_func(params.force)
+    return ToolResult(content=str(result))
 
 
 # ===== Configuration Tools =====
 
 
-@app.tool("get_config")
-async def get_config(params: ConfigSectionParams) -> Dict[str, Any]:
-    """Get current configuration."""
+@app.tool(name="get_mcp_config")
+async def get_config(params: ConfigSectionParams) -> ToolResult:
+    """Get Current Server Configuration.
+
+    Retrieve the active configuration values for API endpoints, timeouts, and device filters.
+    """
     from .tools.config_tools import get_config as tool_func
 
-    return await tool_func(params.section)
+    result = await tool_func(params.section)
+    return ToolResult(content=str(result))
 
 
-@app.tool("update_config")
-async def update_config(params: UpdateConfigParams) -> Dict[str, Any]:
-    """Update configuration values."""
+@app.tool(name="update_mcp_config")
+async def update_config(params: UpdateConfigParams) -> ToolResult:
+    """Update Server Configuration Values.
+
+    Modify active settings and optionally persist them to the config.toml file.
+    """
     from .tools.config_tools import update_config as tool_func
 
-    return await tool_func(params.updates, params.save_to_file)
+    result = await tool_func(params.updates, params.save_to_file)
+    return ToolResult(content=str(result))
 
 
-@app.tool("reset_config")
-async def reset_config(params: ResetConfigParams) -> Dict[str, Any]:
-    """Reset configuration to defaults."""
+@app.tool(name="reset_mcp_config")
+async def reset_config(params: ResetConfigParams) -> ToolResult:
+    """Reset Configuration to Defaults.
+
+    Revert all server settings to their original factory values (requires confirmation).
+    """
     from .tools.config_tools import reset_config as tool_func
 
-    return await tool_func(params.confirm)
+    result = await tool_func(params.confirm)
+    return ToolResult(content=str(result))
 
 
-@app.tool("export_config")
-async def export_config(params: ExportConfigParams) -> Dict[str, Any]:
-    """Export current configuration to a file."""
+@app.tool(name="export_config_file")
+async def export_config(params: ExportConfigParams) -> ToolResult:
+    """Export Config To File.
+
+    Save the current active configuration to a local file in TOML or JSON format.
+    """
     from .tools.config_tools import export_config as tool_func
 
-    return await tool_func(params.file_path, params.format)
+    result = await tool_func(params.file_path, params.format)
+    return ToolResult(content=str(result))
 
 
-@app.tool("import_config")
-async def import_config(params: ImportConfigParams) -> Dict[str, Any]:
-    """Import configuration from a file."""
+@app.tool(name="import_config_file")
+async def import_config(params: ImportConfigParams) -> ToolResult:
+    """Import Config From File.
+
+    Load configuration settings from a local file and merge them into the server state.
+    """
     from .tools.config_tools import import_config as tool_func
 
-    return await tool_func(params.file_path, params.merge)
+    result = await tool_func(params.file_path, params.merge)
+    return ToolResult(content=str(result))
 
 
 # ===== Advanced AI Orchestration Tools =====
 
 
-@app.tool(
-    name="assess_home_safety",
-    description="""
-    🏠 **AI-Powered Home Safety Assessment**
-
-    Perform comprehensive safety evaluation using advanced AI orchestration.
-    This tool analyzes all your Nest Protect devices, identifies safety issues,
-    and provides intelligent recommendations with sampling signals for complex analysis.
-
-    **AI Orchestration Features:**
-    • 🔍 **Comprehensive Analysis**: Evaluates all safety systems simultaneously
-    • 🧠 **Intelligent Recommendations**: AI-generated safety improvement suggestions
-    • 📊 **Risk Assessment**: Prioritizes safety issues by severity and impact
-    • 🚨 **Emergency Detection**: Identifies critical safety situations requiring immediate attention
-
-    **Sampling Capabilities:**
-    • Signals for AI reasoning when complex safety patterns are detected
-    • Emergency coordination when critical issues found
-    • Predictive maintenance recommendations
-
-    **What It Analyzes:**
-    • Smoke and CO detector functionality and status
-    • Battery levels and power health across all devices
-    • Device connectivity and communication status
-    • Alarm system integrity and response times
-    • Overall home safety coverage and gaps
-
-    **Parameters:**
-    • include_recommendations: Include AI-generated safety recommendations (default: true)
-    • assessment_scope: Scope of assessment - basic, comprehensive, or emergency (default: comprehensive)
-    • focus_areas: Specific safety areas to focus on (default: all areas)
-    """,
-)
+@app.tool(name="analyze_home_safety")
 async def assess_home_safety(
     include_recommendations: bool = True,
     assessment_scope: str = "comprehensive",
-    focus_areas: List[str] = None,
-) -> Dict[str, Any]:
-    """AI-powered home safety assessment with sampling capabilities."""
+    focus_areas: list[str] | None = None,
+) -> ToolResult:
+    """Assess Home Safety AI.
+
+    Perform comprehensive safety evaluation using advanced AI orchestration and sampling patterns.
+    """
     from .tools.ai_orchestration import assess_home_safety as tool_func
 
-    return await tool_func(include_recommendations, assessment_scope, focus_areas)
+    result = await tool_func(include_recommendations, assessment_scope, focus_areas)
+    return ToolResult(content=str(result))
 
 
-@app.tool(
-    name="coordinate_emergency_response",
-    description="""
-    🚨 **AI Emergency Response Coordination**
-
-    Coordinate intelligent emergency response when safety incidents are detected.
-    Uses advanced AI orchestration with sampling signals for complex emergency decision-making.
-
-    **Emergency Types Handled:**
-    • 🔥 **Smoke**: Fire detection and evacuation coordination
-    • ☁️ **CO**: Carbon monoxide emergency response
-    • 🔒 **Security**: Intrusion and safety breach response
-    • 🆘 **Medical**: Health emergency assistance coordination
-    • ❓ **Unknown**: Unidentified emergency assessment
-
-    **AI Coordination Features:**
-    • 🎯 **Priority Assessment**: Determines response urgency and priority
-    • 📞 **Emergency Contacts**: Coordinates with emergency services if needed
-    • 🏃 **Evacuation Guidance**: Provides safe evacuation route recommendations
-    • 📍 **Safety Zones**: Identifies safe areas within the home
-    • 📱 **Communication**: Coordinates family/household notifications
-
-    **Sampling Triggers:**
-    • Critical decision-making during emergency situations
-    • Complex evacuation planning and coordination
-    • Emergency service priority assessment
-
-    **Parameters:**
-    • emergency_type: Type of emergency detected (smoke, co, security, medical, unknown)
-    • affected_devices: List of device IDs involved in the emergency
-    • response_priority: Response priority level (low, medium, high, critical) - default: high
-    """,
-)
+@app.tool(name="coordinate_emergency_ai")
 async def coordinate_emergency_response(
-    emergency_type: str, affected_devices: List[str], response_priority: str = "high"
-) -> Dict[str, Any]:
-    """Coordinate emergency response using AI orchestration and sampling."""
+    emergency_type: str, affected_devices: list[str], response_priority: str = "high"
+) -> ToolResult:
+    """Coordinate Emergency AI Response.
+
+    Execute intelligent coordination during safety incidents using sampling for complex decisions.
+    """
     from .tools.ai_orchestration import coordinate_emergency_response as tool_func
 
-    return await tool_func(emergency_type, affected_devices, response_priority)
+    result = await tool_func(emergency_type, affected_devices, response_priority)
+    return ToolResult(content=str(result))
 
 
-@app.tool(
-    name="predict_maintenance_needs",
-    description="""
-    🔮 **Predictive Maintenance Intelligence**
-
-    Use AI to predict future maintenance needs and schedule optimal service times.
-    Analyzes device usage patterns, failure history, and environmental factors.
-
-    **Predictive Capabilities:**
-    • 🔋 **Battery Life Prediction**: Estimates when batteries need replacement
-    • 🔧 **Device Health Forecasting**: Predicts potential device failures
-    • 📅 **Maintenance Scheduling**: Recommends optimal service times
-    • 💰 **Cost Estimation**: Provides maintenance cost projections
-    • 📊 **Failure Risk Analysis**: Identifies devices at higher risk
-
-    **Analysis Depths:**
-    • ⚡ **Quick**: Basic pattern analysis (5-10 minutes)
-    • 📋 **Detailed**: Comprehensive device history analysis (15-30 minutes)
-    • 🔬 **Comprehensive**: Full environmental and usage pattern analysis (30-60 minutes)
-
-    **Time Horizons:**
-    • 1_week: Immediate maintenance needs
-    • 1_month: Short-term planning
-    • 3_months: Medium-term scheduling
-    • 1_year: Long-term maintenance planning
-
-    **Sampling Features:**
-    • Complex pattern recognition for failure prediction
-    • Cost-benefit analysis for maintenance scheduling
-    • Risk assessment for critical safety devices
-
-    **Parameters:**
-    • analysis_depth: Depth of analysis - quick, detailed, comprehensive (default: detailed)
-    • time_horizon: Prediction timeframe - 1_week, 1_month, 3_months, 1_year (default: 1_month)
-    • include_cost_estimates: Include maintenance cost projections (default: true)
-    """,
-)
+@app.tool(name="forecast_maintenance_needs")
 async def predict_maintenance_needs(
     analysis_depth: str = "detailed",
     time_horizon: str = "1_month",
     include_cost_estimates: bool = True,
-) -> Dict[str, Any]:
-    """Predict future maintenance needs using AI analysis and sampling."""
+) -> ToolResult:
+    """Forecast Device Maintenance Needs.
+
+    Predict future battery replacements and sensor failures using environmental AI analysis.
+    """
     from .tools.ai_orchestration import predict_maintenance_needs as tool_func
 
-    return await tool_func(analysis_depth, time_horizon, include_cost_estimates)
+    result = await tool_func(analysis_depth, time_horizon, include_cost_estimates)
+    return ToolResult(content=str(result))
 
 
-@app.tool(
-    name="setup_smart_automation",
-    description="""
-    🤖 **Intelligent Home Automation Setup**
-
-    Configure smart automation that learns your patterns and adapts to your lifestyle.
-    Uses AI to create personalized automation rules for safety and convenience.
-
-    **Automation Types:**
-    • 🛡️ **Safety**: Automated safety checks and alerts based on your schedule
-    • 🔧 **Maintenance**: Automated testing and maintenance reminders
-    • ⚡ **Energy**: Smart energy management and device optimization
-    • 🔒 **Security**: Intelligent security monitoring and alerts
-
-    **AI Learning Process:**
-    • 📚 **Pattern Recognition**: Learns your daily routines and device usage
-    • 🎯 **Intelligent Triggers**: Creates automation based on learned behavior
-    • 📈 **Adaptive Rules**: Adjusts automation as your patterns change
-    • 🎛️ **Confidence Scoring**: Only triggers automation when confidence is high
-
-    **Learning Periods:**
-    • 1_week: Quick setup with basic pattern recognition
-    • 2_weeks: Balanced learning period (recommended)
-    • 1_month: Comprehensive pattern learning for complex automation
-
-    **Sampling Integration:**
-    • Complex pattern analysis during learning phase
-    • Intelligent rule generation from learned behaviors
-    • Adaptive automation adjustment over time
-
-    **Parameters:**
-    • automation_type: Type of automation - safety, maintenance, energy, security
-    • learning_period: AI learning period - 1_week, 2_weeks, 1_month (default: 2_weeks)
-    • confidence_threshold: Minimum confidence for triggers (0.5-0.95, default: 0.8)
-    """,
-)
+@app.tool(name="configure_smart_automation")
 async def setup_smart_automation(
     automation_type: str,
     learning_period: str = "2_weeks",
     confidence_threshold: float = 0.8,
-) -> Dict[str, Any]:
-    """Set up intelligent automation using AI learning and sampling."""
+) -> ToolResult:
+    """Configure Smart Safety Automation.
+
+    Set up adaptive automation rules that learn your lifestyle patterns for proactive safety.
+    """
     from .tools.ai_orchestration import setup_smart_automation as tool_func
 
-    return await tool_func(automation_type, learning_period, confidence_threshold)
+    result = await tool_func(automation_type, learning_period, confidence_threshold)
+    return ToolResult(content=str(result))
 
 
 # ===== About & General Help Tools =====
 
 
-@app.tool(
-    name="about_server",
-    description="""
-    🔥 **Learn About Your Nest Protect MCP Server**
+@app.tool(name="get_server_info")
+async def about_server(level: str = "simple") -> ToolResult:
+    """Get Server Information.
 
-    Get comprehensive information about this server's capabilities, supported devices,
-    and how to get started with home automation using your Nest Protect devices.
-
-    **Information Levels:**
-    • 📋 **Simple**: Quick overview and basic capabilities
-    • ⚙️ **Intermediate**: Detailed features and tool categories
-    • 🔬 **Technical**: Implementation details and API integration
-
-    Perfect for understanding what this server can do before diving into specific tools!
-
-    **Parameters:**
-    • level: Detail level (simple, intermediate, technical) - default: simple
-    """,
-)
-async def about_server(level: str = "simple") -> Dict[str, Any]:
-    """Get information about what this MCP server is and what it can do."""
+    Retrieve version, capabilities, and operational documentation for this Nest Protect MCP instance.
+    """
     from .tools.about_tool import about_server as tool_func
 
-    return await tool_func(level)
+    result = await tool_func(level)
+    return ToolResult(content=str(result))
 
 
-@app.tool("get_supported_devices")
-async def get_supported_devices(params: EmptyParams) -> Dict[str, Any]:
-    """Get detailed information about supported and planned devices."""
+@app.tool(name="list_supported_hardware")
+async def get_supported_devices(params: EmptyParams) -> ToolResult:
+    """List Supported Nest Hardware.
+
+    Retrieve detailed technical specifications for supported Nest Protect generations and models.
+    """
     from .tools.about_tool import get_supported_devices as tool_func
 
-    return await tool_func()
+    result = await tool_func()
+    return ToolResult(content=str(result))
 
 
 # ===== Prompts (skills) for agentic workflows =====
@@ -715,7 +685,10 @@ except ImportError:
 
 if Message is not None:
 
-    @app.prompt(name="nest_protect_setup", description="Guide to set up Nest Protect MCP auth (Google OAuth, refresh token).")
+    @app.prompt(
+        name="nest_protect_setup",
+        description="Guide to set up Nest Protect MCP auth (Google OAuth, refresh token).",
+    )
     def prompt_nest_protect_setup() -> "Message":
         return Message(
             "To use Nest Protect MCP you need one-time Google OAuth setup: "
@@ -725,14 +698,20 @@ if Message is not None:
             "4) Start the server or web_sota; it will load .env and use the refresh token for API access."
         )
 
-    @app.prompt(name="nest_protect_safety_check", description="How to run a safety test on a Nest Protect device.")
+    @app.prompt(
+        name="nest_protect_safety_check",
+        description="How to run a safety test on a Nest Protect device.",
+    )
     def prompt_nest_protect_safety_check() -> "Message":
         return Message(
             "Use the run_safety_check tool with device_id (from list_devices) and test_type: full, smoke, co, or heat. "
             "This triggers the device self-test. Prefer test_type 'full' for a complete check."
         )
 
-    @app.prompt(name="nest_protect_overview", description="Overview of Nest Protect MCP tools and capabilities.")
+    @app.prompt(
+        name="nest_protect_overview",
+        description="Overview of Nest Protect MCP tools and capabilities.",
+    )
     def prompt_nest_protect_overview() -> "Message":
         return Message(
             "Nest Protect MCP provides: list_devices, get_device_status, get_device_events for status; "

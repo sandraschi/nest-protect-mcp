@@ -1,0 +1,31 @@
+# Nest Protect MCP Server - Full Repository Reference (FastMCP 3.2.0)
+
+🔥 **Nest Protect MCP** is a high-fidelity, production-grade interface to Google Nest Protect devices. 
+
+## 🏗️ Architecture
+- **Framework**: FastMCP 3.2.0 (`FastMCPApp`)
+- **Transport**: Stdio (default), HTTP (optional)
+- **State Management**: `StateManager` with `.env` and `config.toml` persistence.
+- **Tools Layout**: Modular registration in `src/nest_protect_mcp/fastmcp_server.py`.
+
+## 🛠️ Core Tools (SOTA 3-4-100)
+- `list_devices`: 🔥 **Discover Nest Protect Devices** - List all detectors, room locations, and online status with rich UI cards.
+- `get_device_status`: 📊 **Get Device Health Status** - Real-time battery, smoke, CO, and connectivity metrics.
+- `hush_alarm`: 🔇 **Silence Active Alarm Device** - Temporarily hush smoke or CO alarms for maintenance.
+- `run_safety_check`: 🔨 **Execute Device Safety Test** - Trigger full, smoke, or CO self-tests.
+- `sound_alarm`: 🚨 **Test Alarm System Sounds** - Verify siren and voice alerts for emergency readiness.
+- `assess_home_safety`: 🏠 **Assess Home Safety AI** - Intelligent analysis across all devices with sampling hooks.
+
+## ⚙️ Configuration
+- `.env`: `NEST_CLIENT_ID`, `NEST_CLIENT_SECRET`, `NEST_PROJECT_ID`, `NEST_REFRESH_TOKEN`.
+- `pyproject.toml`: `fastmcp>=3.2.0`, `psutil>=5.9.0`.
+
+## 🚀 Operations
+- `just serve`: Starts the HTTP server on port 10753.
+- `just test`: Runs the pytest suite.
+- `just dev`: Full CI-style verification (sync, lint, test).
+
+## 🛡️ Security
+- **SSRF Hardening**: All API calls use validated enterprise device paths.
+- **Path Traversal**: Config and export/import paths are strictly sanitized.
+- **Lifespan**: Resource cleanup on server shutdown via `@app.lifespan`.

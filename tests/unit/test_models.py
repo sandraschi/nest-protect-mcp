@@ -5,8 +5,6 @@ Unit tests for Nest Protect models.
 from datetime import datetime, timezone
 
 import pytest
-from pydantic import ValidationError
-
 from nest_protect_mcp.models import (
     ProtectAlarmState,
     ProtectAlarmType,
@@ -16,6 +14,7 @@ from nest_protect_mcp.models import (
     ProtectDeviceState,
     ProtectEvent,
 )
+from pydantic import ValidationError
 
 
 class TestProtectAlarmState:

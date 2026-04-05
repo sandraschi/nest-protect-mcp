@@ -10,7 +10,6 @@ import os
 import signal
 import sys
 from pathlib import Path
-from typing import List
 
 import uvicorn
 from dotenv import load_dotenv
@@ -253,7 +252,7 @@ class NestProtectCLI:
             await self.server.stop()
         self.loop.stop()
 
-    def _print_devices_table(self, devices: List[ProtectDeviceState]) -> None:
+    def _print_devices_table(self, devices: list[ProtectDeviceState]) -> None:
         """Print devices in a table format."""
         from tabulate import tabulate
 

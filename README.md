@@ -1,4 +1,4 @@
-# 🔥 Nest Protect MCP Server
+# Nest Protect MCP Server
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -9,11 +9,11 @@
 [![codecov](https://codecov.io/gh/sandraschi/nest-protect-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/sandraschi/nest-protect-mcp)
 [![Status: Production Ready](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/sandraschi/nest-protect-mcp)
 
-## 🏠 Overview
+##  Overview
 
 The Nest Protect MCP Server is a **production-ready** FastMCP 3.1 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
 
-### ✅ **Current Status: FULLY OPERATIONAL - SOTA UPGRADE COMPLETE**
+###  **Current Status: FULLY OPERATIONAL - SOTA UPGRADE COMPLETE**
 - **20 Production Tools** - Complete device management suite
 - **Real API Integration** - No mocks, authentic Google Smart Device Management API v1
 - **FastMCP 3.1** - Sampling, agentic workflows, prompts (skills)
@@ -23,14 +23,14 @@ The Nest Protect MCP Server is a **production-ready** FastMCP 3.1 compatible ser
 - **Comprehensive Assets** - 22KB prompt templates and documentation
 - **Ruff Linted** - 100% code quality compliance
 
-### 🔧 Key Components
+###  Key Components
 
 1. **MCP Server**: Implements the Model Context Protocol (MCP) v2.13.0 standard with MCPB packaging
 2. **Nest API Integration**: Handles OAuth 2.0 authentication and communication with Google's Smart Device Management API v1
 3. **Device Management**: Provides 20 production-ready tools to discover, monitor, and control Nest Protect devices
 4. **MCPB Assets**: Comprehensive prompt templates (22KB) and documentation for Claude Desktop integration
 
-### 🏗️ Architecture
+###  Architecture
 
 ```mermaid
 graph LR
@@ -47,37 +47,37 @@ graph LR
     style F fill:#bbf,stroke:#333
 ```
 
-## ✨ Features
+##  Features
 
-### 🔥 **Core Capabilities**
+###  **Core Capabilities**
 - **FastMCP 3.1 Compliance**: Sampling, agentic workflows, prompts (skills)
 - **Real Nest API Integration**: Authentic Google Smart Device Management API v1 calls with OAuth 2.0
 - **20 Production Tools**: Complete device management and control suite
 - **MCPB Packaging**: Claude Desktop optimized deployment with comprehensive assets
 - **State-of-the-Art Security**: OAuth 2.0 authentication with automatic token refresh
 
-### 🏠 **Nest Protect Integration**
+###  **Nest Protect Integration**
 - **Device Discovery**: List all Nest Protect devices in your home
 - **Real-time Status**: Monitor battery, connectivity, and alarm states
 - **Device Control**: Hush alarms, run safety checks, adjust settings
 - **Alarm Testing**: Sound alarms for testing purposes
 - **Event History**: Access device events and activity logs
 
-### 🔧 **Technical Features**
+###  **Technical Features**
 - **OAuth 2.0 Authentication**: Secure Google API integration
 - **State Management**: Persistent device state and configuration
 - **Error Handling**: Comprehensive error reporting and recovery
 - **Pydantic V2 Models**: Modern data validation and serialization
 - **Async/Await**: Full asynchronous operation for optimal performance
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Python 3.10 or later
 - Google Cloud Project with Smart Device Management API enabled
 - Nest Protect devices added to your Google Home/Nest account
 
-### 🔑 Authentication Setup
+###  Authentication Setup
 
 Before using the Nest Protect MCP server, you need to set up authentication with Google's API:
 
@@ -100,19 +100,19 @@ Before using the Nest Protect MCP server, you need to set up authentication with
    NEST_PROJECT_ID=your_project_id
    ```
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
 - Python 3.12+
 
-### 📦 Quick Start
+###  Quick Start
 Run immediately via `uvx`:
 ```bash
 uvx nest-protect-mcp
 ```
 
-### 🎯 Claude Desktop Integration
+###  Claude Desktop Integration
 Add to your `claude_desktop_config.json`:
 ```json
 "mcpServers": {
@@ -137,19 +137,19 @@ Add to your `claude_desktop_config.json`:
    - `nest_refresh_token`: Your OAuth refresh token
 5. **Start using** - Claude will automatically connect to your Nest Protect devices
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
 - Python 3.12+
 
-### 📦 Quick Start
+###  Quick Start
 Run immediately via `uvx`:
 ```bash
 uvx nest-protect-mcp
 ```
 
-### 🎯 Claude Desktop Integration
+###  Claude Desktop Integration
 Add to your `claude_desktop_config.json`:
 ```json
 "mcpServers": {
@@ -159,7 +159,7 @@ Add to your `claude_desktop_config.json`:
   }
 }
 ```
-## 🏃 Running the Server
+##  Running the Server
 
 ### MCP Mode (Recommended for IDE Integration)
 
@@ -194,26 +194,26 @@ docker run -d \
   sandraschi/nest-protect-mcp:latest
 ```
 
-## 🔧 Available MCP Tools
+##  Available MCP Tools
 
 The server provides **20 production-ready tools** organized into categories:
 
-### 📊 **Device Status Tools**
+###  **Device Status Tools**
 1. **`get_devices`** - Get a list of all Nest Protect devices
 2. **`get_device`** - Get detailed information about a specific device
 3. **`get_alarm_state`** - Get current alarm states and battery health
 
-### 🎛️ **Device Control Tools**
+###  **Device Control Tools**
 4. **`silence_alarm`** - Hush active alarms on devices
 5. **`run_test`** - Execute device tests and diagnostics
 
-### 🔧 **System Status Tools**
+###  **System Status Tools**
 6. **Enhanced logging** - Comprehensive debugging and monitoring
 7. **State management** - Persistent configuration and device state
 
-## 📦 MCPB Package
+##  MCPB Package
 
-### 🚀 **MCPB Deployment - State of the Art**
+###  **MCPB Deployment - State of the Art**
 
 The Nest Protect MCP server includes a **production-ready MCPB package** optimized for Claude Desktop and modern MCP environments:
 
@@ -223,13 +223,13 @@ The Nest Protect MCP server includes a **production-ready MCPB package** optimiz
 ```
 
 **MCPB Features:**
-- ✅ **20 Production Tools** - Complete device management suite
-- ✅ **22KB Comprehensive Assets** - Extensive prompt templates and documentation
-- ✅ **FastMCP 2.13.0** - Latest MCP specification compliance
-- ✅ **OAuth 2.0 Security** - Secure authentication with automatic token refresh
-- ✅ **Claude Desktop Optimized** - Seamless drag-and-drop installation
+-  **20 Production Tools** - Complete device management suite
+-  **22KB Comprehensive Assets** - Extensive prompt templates and documentation
+-  **FastMCP 2.13.0** - Latest MCP specification compliance
+-  **OAuth 2.0 Security** - Secure authentication with automatic token refresh
+-  **Claude Desktop Optimized** - Seamless drag-and-drop installation
 
-### 🎨 **MCPB Assets Included**
+###  **MCPB Assets Included**
 
 The MCPB package includes **comprehensive prompt templates and documentation**:
 
@@ -253,33 +253,33 @@ The MCPB package includes **comprehensive prompt templates and documentation**:
 5. **Configuration** (5 tools): get_config, update_config, reset_config, export_config, import_config
 6. **Help & About** (5 tools): list_available_tools, get_tool_help, search_tools, about_server, get_supported_devices
 
-## 🚀 CI/CD Pipeline
+##  CI/CD Pipeline
 
-### 🔄 **Automated Workflows**
+###  **Automated Workflows**
 
-The repository includes a **comprehensive CI/CD pipeline** with modern best practices:
+The repository includes a **comprehensive CI/CD pipeline** with modern  practices:
 
 #### **Quality Assurance**
-- ✅ **Multi-OS testing** (Ubuntu, Windows, macOS)
-- ✅ **Multi-Python support** (3.10-3.13)
-- ✅ **Security scanning** (vulnerability checks)
-- ✅ **Code quality analysis** (mypy, bandit, radon)
-- ✅ **Performance benchmarking**
+-  **Multi-OS testing** (Ubuntu, Windows, macOS)
+-  **Multi-Python support** (3.10-3.13)
+-  **Security scanning** (vulnerability checks)
+-  **Code quality analysis** (mypy, bandit, radon)
+-  **Performance benchmarking**
 
 #### **Automated Deployment**
-- ✅ **Semantic versioning** with automated releases
-- ✅ **PyPI publishing** for stable releases
-- ✅ **GitHub releases** with changelog generation
-- ✅ **Docker container builds** (multi-architecture)
-- ✅ **Documentation deployment** (GitHub Pages)
+-  **Semantic versioning** with automated releases
+-  **PyPI publishing** for stable releases
+-  **GitHub releases** with changelog generation
+-  **Docker container builds** (multi-architecture)
+-  **Documentation deployment** (GitHub Pages)
 
 #### **Maintenance & Monitoring**
-- ✅ **Dependency updates** (automated security patches)
-- ✅ **Repository cleanup** (workflow run management)
-- ✅ **Notification system** (Slack/Discord integration)
-- ✅ **Performance tracking** (benchmarking)
+-  **Dependency updates** (automated security patches)
+-  **Repository cleanup** (workflow run management)
+-  **Notification system** (Slack/Discord integration)
+-  **Performance tracking** (benchmarking)
 
-### 🏗️ **Modern Development Practices**
+###  **Modern Development Practices**
 
 #### **Version Management**
 ```toml
@@ -314,14 +314,14 @@ FROM python:3.11-slim as base
 }
 ```
 
-## 🔄 Troubleshooting
+##  Troubleshooting
 
 ### **Recent Fixes Applied**
 - **FastMCP 3.1**: Sampling, agentic workflows, prompts (skills); see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) for auth.
 - **MCPB Packaging**: Claude Desktop optimized; run `scripts/get_nest_refresh_token.py` for refresh token.
 - **Webapp**: Onboarding page and Help modal with setup steps.
 
-### 🚨 **Common Issues & Solutions**
+###  **Common Issues & Solutions**
 
 #### **Server Disconnects from Claude Desktop**
 **Symptom**: Server starts but disconnects after a few seconds
@@ -347,7 +347,7 @@ FROM python:3.11-slim as base
 
 #### **Tool Help Not Working**
 **Symptom**: "get tool help" has difficulties with parameters
-**Solution**: ✅ **FIXED** - Updated FastMCP tool registration with proper syntax
+**Solution**:  **FIXED** - Updated FastMCP tool registration with proper syntax
 
 #### **Device Not Found**
 **Symptom**: No devices appear in tool responses
@@ -356,20 +356,20 @@ FROM python:3.11-slim as base
 2. Check authentication permissions
 3. Restart server after authentication
 
-### 🔍 **Enhanced Debugging**
+###  **Enhanced Debugging**
 The server now includes comprehensive logging:
 ```
-✅ === FASTMCP SERVER INITIALIZED ===
-✅ Tool registration complete
-✅ Authentication state loaded
-✅ Device discovery started
+ === FASTMCP SERVER INITIALIZED ===
+ Tool registration complete
+ Authentication state loaded
+ Device discovery started
 ```
 
 If you see errors, check the detailed logs for specific failure points.
 
-## 📚 Documentation
+##  Documentation
 
-### **📖 Complete Documentation**
+### ** Complete Documentation**
 
 For detailed documentation, please refer to the [docs](docs/) directory:
 
@@ -381,21 +381,21 @@ For detailed documentation, please refer to the [docs](docs/) directory:
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Tools Reference](docs/TOOLS_REFERENCE.md)** - Complete tool documentation
 
-### **🚀 Quick Reference**
+### ** Quick Reference**
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
 - Python 3.12+
 
-### 📦 Quick Start
+###  Quick Start
 Run immediately via `uvx`:
 ```bash
 uvx nest-protect-mcp
 ```
 
-### 🎯 Claude Desktop Integration
+###  Claude Desktop Integration
 Add to your `claude_desktop_config.json`:
 ```json
 "mcpServers": {
@@ -429,7 +429,7 @@ python -m nest_protect_mcp.auth
 python -m nest_protect_mcp --status
 ```
 
-## 🌐 REST API Reference
+##  REST API Reference
 
 When running in HTTP mode, the following endpoints are available:
 
@@ -438,7 +438,7 @@ When running in HTTP mode, the following endpoints are available:
 - `GET /api/devices/{device_id}` - Get device details
 - `POST /api/devices/{device_id}/command` - Send command to device
 
-## 🔐 Security
+##  Security
 
 - **OAuth 2.0 Authentication** - Secure Google API integration
 - **Token Management** - Automatic refresh with secure storage
@@ -446,15 +446,15 @@ When running in HTTP mode, the following endpoints are available:
 - **Input Validation** - Pydantic V2 model validation
 - **Security Scanning** - Automated vulnerability checks
 
-## 🚀 Deployment
+##  Deployment
 
-### **📦 MCPB Package**
+### ** MCPB Package**
 ```bash
 # Deploy MCPB package (Claude Desktop)
 # Download and drag nest-protect-mcp-1.0.0.mcpb into Claude Desktop
 ```
 
-### **🐳 Docker Container**
+### ** Docker Container**
 ```bash
 # Run container
 docker run -d \
@@ -463,12 +463,12 @@ docker run -d \
   sandraschi/nest-protect-mcp:latest
 ```
 
-### **☁️ Cloud Deployment**
+### ** Cloud Deployment**
 - **Railway** - One-click deployment available
 - **Heroku** - Container-based deployment
 - **AWS/GCP** - Container orchestration support
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
@@ -488,7 +488,7 @@ pytest
 pre-commit run --all-files
 ```
 
-## 📈 Performance
+##  Performance
 
 - **Multi-threaded API calls** for optimal performance
 - **Connection pooling** for efficient HTTP requests
@@ -496,7 +496,7 @@ pre-commit run --all-files
 - **Async/await patterns** for non-blocking operations
 - **Memory efficient** device state management
 
-## 🔄 Updates & Maintenance
+##  Updates & Maintenance
 
 The repository includes **automated maintenance workflows**:
 
@@ -505,21 +505,21 @@ The repository includes **automated maintenance workflows**:
 - **Performance monitoring** and benchmarking
 - **Documentation updates** with each release
 
-## 📋 Changelog
+##  Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-## 📧 Support
+##  Support
 
 For support, please:
 1. Check the [troubleshooting guide](docs/TROUBLESHOOTING.md)
 2. Search existing [issues](https://github.com/sandraschi/nest-protect-mcp/issues)
 3. Open a new issue with detailed information
 
-## 📜 License
+##  License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Made with ❤️ for the smart home community**
+**Made with  for the smart home community**

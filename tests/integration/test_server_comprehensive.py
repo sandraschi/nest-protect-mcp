@@ -6,12 +6,11 @@ import time
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from nest_protect_mcp.server import NestProtectMCP
-
 from nest_protect_mcp.exceptions import (
     NestConnectionError,
 )
 from nest_protect_mcp.models import ProtectDeviceState
+from nest_protect_mcp.server import NestProtectMCP
 
 
 class TestServerInitialization:
@@ -474,7 +473,7 @@ class TestServerToolRegistration:
 
     def test_tool_schemas_available(self, sample_config):
         """Test that tool schemas are available."""
-        server = NestProtectMCP(sample_config)
+        NestProtectMCP(sample_config)
 
         # Tool schemas should be available
         from nest_protect_mcp.tools import tool_schemas

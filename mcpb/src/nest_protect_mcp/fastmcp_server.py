@@ -7,7 +7,7 @@ Conversational tool returns and sampling capabilities enabled.
 
 import logging
 import sys
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -83,7 +83,7 @@ class LedBrightnessParams(BaseModel):
 class ProcessStatusParams(BaseModel):
     """Parameters for process status."""
 
-    pid: Optional[int] = Field(
+    pid: int | None = Field(
         None, description="Process ID to check (default: current process)"
     )
 
@@ -98,7 +98,7 @@ class SearchToolsParams(BaseModel):
     """Parameters for searching tools."""
 
     query: str = Field(..., description="Search query")
-    search_in: List[str] = Field(
+    search_in: list[str] = Field(
         ["name", "description"], description="Fields to search in"
     )
 
@@ -109,7 +109,7 @@ class OAuthFlowParams(BaseModel):
     redirect_uri: str = Field(
         "http://localhost:8000/auth/callback", description="Redirect URI for auth code"
     )
-    state: Optional[str] = Field(None, description="CSRF protection state")
+    state: str | None = Field(None, description="CSRF protection state")
     open_browser: bool = Field(True, description="Open auth URL in browser")
 
 
@@ -118,7 +118,7 @@ class OAuthCallbackParams(BaseModel):
 
     code: str = Field(..., description="Auth code from OAuth callback")
     state: str = Field(..., description="State param from OAuth")
-    expected_state: Optional[str] = Field(None, description="Expected CSRF state")
+    expected_state: str | None = Field(None, description="Expected CSRF state")
     redirect_uri: str = Field(
         "http://localhost:8000/auth/callback",
         description="Redirect URI used in auth request",
@@ -134,7 +134,7 @@ class RefreshTokenParams(BaseModel):
 class ConfigSectionParams(BaseModel):
     """Parameters for getting config section."""
 
-    section: Optional[str] = Field(
+    section: str | None = Field(
         None, description="Specific section to retrieve (optional)"
     )
 
@@ -142,7 +142,7 @@ class ConfigSectionParams(BaseModel):
 class UpdateConfigParams(BaseModel):
     """Parameters for updating config."""
 
-    updates: Dict[str, Any] = Field(
+    updates: dict[str, Any] = Field(
         ..., description="Dictionary of configuration updates"
     )
     save_to_file: bool = Field(
@@ -196,7 +196,7 @@ class ArmDisarmParams(BaseModel):
     action: Literal["arm_home", "arm_away", "disarm"] = Field(
         ..., description="Security action to perform"
     )
-    passcode: Optional[str] = Field(
+    passcode: str | None = Field(
         None, description="Security passcode (required for disarm)"
     )
 
@@ -216,20 +216,20 @@ class AboutParams(BaseModel):
     name="list_devices",
     description="""
     🔥 **Discover Your Nest Protect Devices**
-    
+
     Get a comprehensive list of all Nest Protect smoke and CO detectors in your home.
-    
+
     **Returns:**
     • Device IDs and friendly names
     • Device models (1st Gen, 2nd Gen, etc.)
     • Room locations and assignments
     • Online/offline status
     • Last activity timestamps
-    
+
     Perfect for getting an overview of your entire Nest Protect ecosystem.
     """,
 )
-async def list_devices() -> Dict[str, Any]:
+async def list_devices() -> dict[str, Any]:
     """Get a list of all Nest Protect devices."""
     try:
         logger.debug("=== LIST_DEVICES TOOL CALLED ===")
@@ -253,9 +253,9 @@ async def list_devices() -> Dict[str, Any]:
     name="get_device_status",
     description="""
     📊 **Get Real-Time Device Status**
-    
+
     Get comprehensive status information for a specific Nest Protect device.
-    
+
     **What You'll See:**
     • 🔋 Battery level and health status
     • 💨 Smoke detector status and sensitivity
@@ -263,14 +263,14 @@ async def list_devices() -> Dict[str, Any]:
     • 📶 Wi-Fi connectivity and signal strength
     • 🔧 Device health and diagnostic info
     • 📅 Last test date and maintenance alerts
-    
+
     Essential for monitoring device health and troubleshooting issues.
-    
+
     **Parameters:**
     • device_id: Full device ID (format: enterprises/project-id/devices/device-id)
     """,
 )
-async def get_device_status(device_id: str) -> Dict[str, Any]:
+async def get_device_status(device_id: str) -> dict[str, Any]:
     """Get status of a specific Nest Protect device."""
     from .tools.device_status import get_device_status as tool_func
 
@@ -278,7 +278,7 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
 
 
 @app.tool("get_device_events")
-async def get_device_events(params: DeviceEventsParams) -> Dict[str, Any]:
+async def get_device_events(params: DeviceEventsParams) -> dict[str, Any]:
     """Get recent events for a Nest Protect device."""
     from .tools.device_status import get_device_events as tool_func
 
@@ -289,7 +289,7 @@ async def get_device_events(params: DeviceEventsParams) -> Dict[str, Any]:
 
 
 @app.tool("hush_alarm")
-async def hush_alarm(params: HushAlarmParams) -> Dict[str, Any]:
+async def hush_alarm(params: HushAlarmParams) -> dict[str, Any]:
     """Silence an active alarm on a Nest Protect device."""
     from .tools.device_control import hush_alarm as tool_func
 
@@ -297,7 +297,7 @@ async def hush_alarm(params: HushAlarmParams) -> Dict[str, Any]:
 
 
 @app.tool("run_safety_check")
-async def run_safety_check(params: SafetyCheckParams) -> Dict[str, Any]:
+async def run_safety_check(params: SafetyCheckParams) -> dict[str, Any]:
     """Run a safety check on a Nest Protect device."""
     from .tools.device_control import run_safety_check as tool_func
 
@@ -305,7 +305,7 @@ async def run_safety_check(params: SafetyCheckParams) -> Dict[str, Any]:
 
 
 @app.tool("set_led_brightness")
-async def set_led_brightness(params: LedBrightnessParams) -> Dict[str, Any]:
+async def set_led_brightness(params: LedBrightnessParams) -> dict[str, Any]:
     """Set LED brightness for a Nest Protect device."""
     from .tools.device_control import set_led_brightness as tool_func
 
@@ -316,21 +316,21 @@ async def set_led_brightness(params: LedBrightnessParams) -> Dict[str, Any]:
     name="sound_alarm",
     description="""
     🚨 **Test Alarm Systems (Use Responsibly!)**
-    
+
     Trigger real alarm sounds on your Nest Protect devices for testing purposes.
-    
+
     **⚠️ IMPORTANT SAFETY NOTES:**
     • Only use for testing and maintenance
     • Warn household members before testing
     • Verify alarms work properly in emergencies
     • Keep duration short to avoid false emergency responses
-    
+
     **Alarm Types:**
     • 🔥 **Smoke**: Fire detection alarm (loud, pulsing)
     • ☁️ **CO**: Carbon monoxide alarm (distinct pattern)
     • 🔒 **Security**: Intrusion/breach alarm (continuous)
     • 🆘 **Emergency**: Panic button (immediate response)
-    
+
     **Parameters:**
     • device_id: Target Nest Protect device ID (enterprises/project-id/devices/device-id)
     • alarm_type: Type of alarm (smoke, co, security, emergency) - default: smoke
@@ -343,7 +343,7 @@ async def sound_alarm(
     alarm_type: str = "smoke",
     duration_seconds: int = 10,
     volume: int = 100,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Sound an alarm on a Nest device for testing purposes."""
     from .tools.device_control import sound_alarm as tool_func
 
@@ -351,7 +351,7 @@ async def sound_alarm(
 
 
 @app.tool("arm_disarm_security")
-async def arm_disarm_security(params: ArmDisarmParams) -> Dict[str, Any]:
+async def arm_disarm_security(params: ArmDisarmParams) -> dict[str, Any]:
     """Arm or disarm Nest security system (Nest Guard/Secure)."""
     from .tools.device_control import arm_disarm_security as tool_func
 
@@ -362,7 +362,7 @@ async def arm_disarm_security(params: ArmDisarmParams) -> Dict[str, Any]:
 
 
 @app.tool("get_system_status")
-async def get_system_status(params: EmptyParams) -> Dict[str, Any]:
+async def get_system_status(params: EmptyParams) -> dict[str, Any]:
     """Get system status and metrics."""
     from .tools.system_status import get_system_status as tool_func
 
@@ -370,7 +370,7 @@ async def get_system_status(params: EmptyParams) -> Dict[str, Any]:
 
 
 @app.tool("get_process_status")
-async def get_process_status(params: ProcessStatusParams) -> Dict[str, Any]:
+async def get_process_status(params: ProcessStatusParams) -> dict[str, Any]:
     """Get status of the Nest Protect MCP process."""
     from .tools.system_status import get_process_status as tool_func
 
@@ -378,7 +378,7 @@ async def get_process_status(params: ProcessStatusParams) -> Dict[str, Any]:
 
 
 @app.tool("get_api_status")
-async def get_api_status(params: EmptyParams) -> Dict[str, Any]:
+async def get_api_status(params: EmptyParams) -> dict[str, Any]:
     """Get status of the Nest API connection."""
     from .tools.system_status import get_api_status as tool_func
 
@@ -389,7 +389,7 @@ async def get_api_status(params: EmptyParams) -> Dict[str, Any]:
 
 
 @app.tool("list_available_tools")
-async def list_available_tools(params: EmptyParams) -> Dict[str, Any]:
+async def list_available_tools(params: EmptyParams) -> dict[str, Any]:
     """List all available tools with their descriptions."""
     from .tools.help_tool import list_available_tools as tool_func
 
@@ -397,7 +397,7 @@ async def list_available_tools(params: EmptyParams) -> Dict[str, Any]:
 
 
 @app.tool("get_tool_help")
-async def get_tool_help(params: ToolHelpParams) -> Dict[str, Any]:
+async def get_tool_help(params: ToolHelpParams) -> dict[str, Any]:
     """Get detailed help for a specific tool."""
     from .tools.help_tool import get_tool_help as tool_func
 
@@ -405,7 +405,7 @@ async def get_tool_help(params: ToolHelpParams) -> Dict[str, Any]:
 
 
 @app.tool("search_tools")
-async def search_tools(params: SearchToolsParams) -> Dict[str, Any]:
+async def search_tools(params: SearchToolsParams) -> dict[str, Any]:
     """Search for tools by keyword or description."""
     from .tools.help_tool import search_tools as tool_func
 
@@ -416,7 +416,7 @@ async def search_tools(params: SearchToolsParams) -> Dict[str, Any]:
 
 
 @app.tool("initiate_oauth_flow")
-async def initiate_oauth_flow(params: OAuthFlowParams) -> Dict[str, Any]:
+async def initiate_oauth_flow(params: OAuthFlowParams) -> dict[str, Any]:
     """Start OAuth 2.0 flow for Nest API."""
     from .tools.auth_tools import initiate_oauth_flow as tool_func
 
@@ -424,7 +424,7 @@ async def initiate_oauth_flow(params: OAuthFlowParams) -> Dict[str, Any]:
 
 
 @app.tool("handle_oauth_callback")
-async def handle_oauth_callback(params: OAuthCallbackParams) -> Dict[str, Any]:
+async def handle_oauth_callback(params: OAuthCallbackParams) -> dict[str, Any]:
     """Handle OAuth 2.0 callback from Nest API."""
     from .tools.auth_tools import handle_oauth_callback as tool_func
 
@@ -434,7 +434,7 @@ async def handle_oauth_callback(params: OAuthCallbackParams) -> Dict[str, Any]:
 
 
 @app.tool("refresh_access_token")
-async def refresh_access_token(params: RefreshTokenParams) -> Dict[str, Any]:
+async def refresh_access_token(params: RefreshTokenParams) -> dict[str, Any]:
     """Refresh OAuth 2.0 access token."""
     from .tools.auth_tools import refresh_access_token as tool_func
 
@@ -445,7 +445,7 @@ async def refresh_access_token(params: RefreshTokenParams) -> Dict[str, Any]:
 
 
 @app.tool("get_config")
-async def get_config(params: ConfigSectionParams) -> Dict[str, Any]:
+async def get_config(params: ConfigSectionParams) -> dict[str, Any]:
     """Get current configuration."""
     from .tools.config_tools import get_config as tool_func
 
@@ -453,7 +453,7 @@ async def get_config(params: ConfigSectionParams) -> Dict[str, Any]:
 
 
 @app.tool("update_config")
-async def update_config(params: UpdateConfigParams) -> Dict[str, Any]:
+async def update_config(params: UpdateConfigParams) -> dict[str, Any]:
     """Update configuration values."""
     from .tools.config_tools import update_config as tool_func
 
@@ -461,7 +461,7 @@ async def update_config(params: UpdateConfigParams) -> Dict[str, Any]:
 
 
 @app.tool("reset_config")
-async def reset_config(params: ResetConfigParams) -> Dict[str, Any]:
+async def reset_config(params: ResetConfigParams) -> dict[str, Any]:
     """Reset configuration to defaults."""
     from .tools.config_tools import reset_config as tool_func
 
@@ -469,7 +469,7 @@ async def reset_config(params: ResetConfigParams) -> Dict[str, Any]:
 
 
 @app.tool("export_config")
-async def export_config(params: ExportConfigParams) -> Dict[str, Any]:
+async def export_config(params: ExportConfigParams) -> dict[str, Any]:
     """Export current configuration to a file."""
     from .tools.config_tools import export_config as tool_func
 
@@ -477,7 +477,7 @@ async def export_config(params: ExportConfigParams) -> Dict[str, Any]:
 
 
 @app.tool("import_config")
-async def import_config(params: ImportConfigParams) -> Dict[str, Any]:
+async def import_config(params: ImportConfigParams) -> dict[str, Any]:
     """Import configuration from a file."""
     from .tools.config_tools import import_config as tool_func
 
@@ -523,8 +523,8 @@ async def import_config(params: ImportConfigParams) -> Dict[str, Any]:
 async def assess_home_safety(
     include_recommendations: bool = True,
     assessment_scope: str = "comprehensive",
-    focus_areas: List[str] = None,
-) -> Dict[str, Any]:
+    focus_areas: list[str] | None = None,
+) -> dict[str, Any]:
     """AI-powered home safety assessment with sampling capabilities."""
     from .tools.ai_orchestration import assess_home_safety as tool_func
 
@@ -565,8 +565,8 @@ async def assess_home_safety(
     """,
 )
 async def coordinate_emergency_response(
-    emergency_type: str, affected_devices: List[str], response_priority: str = "high"
-) -> Dict[str, Any]:
+    emergency_type: str, affected_devices: list[str], response_priority: str = "high"
+) -> dict[str, Any]:
     """Coordinate emergency response using AI orchestration and sampling."""
     from .tools.ai_orchestration import coordinate_emergency_response as tool_func
 
@@ -614,7 +614,7 @@ async def predict_maintenance_needs(
     analysis_depth: str = "detailed",
     time_horizon: str = "1_month",
     include_cost_estimates: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Predict future maintenance needs using AI analysis and sampling."""
     from .tools.ai_orchestration import predict_maintenance_needs as tool_func
 
@@ -661,7 +661,7 @@ async def setup_smart_automation(
     automation_type: str,
     learning_period: str = "2_weeks",
     confidence_threshold: float = 0.8,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Set up intelligent automation using AI learning and sampling."""
     from .tools.ai_orchestration import setup_smart_automation as tool_func
 
@@ -690,7 +690,7 @@ async def setup_smart_automation(
     • level: Detail level (simple, intermediate, technical) - default: simple
     """,
 )
-async def about_server(level: str = "simple") -> Dict[str, Any]:
+async def about_server(level: str = "simple") -> dict[str, Any]:
     """Get information about what this MCP server is and what it can do."""
     from .tools.about_tool import about_server as tool_func
 
@@ -698,7 +698,7 @@ async def about_server(level: str = "simple") -> Dict[str, Any]:
 
 
 @app.tool("get_supported_devices")
-async def get_supported_devices(params: EmptyParams) -> Dict[str, Any]:
+async def get_supported_devices(params: EmptyParams) -> dict[str, Any]:
     """Get detailed information about supported and planned devices."""
     from .tools.about_tool import get_supported_devices as tool_func
 

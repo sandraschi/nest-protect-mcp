@@ -5,33 +5,28 @@ This backend provides REST API endpoints and WebSocket connections
 for the MCP testing webapp, integrating with the Nest Protect MCP server.
 """
 
-import asyncio
-import json
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
+import socketio
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import socketio
 
 # Add the MCP server to the path
 mcp_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(mcp_path))
 
-from nest_protect_mcp.fastmcp_server import app as mcp_app
 from nest_protect_mcp.state_manager import get_app_state
-from nest_protect_mcp.tools import device_status, device_control, ai_orchestration
+from nest_protect_mcp.tools import ai_orchestration, device_control, device_status
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -39,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Nest Protect MCP Testing API",
     description="FastAPI backend for MCP testing webapp with conversational AI support",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware
@@ -53,72 +48,80 @@ app.add_middleware(
 
 # Socket.IO server
 sio = socketio.AsyncServer(
-    async_mode='asgi',
-    cors_allowed_origins=["http://localhost:7770", "http://127.0.0.1:7770"]
+    async_mode="asgi",
+    cors_allowed_origins=["http://localhost:7770", "http://127.0.0.1:7770"],
 )
 
 # Combine FastAPI and Socket.IO
 socket_app = socketio.ASGIApp(sio, app)
 combined_app = socket_app
 
+
 # Pydantic models for API requests
 class DeviceTestRequest(BaseModel):
     device_id: str
     test_type: str = "full"
+
 
 class AlarmControlRequest(BaseModel):
     device_id: str
     action: str = "hush"
     duration_seconds: int = 180
 
+
 class SafetyAssessmentRequest(BaseModel):
     include_recommendations: bool = True
     assessment_scope: str = "comprehensive"
-    focus_areas: Optional[List[str]] = None
+    focus_areas: list[str] | None = None
+
 
 class EmergencyRequest(BaseModel):
     emergency_type: str
-    affected_devices: List[str]
+    affected_devices: list[str]
     response_priority: str = "high"
+
 
 class PredictiveMaintenanceRequest(BaseModel):
     analysis_depth: str = "detailed"
     time_horizon: str = "1_month"
     include_cost_estimates: bool = True
 
+
 # Global state for MCP integration
 mcp_state = get_app_state()
+
 
 # WebSocket event handlers
 @sio.event
 async def connect(sid, environ):
     logger.info(f"Client connected: {sid}")
-    await sio.emit('status', {'message': 'Connected to MCP testing server'}, to=sid)
+    await sio.emit("status", {"message": "Connected to MCP testing server"}, to=sid)
+
 
 @sio.event
 async def disconnect(sid):
     logger.info(f"Client disconnected: {sid}")
 
+
 @sio.event
 async def test_device(sid, data):
     """Handle device testing requests via WebSocket."""
     try:
-        device_id = data.get('device_id')
-        test_type = data.get('test_type', 'full')
+        device_id = data.get("device_id")
+        test_type = data.get("test_type", "full")
 
         # Run safety check
         result = await device_control.run_safety_check(device_id, test_type)
 
-        await sio.emit('test_result', {
-            'device_id': device_id,
-            'test_type': test_type,
-            'result': result
-        }, to=sid)
+        await sio.emit(
+            "test_result",
+            {"device_id": device_id, "test_type": test_type, "result": result},
+            to=sid,
+        )
 
     except Exception as e:
-        await sio.emit('error', {
-            'message': f'Device test failed: {str(e)}'
-        }, to=sid)
+        await sio.emit("error", {"message": f"Device test failed: {e!s}"}, to=sid)
+
 
 # REST API endpoints
 @app.get("/")
@@ -133,9 +136,10 @@ async def root():
             "Safety testing and diagnostics",
             "Conversational AI responses",
             "Emergency coordination",
-            "Predictive maintenance"
-        ]
+            "Predictive maintenance",
+        ],
     }
+
 
 @app.get("/api/health")
 async def health_check():
@@ -143,8 +147,9 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "mcp_connected": mcp_state.access_token is not None
+        "mcp_connected": mcp_state.access_token is not None,
     }
+
 
 @app.get("/api/devices")
 async def list_devices():
@@ -159,9 +164,10 @@ async def list_devices():
             content={
                 "success": False,
                 "error": "Failed to retrieve devices",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.get("/api/devices/{device_id}")
 async def get_device(device_id: str):
@@ -176,9 +182,10 @@ async def get_device(device_id: str):
             content={
                 "success": False,
                 "error": "Failed to retrieve device status",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.get("/api/devices/{device_id}/events")
 async def get_device_events(device_id: str, limit: int = 10):
@@ -193,9 +200,10 @@ async def get_device_events(device_id: str, limit: int = 10):
             content={
                 "success": False,
                 "error": "Failed to retrieve device events",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/devices/{device_id}/hush")
 async def hush_alarm(device_id: str, request: AlarmControlRequest):
@@ -210,9 +218,10 @@ async def hush_alarm(device_id: str, request: AlarmControlRequest):
             content={
                 "success": False,
                 "error": "Failed to hush alarm",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/devices/{device_id}/test")
 async def run_safety_test(device_id: str, request: DeviceTestRequest):
@@ -227,9 +236,10 @@ async def run_safety_test(device_id: str, request: DeviceTestRequest):
             content={
                 "success": False,
                 "error": "Failed to run safety test",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/devices/{device_id}/brightness")
 async def set_led_brightness(device_id: str, brightness: int):
@@ -244,15 +254,23 @@ async def set_led_brightness(device_id: str, brightness: int):
             content={
                 "success": False,
                 "error": "Failed to set LED brightness",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
 
+
 @app.post("/api/devices/{device_id}/alarm")
-async def sound_alarm(device_id: str, alarm_type: str = "smoke", duration_seconds: int = 10, volume: int = 100):
+async def sound_alarm(
+    device_id: str,
+    alarm_type: str = "smoke",
+    duration_seconds: int = 10,
+    volume: int = 100,
+):
     """Sound an alarm for testing purposes."""
     try:
-        result = await device_control.sound_alarm(device_id, alarm_type, duration_seconds, volume)
+        result = await device_control.sound_alarm(
+            device_id, alarm_type, duration_seconds, volume
+        )
         return {"success": True, "data": result}
     except Exception as e:
         logger.error(f"Failed to sound alarm: {e}")
@@ -261,9 +279,10 @@ async def sound_alarm(device_id: str, alarm_type: str = "smoke", duration_second
             content={
                 "success": False,
                 "error": "Failed to sound alarm",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 # AI Orchestration endpoints (FastMCP 2.14.3 features)
 @app.post("/api/ai/assess-safety")
@@ -273,7 +292,7 @@ async def assess_home_safety(request: SafetyAssessmentRequest):
         result = await ai_orchestration.assess_home_safety(
             include_recommendations=request.include_recommendations,
             assessment_scope=request.assessment_scope,
-            focus_areas=request.focus_areas
+            focus_areas=request.focus_areas,
         )
         return {"success": True, "data": result}
     except Exception as e:
@@ -283,9 +302,10 @@ async def assess_home_safety(request: SafetyAssessmentRequest):
             content={
                 "success": False,
                 "error": "Failed to perform safety assessment",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/ai/emergency-response")
 async def coordinate_emergency(request: EmergencyRequest):
@@ -294,7 +314,7 @@ async def coordinate_emergency(request: EmergencyRequest):
         result = await ai_orchestration.coordinate_emergency_response(
             emergency_type=request.emergency_type,
             affected_devices=request.affected_devices,
-            response_priority=request.response_priority
+            response_priority=request.response_priority,
         )
         return {"success": True, "data": result}
     except Exception as e:
@@ -304,9 +324,10 @@ async def coordinate_emergency(request: EmergencyRequest):
             content={
                 "success": False,
                 "error": "Failed to coordinate emergency response",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/ai/predict-maintenance")
 async def predict_maintenance(request: PredictiveMaintenanceRequest):
@@ -315,7 +336,7 @@ async def predict_maintenance(request: PredictiveMaintenanceRequest):
         result = await ai_orchestration.predict_maintenance_needs(
             analysis_depth=request.analysis_depth,
             time_horizon=request.time_horizon,
-            include_cost_estimates=request.include_cost_estimates
+            include_cost_estimates=request.include_cost_estimates,
         )
         return {"success": True, "data": result}
     except Exception as e:
@@ -325,22 +346,23 @@ async def predict_maintenance(request: PredictiveMaintenanceRequest):
             content={
                 "success": False,
                 "error": "Failed to predict maintenance needs",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/ai/smart-automation")
 async def setup_smart_automation(
     automation_type: str,
     learning_period: str = "2_weeks",
-    confidence_threshold: float = 0.8
+    confidence_threshold: float = 0.8,
 ):
     """Set up intelligent automation with AI learning."""
     try:
         result = await ai_orchestration.setup_smart_automation(
             automation_type=automation_type,
             learning_period=learning_period,
-            confidence_threshold=confidence_threshold
+            confidence_threshold=confidence_threshold,
         )
         return {"success": True, "data": result}
     except Exception as e:
@@ -350,9 +372,10 @@ async def setup_smart_automation(
             content={
                 "success": False,
                 "error": "Failed to setup smart automation",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 # System management endpoints
 @app.get("/api/system/status")
@@ -370,8 +393,8 @@ async def get_system_status():
                 "api_server": "running",
                 "websocket_server": "running",
                 "device_count": 0,  # Would be populated from actual device count
-                "last_health_check": datetime.now().isoformat()
-            }
+                "last_health_check": datetime.now().isoformat(),
+            },
         }
     except Exception as e:
         logger.error(f"Failed to get system status: {e}")
@@ -380,9 +403,10 @@ async def get_system_status():
             content={
                 "success": False,
                 "error": "Failed to get system status",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.get("/api/mcp/status")
 async def get_mcp_status():
@@ -404,9 +428,9 @@ async def get_mcp_status():
                     "sampling_capabilities",
                     "ai_orchestration",
                     "device_management",
-                    "safety_testing"
-                ]
-            }
+                    "safety_testing",
+                ],
+            },
         }
     except Exception as e:
         logger.error(f"Failed to get MCP status: {e}")
@@ -415,9 +439,10 @@ async def get_mcp_status():
             content={
                 "success": False,
                 "error": "Failed to get MCP status",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.get("/api/mcp/tools")
 async def get_available_tools():
@@ -428,33 +453,33 @@ async def get_available_tools():
             {
                 "name": "list_devices",
                 "description": "Discover all Nest Protect devices",
-                "category": "device_discovery"
+                "category": "device_discovery",
             },
             {
                 "name": "get_device_status",
                 "description": "Get detailed device status and health",
-                "category": "device_monitoring"
+                "category": "device_monitoring",
             },
             {
                 "name": "hush_alarm",
                 "description": "Silence active alarms safely",
-                "category": "alarm_control"
+                "category": "alarm_control",
             },
             {
                 "name": "run_safety_check",
                 "description": "Execute comprehensive safety tests",
-                "category": "safety_testing"
+                "category": "safety_testing",
             },
             {
                 "name": "assess_home_safety",
                 "description": "AI-powered safety assessment with sampling",
-                "category": "ai_orchestration"
+                "category": "ai_orchestration",
             },
             {
                 "name": "coordinate_emergency_response",
                 "description": "Intelligent emergency response coordination",
-                "category": "ai_orchestration"
-            }
+                "category": "ai_orchestration",
+            },
         ]
 
         return {
@@ -464,8 +489,8 @@ async def get_available_tools():
             "result": {
                 "tools": tools,
                 "categories": list(set(tool["category"] for tool in tools)),
-                "total_count": len(tools)
-            }
+                "total_count": len(tools),
+            },
         }
     except Exception as e:
         logger.error(f"Failed to get available tools: {e}")
@@ -474,9 +499,10 @@ async def get_available_tools():
             content={
                 "success": False,
                 "error": "Failed to retrieve tools",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 # Authentication endpoints
 @app.post("/api/auth/initiate")
@@ -492,8 +518,8 @@ async def initiate_oauth():
             "result": {
                 "auth_url": "https://accounts.google.com/oauth/authorize?client_id=test",
                 "state": "test_state_123",
-                "flow_started": True
-            }
+                "flow_started": True,
+            },
         }
     except Exception as e:
         logger.error(f"Failed to initiate OAuth: {e}")
@@ -502,9 +528,10 @@ async def initiate_oauth():
             content={
                 "success": False,
                 "error": "Failed to initiate authentication",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 @app.post("/api/auth/refresh")
 async def refresh_access_token():
@@ -519,8 +546,8 @@ async def refresh_access_token():
             "result": {
                 "token_refreshed": True,
                 "expires_in": 3600,
-                "token_type": "Bearer"
-            }
+                "token_type": "Bearer",
+            },
         }
     except Exception as e:
         logger.error(f"Failed to refresh token: {e}")
@@ -529,16 +556,13 @@ async def refresh_access_token():
             content={
                 "success": False,
                 "error": "Failed to refresh access token",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         )
+
 
 if __name__ == "__main__":
     logger.info("Starting Nest Protect MCP Testing API server...")
     uvicorn.run(
-        "main:combined_app",
-        host="0.0.0.0",
-        port=7771,
-        reload=True,
-        log_level="info"
+        "main:combined_app", host="0.0.0.0", port=7771, reload=True, log_level="info"
     )

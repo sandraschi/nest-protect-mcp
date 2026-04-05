@@ -6,10 +6,9 @@ import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from nest_protect_mcp.server import NestProtectMCP
-
 from nest_protect_mcp.exceptions import NestDeviceNotFoundError
 from nest_protect_mcp.models import ProtectCommand, ProtectDeviceState
+from nest_protect_mcp.server import NestProtectMCP
 
 
 class TestMCPDeviceOperations:
@@ -248,7 +247,7 @@ class TestDeviceStateManagement:
             mock_api.return_value = devices_data
 
             # This should trigger caching
-            devices = await server.get_devices()
+            await server.get_devices()
 
             # Devices should be cached
             assert "device1" in server._devices
@@ -473,7 +472,7 @@ class TestMCPProtocolCompliance:
     @pytest.mark.asyncio
     async def test_tool_parameter_validation(self, sample_config):
         """Test tool parameter validation."""
-        server = NestProtectMCP(sample_config)
+        NestProtectMCP(sample_config)
 
         # Test tool registration creates proper validation
         # This is hard to test directly, but we can verify the schemas exist

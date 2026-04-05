@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from .fastmcp_server import app
 
@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger("nest_protect_mcp")
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """Load configuration from environment variables and config file."""
     # Default configuration
     config = {

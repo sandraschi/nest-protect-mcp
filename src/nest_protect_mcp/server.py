@@ -7,7 +7,7 @@ Use nest_protect_mcp.fastmcp_server:app for the MCP server itself (stdio/--http)
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,9 +63,11 @@ async def _startup_refresh_token() -> None:
         return
     try:
         from .tools.auth_tools import refresh_access_token
+
         await refresh_access_token(force=True)
     except Exception:
         pass
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,20 +78,22 @@ app.add_middleware(
 )
 
 
-def _unwrap(result: Dict[str, Any]) -> Dict[str, Any]:
+def _unwrap(result: dict[str, Any]) -> dict[str, Any]:
     """Normalize MCP tool result for REST: success + data or error."""
     if result.get("success") is True:
         return result
     if result.get("error") or result.get("error_code"):
         raise HTTPException(
-            status_code=400 if "AUTHENTICATION" in str(result.get("error_code", "")) else 500,
+            status_code=400
+            if "AUTHENTICATION" in str(result.get("error_code", ""))
+            else 500,
             detail=result.get("message") or result.get("error", "Request failed"),
         )
     return result
 
 
 @app.get("/api/v1/health")
-async def health() -> Dict[str, Any]:
+async def health() -> dict[str, Any]:
     """Health check for the backend."""
     from .tools.system_status import get_api_status
 
@@ -97,12 +101,13 @@ async def health() -> Dict[str, Any]:
     return {
         "success": True,
         "message": "Nest Protect MCP backend",
-        "api_connected": api_result.get("status") == "success" or "connected" in str(api_result).lower(),
+        "api_connected": api_result.get("status") == "success"
+        or "connected" in str(api_result).lower(),
     }
 
 
 @app.get("/api/v1/devices")
-async def get_devices() -> Dict[str, Any]:
+async def get_devices() -> dict[str, Any]:
     """List all Nest Protect (fire/CO) devices."""
     from .tools.device_status import list_devices
 
@@ -121,7 +126,7 @@ async def get_devices() -> Dict[str, Any]:
 
 
 @app.get("/api/v1/devices/{device_id}")
-async def get_device(device_id: str) -> Dict[str, Any]:
+async def get_device(device_id: str) -> dict[str, Any]:
     """Get status of one Nest Protect device (fire/CO, battery, connectivity)."""
     from .tools.device_status import get_device_status
 
@@ -133,7 +138,7 @@ async def get_device(device_id: str) -> Dict[str, Any]:
 
 
 @app.get("/api/v1/devices/{device_id}/events")
-async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
+async def get_device_events(device_id: str, limit: int = 10) -> dict[str, Any]:
     """Get recent events for a device."""
     from .tools.device_status import get_device_events as tool_events
 
@@ -145,7 +150,7 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
 
 
 @app.get("/api/v1/status")
-async def get_status() -> Dict[str, Any]:
+async def get_status() -> dict[str, Any]:
     """System and safety overview (for dashboard)."""
     from .tools.device_status import list_devices
     from .tools.system_status import get_system_status
@@ -168,7 +173,9 @@ async def get_status() -> Dict[str, Any]:
             "online_devices": stats.get("online", 0),
             "devices": devices,
         },
-        "system": system_result if system_result and system_result.get("status") == "success" else None,
+        "system": system_result
+        if system_result and system_result.get("status") == "success"
+        else None,
     }
 
 
@@ -179,14 +186,16 @@ class HushBody(BaseModel):
 
 
 @app.post("/api/v1/devices/{device_id}/hush")
-async def hush_alarm(device_id: str, body: Optional[HushBody] = None) -> Dict[str, Any]:
+async def hush_alarm(device_id: str, body: HushBody | None = None) -> dict[str, Any]:
     """Hush (silence) an active fire/CO alarm."""
     from .tools.device_control import hush_alarm as tool_hush
 
     duration = (body or HushBody()).duration_seconds
     result = await tool_hush(device_id, duration)
     if result.get("status") == "error":
-        raise HTTPException(status_code=400, detail=result.get("message", "Hush failed"))
+        raise HTTPException(
+            status_code=400, detail=result.get("message", "Hush failed")
+        )
     return {"success": True, "message": "Alarm hushed", "result": result}
 
 
@@ -197,12 +206,16 @@ class SafetyCheckBody(BaseModel):
 
 
 @app.post("/api/v1/devices/{device_id}/safety-check")
-async def run_safety_check(device_id: str, body: Optional[SafetyCheckBody] = None) -> Dict[str, Any]:
+async def run_safety_check(
+    device_id: str, body: SafetyCheckBody | None = None
+) -> dict[str, Any]:
     """Run a safety check (test) on a Nest Protect device."""
     from .tools.device_control import run_safety_check as tool_safety
 
     test_type = (body or SafetyCheckBody()).test_type
     result = await tool_safety(device_id, test_type)
     if result.get("status") == "error":
-        raise HTTPException(status_code=400, detail=result.get("message", "Safety check failed"))
+        raise HTTPException(
+            status_code=400, detail=result.get("message", "Safety check failed")
+        )
     return {"success": True, "message": "Safety check completed", "result": result}

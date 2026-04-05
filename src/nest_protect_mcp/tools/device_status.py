@@ -1,6 +1,6 @@
 """Device status tools for Nest Protect MCP."""
 
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +26,7 @@ class DeviceEventsParams(BaseModel):
     )
 
 
-async def list_devices() -> Dict[str, Any]:
+async def list_devices() -> dict[str, Any]:
     """List all Nest Protect devices with conversational response format."""
     import aiohttp
 
@@ -42,18 +42,18 @@ async def list_devices() -> Dict[str, Any]:
             "message": "You need to authenticate with the Nest API first",
             "recovery_options": [
                 "Run 'initiate_oauth_flow' to start authentication",
-                "Check your OAuth tokens are properly configured"
+                "Check your OAuth tokens are properly configured",
             ],
             "diagnostic_info": {
                 "root_cause": "Missing or invalid access token",
-                "affected_components": ["Nest API connection"]
+                "affected_components": ["Nest API connection"],
             },
             "alternative_solutions": [
                 "Re-run OAuth authentication flow",
-                "Refresh your access tokens"
+                "Refresh your access tokens",
             ],
             "estimated_resolution_time": "< 5 minutes",
-            "urgency": "high"
+            "urgency": "high",
         }
 
     try:
@@ -97,25 +97,29 @@ async def list_devices() -> Dict[str, Any]:
                                 "total": len(devices),
                                 "online": online_count,
                                 "offline": len(devices) - online_count,
-                                "types": list(set(device_types))
-                            }
+                                "types": list(set(device_types)),
+                            },
                         },
                         "next_steps": [
                             "Run 'get_device_status' to check individual device details",
-                            "Use 'run_safety_check' to test device functionality"
-                        ] if devices else ["Add Nest Protect devices to your account"],
+                            "Use 'run_safety_check' to test device functionality",
+                        ]
+                        if devices
+                        else ["Add Nest Protect devices to your account"],
                         "context": {
                             "operation_details": f"Retrieved device information from {len(devices)} Nest Protect devices",
-                            "api_response": f"Successfully queried Nest API for enterprise {state.config.project_id}"
+                            "api_response": f"Successfully queried Nest API for enterprise {state.config.project_id}",
                         },
                         "suggestions": [
                             "Consider running safety checks on offline devices",
-                            "Review battery levels for devices showing low power"
-                        ] if any(not d["online"] for d in device_list) else [],
+                            "Review battery levels for devices showing low power",
+                        ]
+                        if any(not d["online"] for d in device_list)
+                        else [],
                         "follow_up_questions": [
                             "Would you like me to check the status of a specific device?",
-                            "Should I run safety checks on any of these devices?"
-                        ]
+                            "Should I run safety checks on any of these devices?",
+                        ],
                     }
                 else:
                     error = await response.json()
@@ -123,49 +127,51 @@ async def list_devices() -> Dict[str, Any]:
                         "success": False,
                         "error": "API request failed",
                         "error_code": f"API_ERROR_{response.status}",
-                        "message": f"Failed to retrieve device list from Nest API",
+                        "message": "Failed to retrieve device list from Nest API",
                         "recovery_options": [
                             "Check your internet connection",
                             "Verify OAuth tokens are valid",
-                            "Try refreshing access tokens"
+                            "Try refreshing access tokens",
                         ],
                         "diagnostic_info": {
-                            "root_cause": error.get("error", {}).get("message", "Unknown API error"),
+                            "root_cause": error.get("error", {}).get(
+                                "message", "Unknown API error"
+                            ),
                             "affected_components": ["Nest API connection"],
-                            "http_status": response.status
+                            "http_status": response.status,
                         },
                         "alternative_solutions": [
                             "Run 'refresh_access_token' to update authentication",
-                            "Check API service status"
+                            "Check API service status",
                         ],
                         "estimated_resolution_time": "< 10 minutes",
-                        "urgency": "medium"
+                        "urgency": "medium",
                     }
     except Exception as e:
         return {
             "success": False,
             "error": "Unexpected error occurred",
             "error_code": "INTERNAL_ERROR",
-            "message": f"Failed to list devices due to internal error",
+            "message": "Failed to list devices due to internal error",
             "recovery_options": [
                 "Check server logs for more details",
                 "Restart the MCP server",
-                "Verify network connectivity"
+                "Verify network connectivity",
             ],
             "diagnostic_info": {
                 "root_cause": str(e),
-                "affected_components": ["Device listing functionality"]
+                "affected_components": ["Device listing functionality"],
             },
             "alternative_solutions": [
                 "Try again in a few moments",
-                "Contact support if issue persists"
+                "Contact support if issue persists",
             ],
             "estimated_resolution_time": "< 15 minutes",
-            "urgency": "medium"
+            "urgency": "medium",
         }
 
 
-async def get_device_status(device_id: str) -> Dict[str, Any]:
+async def get_device_status(device_id: str) -> dict[str, Any]:
     """Get status of a specific Nest Protect device with conversational response format."""
     import aiohttp
 
@@ -181,18 +187,18 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
             "message": "You need to authenticate with the Nest API first",
             "recovery_options": [
                 "Run 'initiate_oauth_flow' to start authentication",
-                "Check your OAuth tokens are properly configured"
+                "Check your OAuth tokens are properly configured",
             ],
             "diagnostic_info": {
                 "root_cause": "Missing or invalid access token",
-                "affected_components": ["Nest API connection"]
+                "affected_components": ["Nest API connection"],
             },
             "alternative_solutions": [
                 "Re-run OAuth authentication flow",
-                "Refresh your access tokens"
+                "Refresh your access tokens",
             ],
             "estimated_resolution_time": "< 5 minutes",
-            "urgency": "high"
+            "urgency": "high",
         }
 
     try:
@@ -269,26 +275,38 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
                     if not device_status["online"]:
                         health_issues.append("Device is offline")
                         suggestions.append("Check device power and Wi-Fi connection")
-                        follow_up_questions.append("Would you like me to try reconnecting the device?")
+                        follow_up_questions.append(
+                            "Would you like me to try reconnecting the device?"
+                        )
 
                     battery_level = device_status["battery"]["level"]
                     if battery_level and battery_level < 20:
                         health_issues.append(f"Low battery ({battery_level}%)")
                         suggestions.append("Replace the battery soon")
-                        follow_up_questions.append("Should I schedule a battery replacement reminder?")
+                        follow_up_questions.append(
+                            "Should I schedule a battery replacement reminder?"
+                        )
 
                     alarm_status = device_status["alarm"]["status"]
                     if alarm_status and alarm_status != "NONE":
                         health_issues.append(f"Active alarm: {alarm_status}")
-                        suggestions.append("Investigate the alarm condition immediately")
-                        follow_up_questions.append("Do you need help silencing this alarm?")
+                        suggestions.append(
+                            "Investigate the alarm condition immediately"
+                        )
+                        follow_up_questions.append(
+                            "Do you need help silencing this alarm?"
+                        )
 
                     smoke_status = device_status["smoke"]["status"]
                     co_status = device_status["co"]["status"]
                     if smoke_status == "SMOKE_DETECTED" or co_status == "CO_DETECTED":
                         health_issues.append("Dangerous condition detected")
-                        suggestions.append("Evacuate if necessary and call emergency services")
-                        follow_up_questions.append("Are you safe? Should I help silence alarms?")
+                        suggestions.append(
+                            "Evacuate if necessary and call emergency services"
+                        )
+                        follow_up_questions.append(
+                            "Are you safe? Should I help silence alarms?"
+                        )
 
                     device_name = device_status["name"] or f"Device {device_id[:8]}"
 
@@ -300,21 +318,31 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
                             "device": device_status,
                             "health_analysis": {
                                 "issues": health_issues,
-                                "overall_status": "critical" if any("Dangerous condition" in issue for issue in health_issues)
-                                               else "warning" if health_issues
-                                               else "good"
-                            }
+                                "overall_status": "critical"
+                                if any(
+                                    "Dangerous condition" in issue
+                                    for issue in health_issues
+                                )
+                                else "warning"
+                                if health_issues
+                                else "good",
+                            },
                         },
                         "next_steps": [
                             "Run 'run_safety_check' to test device functionality",
-                            "Use 'get_device_events' to see recent activity"
-                        ] + (["Address health issues immediately"] if health_issues else []),
+                            "Use 'get_device_events' to see recent activity",
+                        ]
+                        + (
+                            ["Address health issues immediately"]
+                            if health_issues
+                            else []
+                        ),
                         "context": {
                             "operation_details": f"Retrieved comprehensive status for Nest Protect device {device_id}",
-                            "last_updated": device_status["last_update"]
+                            "last_updated": device_status["last_update"],
                         },
                         "suggestions": suggestions,
-                        "follow_up_questions": follow_up_questions
+                        "follow_up_questions": follow_up_questions,
                     }
                 else:
                     error = await response.json()
@@ -326,20 +354,22 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
                         "recovery_options": [
                             "Verify the device ID is correct",
                             "Check if device is powered on and connected",
-                            "Ensure device is registered in your Nest account"
+                            "Ensure device is registered in your Nest account",
                         ],
                         "diagnostic_info": {
-                            "root_cause": error.get("error", {}).get("message", "Unknown device error"),
+                            "root_cause": error.get("error", {}).get(
+                                "message", "Unknown device error"
+                            ),
                             "affected_components": [f"Device {device_id}"],
                             "device_id": device_id,
-                            "http_status": response.status
+                            "http_status": response.status,
                         },
                         "alternative_solutions": [
                             "Run 'list_devices' to see available devices",
-                            "Check device connectivity and power status"
+                            "Check device connectivity and power status",
                         ],
                         "estimated_resolution_time": "< 10 minutes",
-                        "urgency": "medium"
+                        "urgency": "medium",
                     }
     except Exception as e:
         return {
@@ -350,23 +380,23 @@ async def get_device_status(device_id: str) -> Dict[str, Any]:
             "recovery_options": [
                 "Check server logs for more details",
                 "Try again in a few moments",
-                "Verify device ID format is correct"
+                "Verify device ID format is correct",
             ],
             "diagnostic_info": {
                 "root_cause": str(e),
                 "affected_components": [f"Device {device_id}"],
-                "device_id": device_id
+                "device_id": device_id,
             },
             "alternative_solutions": [
                 "Run 'list_devices' to verify device exists",
-                "Contact support if issue persists"
+                "Contact support if issue persists",
             ],
             "estimated_resolution_time": "< 15 minutes",
-            "urgency": "medium"
+            "urgency": "medium",
         }
 
 
-async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
+async def get_device_events(device_id: str, limit: int = 10) -> dict[str, Any]:
     """Get recent events for a Nest Protect device with conversational response format."""
     import aiohttp
 
@@ -382,18 +412,18 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
             "message": "You need to authenticate with the Nest API first",
             "recovery_options": [
                 "Run 'initiate_oauth_flow' to start authentication",
-                "Check your OAuth tokens are properly configured"
+                "Check your OAuth tokens are properly configured",
             ],
             "diagnostic_info": {
                 "root_cause": "Missing or invalid access token",
-                "affected_components": ["Nest API connection"]
+                "affected_components": ["Nest API connection"],
             },
             "alternative_solutions": [
                 "Re-run OAuth authentication flow",
-                "Refresh your access tokens"
+                "Refresh your access tokens",
             ],
             "estimated_resolution_time": "< 5 minutes",
-            "urgency": "high"
+            "urgency": "high",
         }
 
     try:
@@ -426,9 +456,15 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
                         event_types.add(event_type)
 
                         # Categorize events for analysis
-                        if any(keyword in event_type.lower() for keyword in ['alarm', 'smoke', 'co', 'safety']):
+                        if any(
+                            keyword in event_type.lower()
+                            for keyword in ["alarm", "smoke", "co", "safety"]
+                        ):
                             alarm_events.append(formatted_event)
-                        elif any(keyword in event_type.lower() for keyword in ['connectivity', 'battery', 'status']):
+                        elif any(
+                            keyword in event_type.lower()
+                            for keyword in ["connectivity", "battery", "status"]
+                        ):
                             status_events.append(formatted_event)
 
                     # Analyze event patterns
@@ -437,13 +473,19 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
 
                     if alarm_events:
                         suggestions.append("Review alarm events for safety concerns")
-                        follow_up_questions.append("Would you like me to check current device status?")
+                        follow_up_questions.append(
+                            "Would you like me to check current device status?"
+                        )
 
                     if not formatted_events:
                         suggestions.append("Device may not have recent activity")
-                        follow_up_questions.append("Should I run a safety check on this device?")
+                        follow_up_questions.append(
+                            "Should I run a safety check on this device?"
+                        )
 
-                    device_name = f"Device {device_id[:8]}"  # We don't have the friendly name here
+                    device_name = (
+                        f"Device {device_id[:8]}"
+                    )  # We don't have the friendly name here
 
                     return {
                         "success": True,
@@ -458,22 +500,28 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
                                 "status_events": len(status_events),
                                 "event_types": list(event_types),
                                 "time_range": {
-                                    "newest": formatted_events[0]["timestamp"] if formatted_events else None,
-                                    "oldest": formatted_events[-1]["timestamp"] if formatted_events else None
-                                }
-                            }
+                                    "newest": formatted_events[0]["timestamp"]
+                                    if formatted_events
+                                    else None,
+                                    "oldest": formatted_events[-1]["timestamp"]
+                                    if formatted_events
+                                    else None,
+                                },
+                            },
                         },
                         "next_steps": [
                             "Run 'get_device_status' for current device state",
-                            "Use 'run_safety_check' to test device functionality"
-                        ] if formatted_events else ["Run 'run_safety_check' to verify device is working"],
+                            "Use 'run_safety_check' to test device functionality",
+                        ]
+                        if formatted_events
+                        else ["Run 'run_safety_check' to verify device is working"],
                         "context": {
                             "operation_details": f"Retrieved event history for device {device_id} (requested {limit} events)",
                             "device_id": device_id,
-                            "limit_requested": limit
+                            "limit_requested": limit,
                         },
                         "suggestions": suggestions,
-                        "follow_up_questions": follow_up_questions
+                        "follow_up_questions": follow_up_questions,
                     }
                 else:
                     error = await response.json()
@@ -485,21 +533,23 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
                         "recovery_options": [
                             "Verify the device ID is correct",
                             "Check device connectivity",
-                            "Try a smaller limit value"
+                            "Try a smaller limit value",
                         ],
                         "diagnostic_info": {
-                            "root_cause": error.get("error", {}).get("message", "Unknown events error"),
+                            "root_cause": error.get("error", {}).get(
+                                "message", "Unknown events error"
+                            ),
                             "affected_components": [f"Device {device_id} events"],
                             "device_id": device_id,
                             "requested_limit": limit,
-                            "http_status": response.status
+                            "http_status": response.status,
                         },
                         "alternative_solutions": [
                             "Run 'get_device_status' to verify device exists",
-                            "Try with a smaller event limit (1-10)"
+                            "Try with a smaller event limit (1-10)",
                         ],
                         "estimated_resolution_time": "< 10 minutes",
-                        "urgency": "medium"
+                        "urgency": "medium",
                     }
     except Exception as e:
         return {
@@ -510,18 +560,18 @@ async def get_device_events(device_id: str, limit: int = 10) -> Dict[str, Any]:
             "recovery_options": [
                 "Check server logs for more details",
                 "Try again in a few moments",
-                "Verify device ID format"
+                "Verify device ID format",
             ],
             "diagnostic_info": {
                 "root_cause": str(e),
                 "affected_components": [f"Device {device_id} events"],
                 "device_id": device_id,
-                "requested_limit": limit
+                "requested_limit": limit,
             },
             "alternative_solutions": [
                 "Run 'list_devices' to verify device exists",
-                "Contact support if issue persists"
+                "Contact support if issue persists",
             ],
             "estimated_resolution_time": "< 15 minutes",
-            "urgency": "medium"
+            "urgency": "medium",
         }

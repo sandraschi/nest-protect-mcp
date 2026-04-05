@@ -231,7 +231,7 @@ class TestErrorHandlingIntegration:
             mock_send.return_value = True
 
             # This should be handled by the command validation
-            command = ProtectCommand(command="invalid_command")
+            ProtectCommand(command="invalid_command")
             # The validation should happen in the model itself
 
         # Test the handler with invalid command

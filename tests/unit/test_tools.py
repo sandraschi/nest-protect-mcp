@@ -3,8 +3,6 @@ Unit tests for Nest Protect tools.
 """
 
 import pytest
-from pydantic import ValidationError
-
 from nest_protect_mcp.tools import (
     AlarmState,
     BatteryState,
@@ -16,6 +14,7 @@ from nest_protect_mcp.tools import (
     SilenceAlarmTool,
     tool_schemas,
 )
+from pydantic import ValidationError
 
 
 class TestDeviceType:

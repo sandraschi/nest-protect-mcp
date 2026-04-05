@@ -5,7 +5,6 @@ This module defines all the MCP tools for interacting with Nest Protect devices.
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -38,13 +37,11 @@ class DeviceInfo(BaseModel):
     name: str = Field(..., description="The display name of the device")
     type: DeviceType = Field(..., description="The type of the device")
     online: bool = Field(..., description="Whether the device is online")
-    battery_state: Optional[BatteryState] = Field(
+    battery_state: BatteryState | None = Field(
         None, description="Battery state if applicable"
     )
-    alarm_state: Optional[AlarmState] = Field(None, description="Current alarm state")
-    last_connection: Optional[str] = Field(
-        None, description="Last connection timestamp"
-    )
+    alarm_state: AlarmState | None = Field(None, description="Current alarm state")
+    last_connection: str | None = Field(None, description="Last connection timestamp")
 
 
 class GetDevicesTool(BaseModel):
@@ -74,10 +71,10 @@ class GetDeviceHistoryTool(BaseModel):
     """Get the history of events for a specific Nest Protect device."""
 
     device_id: str = Field(..., description="The ID of the device to get history for")
-    start_time: Optional[str] = Field(
+    start_time: str | None = Field(
         None, description="Start time for the history query (ISO 8601 format)"
     )
-    end_time: Optional[str] = Field(
+    end_time: str | None = Field(
         None, description="End time for the history query (ISO 8601 format)"
     )
     max_results: int = Field(

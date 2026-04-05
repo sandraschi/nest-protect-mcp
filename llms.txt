@@ -1,0 +1,18 @@
+# Nest Protect MCP Server
+
+🔥 Production-ready FastMCP server for Google Nest Protect devices.
+
+## Hub
+- [Documentation](llms-full.txt): Full technical guide and tool reference.
+- [SOTA Standards](file:///D:/Dev/repos/mcp-central-docs/standards/SOTA_REQUIREMENTS.md): Fleet-wide architectural requirements.
+
+## Capabilities
+- **Device Status**: List devices, get real-time status (smoke, CO, battery), and event history.
+- **Device Control**: Hush alarms, run safety checks, set LED brightness, and test alarms.
+- **AI Orchestration**: Home safety assessment, emergency coordination, and predictive maintenance.
+- **System Health**: Monitor process health, API connectivity, and resource usage.
+
+## Patterns
+- **FastMCP 3.2.0**: Uses `FastMCPApp` and `@app.ui()` for rich visual feedback.
+- **Security**: Built-in hardening for SSRF and path traversal.
+- **Async**: Fully asynchronous I/O with lifespan management.

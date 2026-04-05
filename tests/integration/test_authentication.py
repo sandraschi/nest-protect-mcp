@@ -7,9 +7,8 @@ import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from nest_protect_mcp.server import NEST_AUTH_URL, NestProtectMCP
-
 from nest_protect_mcp.exceptions import NestAuthError, NestConnectionError
+from nest_protect_mcp.server import NEST_AUTH_URL, NestProtectMCP
 
 
 class TestOAuthAuthentication:

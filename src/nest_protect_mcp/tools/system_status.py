@@ -3,7 +3,7 @@
 import os
 import platform
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
 from pydantic import BaseModel, Field
@@ -12,12 +12,12 @@ from pydantic import BaseModel, Field
 class ProcessStatusParams(BaseModel):
     """Parameters for process status."""
 
-    pid: Optional[int] = Field(
+    pid: int | None = Field(
         None, description="Process ID to check (default: current process)"
     )
 
 
-async def get_system_status() -> Dict[str, Any]:
+async def get_system_status() -> dict[str, Any]:
     """Get system status and metrics."""
     try:
         # CPU
@@ -91,10 +91,10 @@ async def get_system_status() -> Dict[str, Any]:
             },
         }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to get system status: {str(e)}"}
+        return {"status": "error", "message": f"Failed to get system status: {e!s}"}
 
 
-async def get_process_status(pid: int = None) -> Dict[str, Any]:
+async def get_process_status(pid: int | None = None) -> dict[str, Any]:
     """Get status of the Nest Protect MCP process."""
     try:
         if pid is None:
@@ -137,10 +137,10 @@ async def get_process_status(pid: int = None) -> Dict[str, Any]:
     except psutil.NoSuchProcess:
         return {"status": "error", "message": f"Process {pid} not found"}
     except Exception as e:
-        return {"status": "error", "message": f"Failed to get process status: {str(e)}"}
+        return {"status": "error", "message": f"Failed to get process status: {e!s}"}
 
 
-async def get_api_status() -> Dict[str, Any]:
+async def get_api_status() -> dict[str, Any]:
     """Get status of the Nest API connection."""
     import aiohttp
 
@@ -183,6 +183,6 @@ async def get_api_status() -> Dict[str, Any]:
         return {
             "status": "error",
             "api_connected": False,
-            "message": f"Failed to check API status: {str(e)}",
+            "message": f"Failed to check API status: {e!s}",
             "token_expires_in": getattr(state, "token_expires_in", None),
         }

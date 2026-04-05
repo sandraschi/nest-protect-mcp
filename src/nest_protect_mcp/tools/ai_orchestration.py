@@ -1,6 +1,6 @@
 """Advanced AI orchestration tools using sampling capabilities for intelligent device management."""
 
-from typing import Any, Dict, List, Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -14,9 +14,9 @@ class HomeSafetyAssessmentParams(BaseModel):
     assessment_scope: Literal["basic", "comprehensive", "emergency"] = Field(
         "comprehensive", description="Scope of safety assessment"
     )
-    focus_areas: List[str] = Field(
+    focus_areas: list[str] = Field(
         ["smoke_detection", "co_detection", "battery_levels", "connectivity"],
-        description="Specific areas to focus assessment on"
+        description="Specific areas to focus assessment on",
     )
 
 
@@ -26,7 +26,7 @@ class EmergencyResponseParams(BaseModel):
     emergency_type: Literal["smoke", "co", "security", "medical", "unknown"] = Field(
         ..., description="Type of emergency detected"
     )
-    affected_devices: List[str] = Field(
+    affected_devices: list[str] = Field(
         ..., description="Device IDs involved in emergency"
     )
     response_priority: Literal["low", "medium", "high", "critical"] = Field(
@@ -66,8 +66,8 @@ class SmartAutomationParams(BaseModel):
 async def assess_home_safety(
     include_recommendations: bool = True,
     assessment_scope: str = "comprehensive",
-    focus_areas: List[str] = None
-) -> Dict[str, Any]:
+    focus_areas: list[str] | None = None,
+) -> dict[str, Any]:
     """🧠 **AI-Powered Home Safety Assessment with Sampling Intelligence**
 
     PORTMANTEAU PATTERN RATIONALE:
@@ -181,13 +181,19 @@ async def assess_home_safety(
         - estimated_resolution_time (str): Expected time to resolve
         - urgency (str): Priority level (low, medium, high, critical)
     """
+    from datetime import datetime
+
     import aiohttp
-    from datetime import datetime, timedelta
 
     from ..state_manager import get_app_state
 
     if focus_areas is None:
-        focus_areas = ["smoke_detection", "co_detection", "battery_levels", "connectivity"]
+        focus_areas = [
+            "smoke_detection",
+            "co_detection",
+            "battery_levels",
+            "connectivity",
+        ]
 
     state = get_app_state()
 
@@ -199,10 +205,10 @@ async def assess_home_safety(
             "message": "Cannot perform safety assessment without API authentication",
             "recovery_options": [
                 "Complete OAuth authentication flow",
-                "Verify API credentials are configured"
+                "Verify API credentials are configured",
             ],
             "estimated_resolution_time": "< 5 minutes",
-            "urgency": "high"
+            "urgency": "high",
         }
 
     try:
@@ -221,10 +227,10 @@ async def assess_home_safety(
                         "recovery_options": [
                             "Check API credentials",
                             "Verify network connectivity",
-                            "Try again in a few moments"
+                            "Try again in a few moments",
                         ],
                         "estimated_resolution_time": "< 10 minutes",
-                        "urgency": "medium"
+                        "urgency": "medium",
                     }
 
                 devices_data = await response.json()
@@ -239,10 +245,10 @@ async def assess_home_safety(
                 "recovery_options": [
                     "Add Nest Protect devices to your account",
                     "Check device connectivity",
-                    "Verify device registration"
+                    "Verify device registration",
                 ],
                 "estimated_resolution_time": "Varies",
-                "urgency": "medium"
+                "urgency": "medium",
             }
 
         # Step 2: Analyze each device
@@ -256,41 +262,60 @@ async def assess_home_safety(
 
             analysis = {
                 "device_id": device_id,
-                "name": traits.get("sdm.devices.traits.Info", {}).get("customName", f"Device {device_id[:8]}"),
-                "online": traits.get("sdm.devices.traits.Connectivity", {}).get("status") == "ONLINE",
-                "battery_level": traits.get("sdm.devices.traits.Battery", {}).get("batteryLevel"),
-                "alarm_status": traits.get("sdm.devices.traits.SafetyAlarm", {}).get("alarmStatus"),
-                "smoke_status": traits.get("sdm.devices.traits.Smoke", {}).get("smokeStatus"),
-                "co_status": traits.get("sdm.devices.traits.CarbonMonoxide", {}).get("coStatus"),
-                "last_update": device.get("lastEventTime")
+                "name": traits.get("sdm.devices.traits.Info", {}).get(
+                    "customName", f"Device {device_id[:8]}"
+                ),
+                "online": traits.get("sdm.devices.traits.Connectivity", {}).get(
+                    "status"
+                )
+                == "ONLINE",
+                "battery_level": traits.get("sdm.devices.traits.Battery", {}).get(
+                    "batteryLevel"
+                ),
+                "alarm_status": traits.get("sdm.devices.traits.SafetyAlarm", {}).get(
+                    "alarmStatus"
+                ),
+                "smoke_status": traits.get("sdm.devices.traits.Smoke", {}).get(
+                    "smokeStatus"
+                ),
+                "co_status": traits.get("sdm.devices.traits.CarbonMonoxide", {}).get(
+                    "coStatus"
+                ),
+                "last_update": device.get("lastEventTime"),
             }
 
             device_analyses.append(analysis)
 
             # Analyze safety issues
             if not analysis["online"]:
-                safety_issues.append({
-                    "type": "connectivity",
-                    "device": analysis["name"],
-                    "severity": "high",
-                    "description": f"Device {analysis['name']} is offline"
-                })
+                safety_issues.append(
+                    {
+                        "type": "connectivity",
+                        "device": analysis["name"],
+                        "severity": "high",
+                        "description": f"Device {analysis['name']} is offline",
+                    }
+                )
 
             if analysis["battery_level"] and analysis["battery_level"] < 20:
-                safety_issues.append({
-                    "type": "battery",
-                    "device": analysis["name"],
-                    "severity": "medium",
-                    "description": f"Low battery ({analysis['battery_level']}%) on {analysis['name']}"
-                })
+                safety_issues.append(
+                    {
+                        "type": "battery",
+                        "device": analysis["name"],
+                        "severity": "medium",
+                        "description": f"Low battery ({analysis['battery_level']}%) on {analysis['name']}",
+                    }
+                )
 
             if analysis["alarm_status"] and analysis["alarm_status"] != "NONE":
-                safety_issues.append({
-                    "type": "alarm",
-                    "device": analysis["name"],
-                    "severity": "critical",
-                    "description": f"Active alarm ({analysis['alarm_status']}) on {analysis['name']}"
-                })
+                safety_issues.append(
+                    {
+                        "type": "alarm",
+                        "device": analysis["name"],
+                        "severity": "critical",
+                        "description": f"Active alarm ({analysis['alarm_status']}) on {analysis['name']}",
+                    }
+                )
 
         # Step 3: Generate AI-powered recommendations (requires sampling signal)
         if include_recommendations and safety_issues:
@@ -299,11 +324,13 @@ async def assess_home_safety(
                 "Test alarm functionality on devices with connectivity issues",
                 "Consider adding additional smoke detectors in high-risk areas",
                 "Schedule professional inspection of alarm systems",
-                "Update emergency contact information in safety apps"
+                "Update emergency contact information in safety apps",
             ]
 
             # Signal for AI sampling - complex safety analysis needed
-            if len(safety_issues) > 3 or any(issue["severity"] == "critical" for issue in safety_issues):
+            if len(safety_issues) > 3 or any(
+                issue["severity"] == "critical" for issue in safety_issues
+            ):
                 return {
                     "success": True,
                     "operation": "assess_home_safety",
@@ -312,30 +339,30 @@ async def assess_home_safety(
                         "assessment_scope": assessment_scope,
                         "devices_analyzed": len(devices),
                         "safety_issues": safety_issues,
-                        "device_summaries": device_analyses
+                        "device_summaries": device_analyses,
                     },
                     "requires_sampling": True,  # Signal for AI reasoning
                     "sampling_reason": "Complex safety analysis with multiple critical issues detected",
                     "next_steps": [
                         "AI will analyze safety patterns and generate prioritized recommendations",
                         "Review device statuses and address critical issues first",
-                        "Consider emergency response procedures"
+                        "Consider emergency response procedures",
                     ],
                     "context": {
                         "operation_details": "Comprehensive safety assessment with critical findings",
                         "assessment_timestamp": datetime.now().isoformat(),
-                        "focus_areas_covered": focus_areas
+                        "focus_areas_covered": focus_areas,
                     },
                     "suggestions": [
                         "Address critical safety issues immediately",
                         "Run emergency evacuation drills",
-                        "Update family emergency plans"
+                        "Update family emergency plans",
                     ],
                     "follow_up_questions": [
                         "Would you like me to help prioritize these safety issues?",
                         "Should I prepare emergency response recommendations?",
-                        "Do you need help contacting emergency services?"
-                    ]
+                        "Do you need help contacting emergency services?",
+                    ],
                 }
 
         # Standard response for normal assessments
@@ -348,24 +375,26 @@ async def assess_home_safety(
                 "devices_analyzed": len(devices),
                 "safety_issues": safety_issues,
                 "device_summaries": device_analyses,
-                "recommendations": recommendations if include_recommendations else []
+                "recommendations": recommendations if include_recommendations else [],
             },
             "next_steps": [
                 "Review safety issues and address them promptly",
                 "Run individual device tests using 'run_safety_check'",
-                "Schedule regular maintenance for battery replacement"
+                "Schedule regular maintenance for battery replacement",
             ],
             "context": {
                 "operation_details": f"Completed {assessment_scope} safety assessment",
                 "assessment_timestamp": datetime.now().isoformat(),
-                "focus_areas_covered": focus_areas
+                "focus_areas_covered": focus_areas,
             },
-            "suggestions": recommendations[:3] if recommendations else [],  # Top 3 recommendations
+            "suggestions": recommendations[:3]
+            if recommendations
+            else [],  # Top 3 recommendations
             "follow_up_questions": [
                 "Would you like me to run safety checks on specific devices?",
                 "Should I help you schedule battery replacements?",
-                "Do you want to review emergency preparedness?"
-            ]
+                "Do you want to review emergency preparedness?",
+            ],
         }
 
     except Exception as e:
@@ -377,27 +406,25 @@ async def assess_home_safety(
             "recovery_options": [
                 "Check network connectivity",
                 "Verify API access",
-                "Try assessment again"
+                "Try assessment again",
             ],
             "diagnostic_info": {
                 "root_cause": str(e),
-                "affected_components": ["Safety assessment system"]
+                "affected_components": ["Safety assessment system"],
             },
             "alternative_solutions": [
                 "Run individual device status checks",
-                "Contact support for assessment assistance"
+                "Contact support for assessment assistance",
             ],
             "estimated_resolution_time": "< 15 minutes",
-            "urgency": "medium"
+            "urgency": "medium",
         }
 
 
 @mcp.tool()
 async def coordinate_emergency_response(
-    emergency_type: str,
-    affected_devices: List[str],
-    response_priority: str = "high"
-) -> Dict[str, Any]:
+    emergency_type: str, affected_devices: list[str], response_priority: str = "high"
+) -> dict[str, Any]:
     """🚨 **AI Emergency Response Coordination with Sampling**
 
     PORTMANTEAU PATTERN RATIONALE:
@@ -516,7 +543,7 @@ async def coordinate_emergency_response(
             "emergency_type": emergency_type,
             "affected_devices": affected_devices,
             "response_priority": response_priority,
-            "coordination_status": "initiated"
+            "coordination_status": "initiated",
         },
         "requires_sampling": True,  # Critical - AI must reason about emergency response
         "sampling_reason": f"Complex emergency coordination required for {emergency_type} incident",
@@ -524,33 +551,33 @@ async def coordinate_emergency_response(
             "AI will analyze emergency patterns and determine optimal response",
             "Silence non-essential alarms to reduce confusion",
             "Prepare emergency contact procedures",
-            "Assess evacuation routes and safety zones"
+            "Assess evacuation routes and safety zones",
         ],
         "context": {
             "operation_details": f"Emergency response coordination for {emergency_type}",
             "timestamp": datetime.now().isoformat(),
-            "priority_level": response_priority
+            "priority_level": response_priority,
         },
         "suggestions": [
             "Follow established emergency procedures",
             "Contact emergency services if situation is life-threatening",
             "Account for all household members",
-            "Have emergency supplies ready"
+            "Have emergency supplies ready",
         ],
         "follow_up_questions": [
             "Are you and your family safe right now?",
             "Should I help silence alarms to reduce panic?",
             "Do you need emergency contact information?",
-            "Would you like me to guide you through evacuation procedures?"
-        ]
+            "Would you like me to guide you through evacuation procedures?",
+        ],
     }
 
 
 async def predict_maintenance_needs(
     analysis_depth: str = "detailed",
     time_horizon: str = "1_month",
-    include_cost_estimates: bool = True
-) -> Dict[str, Any]:
+    include_cost_estimates: bool = True,
+) -> dict[str, Any]:
     """Predict future maintenance needs using AI analysis and sampling.
 
     PORTMANTEAU PATTERN RATIONALE:
@@ -565,7 +592,7 @@ async def predict_maintenance_needs(
     Returns:
         FastMCP 2.14.3+ Conversational Response Structure with predictive insights
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     # Predictive analysis requires AI sampling for pattern recognition
     return {
@@ -575,37 +602,37 @@ async def predict_maintenance_needs(
         "result": {
             "analysis_depth": analysis_depth,
             "time_horizon": time_horizon,
-            "predictions_generated": True
+            "predictions_generated": True,
         },
         "requires_sampling": True,  # AI needed for predictive pattern analysis
         "sampling_reason": "Complex pattern analysis required for accurate maintenance predictions",
         "next_steps": [
             "AI will analyze device usage patterns and failure history",
             "Generate maintenance schedule recommendations",
-            "Calculate cost estimates and priority rankings"
+            "Calculate cost estimates and priority rankings",
         ],
         "context": {
             "operation_details": f"{analysis_depth.capitalize()} predictive analysis for {time_horizon}",
-            "analysis_timestamp": datetime.now().isoformat()
+            "analysis_timestamp": datetime.now().isoformat(),
         },
         "suggestions": [
             "Schedule battery replacements before predicted failures",
             "Plan maintenance during off-peak times",
-            "Keep replacement parts inventory ready"
+            "Keep replacement parts inventory ready",
         ],
         "follow_up_questions": [
             "Would you like me to create a maintenance schedule?",
             "Should I help you order replacement parts?",
-            "Do you want cost estimates for predicted maintenance?"
-        ]
+            "Do you want cost estimates for predicted maintenance?",
+        ],
     }
 
 
 async def setup_smart_automation(
     automation_type: str,
     learning_period: str = "2_weeks",
-    confidence_threshold: float = 0.8
-) -> Dict[str, Any]:
+    confidence_threshold: float = 0.8,
+) -> dict[str, Any]:
     """Set up intelligent automation using AI learning and sampling.
 
     PORTMANTEAU PATTERN RATIONALE:
@@ -631,28 +658,28 @@ async def setup_smart_automation(
             "automation_type": automation_type,
             "learning_period": learning_period,
             "confidence_threshold": confidence_threshold,
-            "setup_status": "learning_phase_started"
+            "setup_status": "learning_phase_started",
         },
         "requires_sampling": True,  # AI needed for pattern learning and automation logic
         "sampling_reason": f"Complex pattern learning required for {automation_type} automation",
         "next_steps": [
             "AI will learn your usage patterns over the next {learning_period.replace('_', ' ')}",
             "Analyze device behavior and user interactions",
-            "Generate optimal automation rules based on learned patterns"
+            "Generate optimal automation rules based on learned patterns",
         ],
         "context": {
             "operation_details": f"Setting up {automation_type} automation with AI learning",
             "learning_start": datetime.now().isoformat(),
-            "learning_end": (datetime.now() + timedelta(weeks=2)).isoformat()
+            "learning_end": (datetime.now() + timedelta(weeks=2)).isoformat(),
         },
         "suggestions": [
             "Continue normal device usage during learning period",
             "Avoid unusual patterns that might confuse the AI",
-            "Monitor automation suggestions during learning phase"
+            "Monitor automation suggestions during learning phase",
         ],
         "follow_up_questions": [
             "Would you like me to explain how this automation will work?",
             "Should I set up notifications for automation triggers?",
-            "Do you want to customize the learning parameters?"
-        ]
+            "Do you want to customize the learning parameters?",
+        ],
     }

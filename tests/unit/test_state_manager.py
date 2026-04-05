@@ -10,7 +10,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from nest_protect_mcp.state_manager import StateManager, state_manager
 
 

@@ -1,6 +1,6 @@
 """Device control tools for Nest Protect MCP."""
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -52,12 +52,12 @@ class ArmDisarmParams(BaseModel):
     action: Literal["arm_home", "arm_away", "disarm"] = Field(
         ..., description="Security action to perform"
     )
-    passcode: Optional[str] = Field(
+    passcode: str | None = Field(
         None, description="Security passcode (required for disarm)"
     )
 
 
-async def hush_alarm(device_id: str, duration_seconds: int = 180) -> Dict[str, Any]:
+async def hush_alarm(device_id: str, duration_seconds: int = 180) -> dict[str, Any]:
     """Silence an active alarm on a Nest Protect device."""
     import aiohttp
 
@@ -92,12 +92,12 @@ async def hush_alarm(device_id: str, duration_seconds: int = 180) -> Dict[str, A
                         "error": error.get("error", {}).get("message"),
                     }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to hush alarm: {str(e)}"}
+        return {"status": "error", "message": f"Failed to hush alarm: {e!s}"}
 
 
 async def run_safety_check(
     device_id: str, test_type: Literal["full", "smoke", "co", "heat"] = "full"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run a safety check on a Nest Protect device."""
     import aiohttp
 
@@ -136,10 +136,10 @@ async def run_safety_check(
                         "error": error.get("error", {}).get("message"),
                     }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to run safety test: {str(e)}"}
+        return {"status": "error", "message": f"Failed to run safety test: {e!s}"}
 
 
-async def set_led_brightness(device_id: str, brightness: int) -> Dict[str, Any]:
+async def set_led_brightness(device_id: str, brightness: int) -> dict[str, Any]:
     """Set LED brightness for a Nest Protect device."""
     import aiohttp
 
@@ -174,7 +174,7 @@ async def set_led_brightness(device_id: str, brightness: int) -> Dict[str, Any]:
                         "error": error.get("error", {}).get("message"),
                     }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to set LED brightness: {str(e)}"}
+        return {"status": "error", "message": f"Failed to set LED brightness: {e!s}"}
 
 
 async def sound_alarm(
@@ -182,7 +182,7 @@ async def sound_alarm(
     alarm_type: Literal["smoke", "co", "security", "emergency"] = "smoke",
     duration_seconds: int = 10,
     volume: int = 100,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Sound an alarm on a Nest device for testing purposes."""
     import aiohttp
 
@@ -233,14 +233,14 @@ async def sound_alarm(
                         "error": error.get("error", {}).get("message"),
                     }
     except Exception as e:
-        return {"status": "error", "message": f"Failed to sound alarm: {str(e)}"}
+        return {"status": "error", "message": f"Failed to sound alarm: {e!s}"}
 
 
 async def arm_disarm_security(
     device_id: str,
     action: Literal["arm_home", "arm_away", "disarm"],
-    passcode: Optional[str] = None,
-) -> Dict[str, Any]:
+    passcode: str | None = None,
+) -> dict[str, Any]:
     """Arm or disarm Nest security system (Nest Guard/Secure)."""
     import aiohttp
 
@@ -299,5 +299,5 @@ async def arm_disarm_security(
     except Exception as e:
         return {
             "status": "error",
-            "message": f"Failed to {action} security system: {str(e)}",
+            "message": f"Failed to {action} security system: {e!s}",
         }

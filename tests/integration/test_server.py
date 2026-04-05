@@ -6,9 +6,8 @@ import asyncio
 from unittest.mock import patch
 
 import pytest
-from nest_protect_mcp.server import NEST_API_URL, NEST_AUTH_URL, NestProtectMCP
-
 from nest_protect_mcp.exceptions import NestProtectError
+from nest_protect_mcp.server import NEST_API_URL, NEST_AUTH_URL, NestProtectMCP
 
 
 class TestNestProtectMCPServer:

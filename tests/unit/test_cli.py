@@ -6,7 +6,6 @@ import argparse
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from nest_protect_mcp.cli import NestProtectCLI
 
 
@@ -139,7 +138,7 @@ class TestNestProtectCLI:
 
     def test_main_function(self, cli):
         """Test main function execution."""
-        with patch.object(cli, "run") as mock_run:
+        with patch.object(cli, "run"):
             # Test with no arguments (should show help)
             with patch("sys.argv", ["nest-protect-mcp"]):
                 try:

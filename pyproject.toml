@@ -38,9 +38,10 @@ keywords = [
     "google", "nest-api", "device-control", "monitoring"
 ]
 dependencies = [
-    # Core MCP framework (3.1: sampling, agentic workflows, prompts/skills)
-    "fastmcp>=3.1.0,<4.0.0",
+    # Core MCP framework (3.2: Apps, Generative UI, Security)
+    "fastmcp>=3.2.0",
     "pydantic>=2.0.0,<3.0.0",
+    "psutil>=5.9.0",
     # HTTP and networking
     "aiohttp>=3.8.0,<4.0.0",
     "httpx>=0.24.0,<1.0.0",
@@ -124,30 +125,6 @@ where = ["src"]
 include = ["nest_protect_mcp"]
 exclude = ["tests", "tests.*"]
 
-[tool.ruff]
-target-version = "py310"
-line-length = 88
-
-[tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "C90", # mccabe complexity
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-    "RUF"  # ruff-specific rules
-]
-ignore = [
-    "E203",  # whitespace before ':' (conflicts with black)
-    "E501"   # line too long (handled by black)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # unused imports in __init__
-"tests/*" = ["S101"]     # use of assert in tests
-
 [tool.black]
 line-length = 88
 target-version = ["py38"]
@@ -179,3 +156,32 @@ warn_unreachable = true
 [[tool.mypy.overrides]]
 module = ["aiohttp.*", "fastapi.*", "pydantic.*"]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# Hardened v13.1 Rule Set
+select = [
+    "E", "F", "I", "UP", "B", "S", "A", "ANN", "COM", "C4", "DTZ", "PIE", "T20", "PYI", "Q", "RSE", "RET", "SLF", "SIM", "TID", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "PERF", "FURB", "LOG", "RUF"
+]
+ignore = [
+    "ANN101", # Missing type annotation for self
+    "ANN102", # Missing type annotation for cls
+    "COM812", # Trailing comma missing (handled by formatter)
+    "ISC001", # Single line implicit string concatenation (handled by formatter)
+    "PLR0913", # Too many arguments
+    "S101",   # Use of assert (standard for pytest)
+    "TRY003", # Avoid specifying long messages in exceptions
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "ANN", "PLR", "TRY", "S105", "S106", "SLF001", "ARG002", "PLC0415"]
+"server.py" = ["T20", "ARG001", "ARG002"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

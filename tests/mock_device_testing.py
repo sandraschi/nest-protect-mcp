@@ -6,11 +6,9 @@ including device state simulation, network condition testing, and conversational
 """
 
 import asyncio
-import json
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
 
 import pytest
 from pydantic import BaseModel
@@ -39,9 +37,9 @@ class MockDeviceState(BaseModel):
     software_version: str = "3.2.1"
     hardware_version: str = "HW_2.1"
     location: str = "Living Room"
-    room_id: Optional[str] = None
+    room_id: str | None = None
 
-    def to_nest_api_format(self) -> Dict[str, Any]:
+    def to_nest_api_format(self) -> dict[str, Any]:
         """Convert to Google Nest API format."""
         return {
             "name": f"enterprises/test-project/devices/{self.device_id}",
@@ -105,7 +103,9 @@ class MockDeviceFactory:
         )
 
     @staticmethod
-    def create_low_battery_device(device_id: str = "test-device-002") -> MockDeviceState:
+    def create_low_battery_device(
+        device_id: str = "test-device-002"
+    ) -> MockDeviceState:
         """Create device with low battery."""
         return MockDeviceState(
             device_id=device_id,
@@ -130,7 +130,9 @@ class MockDeviceFactory:
         )
 
     @staticmethod
-    def create_smoke_alarm_device(device_id: str = "test-device-004") -> MockDeviceState:
+    def create_smoke_alarm_device(
+        device_id: str = "test-device-004"
+    ) -> MockDeviceState:
         """Create device with active smoke alarm."""
         return MockDeviceState(
             device_id=device_id,
@@ -157,18 +159,24 @@ class MockDeviceFactory:
         )
 
     @staticmethod
-    def create_multiple_devices(count: int = 5) -> List[MockDeviceState]:
+    def create_multiple_devices(count: int = 5) -> list[MockDeviceState]:
         """Create multiple devices with varied states."""
         devices = []
 
         # Normal devices
         for i in range(count - 3):
-            devices.append(MockDeviceFactory.create_normal_device(f"normal-device-{i+1:03d}"))
+            devices.append(
+                MockDeviceFactory.create_normal_device(f"normal-device-{i+1:03d}")
+            )
 
         # Add some problem devices
-        devices.append(MockDeviceFactory.create_low_battery_device("low-battery-device"))
+        devices.append(
+            MockDeviceFactory.create_low_battery_device("low-battery-device")
+        )
         devices.append(MockDeviceFactory.create_offline_device("offline-device"))
-        devices.append(MockDeviceFactory.create_smoke_alarm_device("smoke-alarm-device"))
+        devices.append(
+            MockDeviceFactory.create_smoke_alarm_device("smoke-alarm-device")
+        )
 
         return devices
 
@@ -182,10 +190,14 @@ class MockNetworkSimulator:
         self.packet_loss_rate = 0.0
         self.connection_drops = 0
 
-    async def simulate_request(self, response_data: Any, status_code: int = 200) -> tuple:
+    async def simulate_request(
+        self, response_data: Any, status_code: int = 200
+    ) -> tuple:
         """Simulate network request with configurable conditions."""
         # Simulate latency
-        actual_latency = self.latency_ms + random.uniform(-self.jitter_ms, self.jitter_ms)
+        actual_latency = self.latency_ms + random.uniform(
+            -self.jitter_ms, self.jitter_ms
+        )
         await asyncio.sleep(actual_latency / 1000)
 
         # Simulate packet loss
@@ -204,50 +216,57 @@ class MockNestAPIServer:
     """Comprehensive mock Nest API server for testing."""
 
     def __init__(self):
-        self.devices: Dict[str, MockDeviceState] = {}
+        self.devices: dict[str, MockDeviceState] = {}
         self.network = MockNetworkSimulator()
-        self.request_history: List[Dict[str, Any]] = []
+        self.request_history: list[dict[str, Any]] = []
 
     def add_device(self, device: MockDeviceState) -> None:
         """Add a device to the mock server."""
         self.devices[device.device_id] = device
 
-    def add_devices(self, devices: List[MockDeviceState]) -> None:
+    def add_devices(self, devices: list[MockDeviceState]) -> None:
         """Add multiple devices to the mock server."""
         for device in devices:
             self.add_device(device)
 
-    def set_network_conditions(self, latency_ms: int = 50, packet_loss: float = 0.0,
-                             connection_drops: int = 0) -> None:
+    def set_network_conditions(
+        self, latency_ms: int = 50, packet_loss: float = 0.0, connection_drops: int = 0
+    ) -> None:
         """Configure network simulation conditions."""
         self.network.latency_ms = latency_ms
         self.network.packet_loss_rate = packet_loss
         self.network.connection_drops = connection_drops
 
-    async def list_devices(self) -> Dict[str, Any]:
+    async def list_devices(self) -> dict[str, Any]:
         """Mock the Nest API list devices endpoint."""
-        self.request_history.append({
-            "endpoint": "list_devices",
-            "timestamp": datetime.now(timezone.utc),
-            "device_count": len(self.devices)
-        })
+        self.request_history.append(
+            {
+                "endpoint": "list_devices",
+                "timestamp": datetime.now(timezone.utc),
+                "device_count": len(self.devices),
+            }
+        )
 
         status_code, _ = await self.network.simulate_request({}, 200)
 
         if status_code == 200:
             return {
-                "devices": [device.to_nest_api_format() for device in self.devices.values()]
+                "devices": [
+                    device.to_nest_api_format() for device in self.devices.values()
+                ]
             }
         else:
             return {"error": {"message": "API Error", "code": status_code}}
 
-    async def get_device(self, device_id: str) -> Dict[str, Any]:
+    async def get_device(self, device_id: str) -> dict[str, Any]:
         """Mock the Nest API get device endpoint."""
-        self.request_history.append({
-            "endpoint": "get_device",
-            "device_id": device_id,
-            "timestamp": datetime.now(timezone.utc)
-        })
+        self.request_history.append(
+            {
+                "endpoint": "get_device",
+                "device_id": device_id,
+                "timestamp": datetime.now(timezone.utc),
+            }
+        )
 
         status_code, _ = await self.network.simulate_request({}, 200)
 
@@ -259,16 +278,19 @@ class MockNestAPIServer:
         else:
             return {"error": {"message": "API Error", "code": status_code}}
 
-    async def execute_command(self, device_id: str, command: str,
-                            params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def execute_command(
+        self, device_id: str, command: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Mock the Nest API execute command endpoint."""
-        self.request_history.append({
-            "endpoint": "execute_command",
-            "device_id": device_id,
-            "command": command,
-            "params": params,
-            "timestamp": datetime.now(timezone.utc)
-        })
+        self.request_history.append(
+            {
+                "endpoint": "execute_command",
+                "device_id": device_id,
+                "command": command,
+                "params": params,
+                "timestamp": datetime.now(timezone.utc),
+            }
+        )
 
         status_code, _ = await self.network.simulate_request({}, 200)
 
@@ -293,8 +315,9 @@ class ConversationalResponseValidator:
     """Validate FastMCP 2.14.3+ conversational response formats."""
 
     @staticmethod
-    def validate_conversational_response(response: Dict[str, Any],
-                                       expected_operation: str) -> List[str]:
+    def validate_conversational_response(
+        response: dict[str, Any], expected_operation: str
+    ) -> list[str]:
         """Validate that response follows conversational format standards."""
         errors = []
 
@@ -309,10 +332,17 @@ class ConversationalResponseValidator:
             errors.append("Field 'success' must be boolean")
 
         if "operation" in response and response["operation"] != expected_operation:
-            errors.append(f"Operation mismatch: expected {expected_operation}, got {response['operation']}")
+            errors.append(
+                f"Operation mismatch: expected {expected_operation}, got {response['operation']}"
+            )
 
         # Conversational fields (recommended)
-        conversational_fields = ["next_steps", "context", "suggestions", "follow_up_questions"]
+        conversational_fields = [
+            "next_steps",
+            "context",
+            "suggestions",
+            "follow_up_questions",
+        ]
         for field in conversational_fields:
             if field not in response:
                 errors.append(f"Missing conversational field: {field}")
@@ -327,7 +357,7 @@ class ConversationalResponseValidator:
         return errors
 
     @staticmethod
-    def validate_error_response(response: Dict[str, Any]) -> List[str]:
+    def validate_error_response(response: dict[str, Any]) -> list[str]:
         """Validate error response format."""
         errors = []
 
@@ -340,7 +370,9 @@ class ConversationalResponseValidator:
                 errors.append(f"Missing error field: {field}")
 
         # Recovery options validation
-        if "recovery_options" in response and not isinstance(response["recovery_options"], list):
+        if "recovery_options" in response and not isinstance(
+            response["recovery_options"], list
+        ):
             errors.append("Field 'recovery_options' must be a list")
 
         return errors
@@ -378,13 +410,9 @@ class ComprehensiveTestSuite:
                 latency_ms=500, packet_loss=0.1, connection_drops=2
             )
 
-    async def test_conversational_responses(self) -> Dict[str, Any]:
+    async def test_conversational_responses(self) -> dict[str, Any]:
         """Test all tools return proper conversational responses."""
-        results = {
-            "passed": 0,
-            "failed": 0,
-            "details": []
-        }
+        results = {"passed": 0, "failed": 0, "details": []}
 
         # Mock the actual tool imports and calls
         test_cases = [
@@ -393,7 +421,7 @@ class ComprehensiveTestSuite:
             ("get_device_events", {"device_id": "test-device-001", "limit": 10}),
         ]
 
-        for operation, params in test_cases:
+        for operation, _params in test_cases:
             # This would normally call the actual tool
             # For now, we'll simulate the expected response structure
             mock_response = {
@@ -404,46 +432,46 @@ class ComprehensiveTestSuite:
                 "next_steps": ["Step 1", "Step 2"],
                 "context": {"details": "Mock context"},
                 "suggestions": ["Suggestion 1"],
-                "follow_up_questions": ["Question 1"]
+                "follow_up_questions": ["Question 1"],
             }
 
-            errors = self.validator.validate_conversational_response(mock_response, operation)
+            errors = self.validator.validate_conversational_response(
+                mock_response, operation
+            )
             if errors:
                 results["failed"] += 1
-                results["details"].append({
-                    "operation": operation,
-                    "status": "failed",
-                    "errors": errors
-                })
+                results["details"].append(
+                    {"operation": operation, "status": "failed", "errors": errors}
+                )
             else:
                 results["passed"] += 1
-                results["details"].append({
-                    "operation": operation,
-                    "status": "passed"
-                })
+                results["details"].append({"operation": operation, "status": "passed"})
 
         return results
 
-    async def test_sampling_capabilities(self) -> Dict[str, Any]:
+    async def test_sampling_capabilities(self) -> dict[str, Any]:
         """Test AI orchestration tools with sampling signals."""
         results = {
             "sampling_signals_detected": 0,
             "sampling_reasons_valid": 0,
-            "details": []
+            "details": [],
         }
 
         # Test AI orchestration tools that should trigger sampling
         sampling_tools = [
             ("assess_home_safety", {"assessment_scope": "comprehensive"}),
-            ("coordinate_emergency_response", {
-                "emergency_type": "smoke",
-                "affected_devices": ["device-001"],
-                "response_priority": "high"
-            }),
+            (
+                "coordinate_emergency_response",
+                {
+                    "emergency_type": "smoke",
+                    "affected_devices": ["device-001"],
+                    "response_priority": "high",
+                },
+            ),
             ("predict_maintenance_needs", {"analysis_depth": "detailed"}),
         ]
 
-        for tool_name, params in sampling_tools:
+        for tool_name, _params in sampling_tools:
             # Simulate tool response with sampling signal
             mock_response = {
                 "success": True,
@@ -455,7 +483,9 @@ class ComprehensiveTestSuite:
                 "next_steps": ["AI will process complex patterns"],
                 "context": {"sampling_triggered": True},
                 "suggestions": ["Wait for AI analysis completion"],
-                "follow_up_questions": ["Would you like me to explain the analysis process?"]
+                "follow_up_questions": [
+                    "Would you like me to explain the analysis process?"
+                ],
             }
 
             if mock_response.get("requires_sampling"):
@@ -463,21 +493,19 @@ class ComprehensiveTestSuite:
                 if "sampling_reason" in mock_response:
                     results["sampling_reasons_valid"] += 1
 
-            results["details"].append({
-                "tool": tool_name,
-                "sampling_detected": mock_response.get("requires_sampling", False),
-                "reason_present": "sampling_reason" in mock_response
-            })
+            results["details"].append(
+                {
+                    "tool": tool_name,
+                    "sampling_detected": mock_response.get("requires_sampling", False),
+                    "reason_present": "sampling_reason" in mock_response,
+                }
+            )
 
         return results
 
-    async def test_device_state_transitions(self) -> Dict[str, Any]:
+    async def test_device_state_transitions(self) -> dict[str, Any]:
         """Test device state transitions under various conditions."""
-        results = {
-            "transitions_tested": 0,
-            "transitions_successful": 0,
-            "details": []
-        }
+        results = {"transitions_tested": 0, "transitions_successful": 0, "details": []}
 
         # Test battery level transitions
         device = MockDeviceFactory.create_normal_device()
@@ -490,18 +518,22 @@ class ComprehensiveTestSuite:
         results["transitions_tested"] += 1
         if device.battery_level < initial_battery and device.battery_status == "LOW":
             results["transitions_successful"] += 1
-            results["details"].append({
-                "transition": "battery_drain",
-                "status": "successful",
-                "from": f"{initial_battery}% OK",
-                "to": f"{device.battery_level}% LOW"
-            })
+            results["details"].append(
+                {
+                    "transition": "battery_drain",
+                    "status": "successful",
+                    "from": f"{initial_battery}% OK",
+                    "to": f"{device.battery_level}% LOW",
+                }
+            )
         else:
-            results["details"].append({
-                "transition": "battery_drain",
-                "status": "failed",
-                "expected": "battery level decrease and LOW status"
-            })
+            results["details"].append(
+                {
+                    "transition": "battery_drain",
+                    "status": "failed",
+                    "expected": "battery level decrease and LOW status",
+                }
+            )
 
         # Test alarm state transitions
         device = MockDeviceFactory.create_normal_device()
@@ -512,24 +544,31 @@ class ComprehensiveTestSuite:
         device.alarm_status = "SMOKE"
 
         results["transitions_tested"] += 1
-        if device.alarm_status != initial_alarm and device.smoke_status == "SMOKE_DETECTED":
+        if (
+            device.alarm_status != initial_alarm
+            and device.smoke_status == "SMOKE_DETECTED"
+        ):
             results["transitions_successful"] += 1
-            results["details"].append({
-                "transition": "smoke_alarm",
-                "status": "successful",
-                "from": initial_alarm,
-                "to": device.alarm_status
-            })
+            results["details"].append(
+                {
+                    "transition": "smoke_alarm",
+                    "status": "successful",
+                    "from": initial_alarm,
+                    "to": device.alarm_status,
+                }
+            )
         else:
-            results["details"].append({
-                "transition": "smoke_alarm",
-                "status": "failed",
-                "expected": "alarm status change on smoke detection"
-            })
+            results["details"].append(
+                {
+                    "transition": "smoke_alarm",
+                    "status": "failed",
+                    "expected": "alarm status change on smoke detection",
+                }
+            )
 
         return results
 
-    async def run_comprehensive_test_suite(self) -> Dict[str, Any]:
+    async def run_comprehensive_test_suite(self) -> dict[str, Any]:
         """Run the complete comprehensive test suite."""
         results = {
             "test_suite": "Comprehensive Nest Protect MCP Testing",
@@ -537,15 +576,15 @@ class ComprehensiveTestSuite:
             "conversational_tests": await self.test_conversational_responses(),
             "sampling_tests": await self.test_sampling_capabilities(),
             "state_transition_tests": await self.test_device_state_transitions(),
-            "overall_status": "pending"
+            "overall_status": "pending",
         }
 
         # Calculate overall status
         all_passed = (
-            results["conversational_tests"]["failed"] == 0 and
-            results["sampling_tests"]["sampling_signals_detected"] > 0 and
-            results["state_transition_tests"]["transitions_successful"] ==
-            results["state_transition_tests"]["transitions_tested"]
+            results["conversational_tests"]["failed"] == 0
+            and results["sampling_tests"]["sampling_signals_detected"] > 0
+            and results["state_transition_tests"]["transitions_successful"]
+            == results["state_transition_tests"]["transitions_tested"]
         )
 
         results["overall_status"] = "passed" if all_passed else "failed"
@@ -559,6 +598,7 @@ async def mock_device_factory():
     """Fixture for mock device factory."""
     return MockDeviceFactory()
 
+
 @pytest.fixture
 async def mock_api_server():
     """Fixture for mock Nest API server."""
@@ -567,10 +607,12 @@ async def mock_api_server():
     server.add_devices(devices)
     return server
 
+
 @pytest.fixture
 async def comprehensive_test_suite():
     """Fixture for comprehensive test suite."""
     return ComprehensiveTestSuite()
+
 
 @pytest.fixture
 async def conversational_validator():

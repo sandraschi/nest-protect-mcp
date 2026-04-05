@@ -4,15 +4,13 @@ Comprehensive FastMCP 2.14.3 Test Suite
 Tests conversational responses, sampling capabilities, and both mock and real device scenarios.
 """
 
-import asyncio
 import pytest
-from unittest.mock import AsyncMock, patch
 
 from tests.mock_device_testing import (
     ComprehensiveTestSuite,
     ConversationalResponseValidator,
     MockDeviceFactory,
-    MockNestAPIServer
+    MockNestAPIServer,
 )
 from tests.real_device_testing import RealDeviceDiscovery, RealDeviceTestSuite
 
@@ -35,33 +33,33 @@ class TestConversationalResponses:
                 "devices": [
                     {"id": "device-1", "name": "Living Room", "online": True},
                     {"id": "device-2", "name": "Kitchen", "online": True},
-                    {"id": "device-3", "name": "Bedroom", "online": False}
+                    {"id": "device-3", "name": "Bedroom", "online": False},
                 ],
                 "stats": {
                     "total": 5,
                     "online": 4,
                     "offline": 1,
-                    "types": ["SMOKE_CO_ALARM"]
-                }
+                    "types": ["SMOKE_CO_ALARM"],
+                },
             },
             "next_steps": [
                 "Run 'get_device_status' to check individual device details",
-                "Use 'run_safety_check' to test device functionality"
+                "Use 'run_safety_check' to test device functionality",
             ],
             "context": {
                 "operation_details": "Retrieved device information from Nest API",
-                "api_response": "Successfully queried enterprise test-project"
+                "api_response": "Successfully queried enterprise test-project",
             },
-            "suggestions": [
-                "Consider running safety checks on the offline device"
-            ],
+            "suggestions": ["Consider running safety checks on the offline device"],
             "follow_up_questions": [
                 "Would you like me to check the status of a specific device?",
-                "Should I run safety checks on any of these devices?"
-            ]
+                "Should I run safety checks on any of these devices?",
+            ],
         }
 
-        errors = validator.validate_conversational_response(mock_response, "list_devices")
+        errors = validator.validate_conversational_response(
+            mock_response, "list_devices"
+        )
         assert len(errors) == 0, f"Conversational response validation failed: {errors}"
 
     async def test_device_status_conversational_format(self, validator):
@@ -76,29 +74,28 @@ class TestConversationalResponses:
                     "name": "Living Room Detector",
                     "online": True,
                     "battery": {"level": 85, "status": "OK"},
-                    "alarm": {"status": "NONE"}
+                    "alarm": {"status": "NONE"},
                 },
-                "health_analysis": {
-                    "issues": [],
-                    "overall_status": "good"
-                }
+                "health_analysis": {"issues": [], "overall_status": "good"},
             },
             "next_steps": [
                 "Run 'run_safety_check' to test device functionality",
-                "Use 'get_device_events' to see recent activity"
+                "Use 'get_device_events' to see recent activity",
             ],
             "context": {
                 "operation_details": "Retrieved comprehensive status for Nest Protect device",
-                "last_updated": "2025-01-18T10:30:00Z"
+                "last_updated": "2025-01-18T10:30:00Z",
             },
             "suggestions": [],
             "follow_up_questions": [
                 "Would you like me to run a safety check on this device?",
-                "Should I check the recent event history?"
-            ]
+                "Should I check the recent event history?",
+            ],
         }
 
-        errors = validator.validate_conversational_response(mock_response, "get_device_status")
+        errors = validator.validate_conversational_response(
+            mock_response, "get_device_status"
+        )
         assert len(errors) == 0, f"Conversational response validation failed: {errors}"
 
     async def test_error_response_format(self, validator):
@@ -110,18 +107,18 @@ class TestConversationalResponses:
             "message": "You need to authenticate with the Nest API first",
             "recovery_options": [
                 "Run 'initiate_oauth_flow' to start authentication",
-                "Check your OAuth tokens are properly configured"
+                "Check your OAuth tokens are properly configured",
             ],
             "diagnostic_info": {
                 "root_cause": "Missing or invalid access token",
-                "affected_components": ["Nest API connection"]
+                "affected_components": ["Nest API connection"],
             },
             "alternative_solutions": [
                 "Re-run OAuth authentication flow",
-                "Refresh your access tokens"
+                "Refresh your access tokens",
             ],
             "estimated_resolution_time": "< 5 minutes",
-            "urgency": "high"
+            "urgency": "high",
         }
 
         errors = validator.validate_error_response(error_response)
@@ -144,8 +141,8 @@ class TestSamplingCapabilities:
                 "devices_analyzed": 3,
                 "safety_issues": [
                     {"type": "connectivity", "device": "Bedroom", "severity": "high"},
-                    {"type": "battery", "device": "Kitchen", "severity": "medium"}
-                ]
+                    {"type": "battery", "device": "Kitchen", "severity": "medium"},
+                ],
             },
             "requires_sampling": True,
             "sampling_reason": "Complex safety analysis with multiple critical issues detected",
@@ -154,8 +151,8 @@ class TestSamplingCapabilities:
             ],
             "context": {
                 "operation_details": "Comprehensive safety assessment with critical findings",
-                "assessment_timestamp": "2025-01-18T10:30:00Z"
-            }
+                "assessment_timestamp": "2025-01-18T10:30:00Z",
+            },
         }
 
         assert expected_response["requires_sampling"] is True
@@ -172,13 +169,13 @@ class TestSamplingCapabilities:
                 "emergency_type": "smoke",
                 "affected_devices": ["living-room", "kitchen"],
                 "response_priority": "critical",
-                "coordination_status": "initiated"
+                "coordination_status": "initiated",
             },
             "requires_sampling": True,
             "sampling_reason": "Complex emergency coordination required for smoke incident",
             "next_steps": [
                 "AI will analyze emergency patterns and determine optimal response"
-            ]
+            ],
         }
 
         assert expected_response["requires_sampling"] is True
@@ -193,13 +190,11 @@ class TestSamplingCapabilities:
             "result": {
                 "analysis_depth": "detailed",
                 "time_horizon": "1_month",
-                "predictions_generated": True
+                "predictions_generated": True,
             },
             "requires_sampling": True,
             "sampling_reason": "Complex pattern analysis required for accurate maintenance predictions",
-            "next_steps": [
-                "AI will analyze device usage patterns and failure history"
-            ]
+            "next_steps": ["AI will analyze device usage patterns and failure history"],
         }
 
         assert expected_response["requires_sampling"] is True
@@ -234,13 +229,14 @@ class TestMockDeviceScenarios:
         # Add emergency devices
         emergency_devices = [
             MockDeviceFactory.create_smoke_alarm_device("emergency-smoke"),
-            MockDeviceFactory.create_co_alarm_device("emergency-co")
+            MockDeviceFactory.create_co_alarm_device("emergency-co"),
         ]
         mock_server.add_devices(emergency_devices)
 
         devices = await mock_server.list_devices()
-        emergency_count = sum(1 for d in devices["devices"]
-                            if "emergency-" in d["name"])
+        emergency_count = sum(
+            1 for d in devices["devices"] if "emergency-" in d["name"]
+        )
 
         assert emergency_count == 2
 
@@ -248,7 +244,7 @@ class TestMockDeviceScenarios:
         """Test maintenance scenario with low battery devices."""
         maintenance_devices = [
             MockDeviceFactory.create_low_battery_device("maintenance-battery"),
-            MockDeviceFactory.create_offline_device("maintenance-offline")
+            MockDeviceFactory.create_offline_device("maintenance-offline"),
         ]
         mock_server.add_devices(maintenance_devices)
 
@@ -374,11 +370,13 @@ class TestIntegrationScenarios:
             "next_steps": ["Mock next step"],
             "context": {"mock_context": True},
             "suggestions": ["Mock suggestion"],
-            "follow_up_questions": ["Mock question"]
+            "follow_up_questions": ["Mock question"],
         }
 
         validator = ConversationalResponseValidator()
-        errors = validator.validate_conversational_response(mock_response, "test_operation")
+        errors = validator.validate_conversational_response(
+            mock_response, "test_operation"
+        )
 
         assert len(errors) == 0, f"Mock response format invalid: {errors}"
 
@@ -390,15 +388,15 @@ class TestIntegrationScenarios:
                 "error": "Authentication failed",
                 "error_code": "AUTHENTICATION_ERROR",
                 "recovery_options": ["Re-authenticate"],
-                "urgency": "high"
+                "urgency": "high",
             },
             {
                 "success": False,
                 "error": "Device not found",
                 "error_code": "DEVICE_NOT_FOUND",
                 "recovery_options": ["Check device ID"],
-                "urgency": "medium"
-            }
+                "urgency": "medium",
+            },
         ]
 
         validator = ConversationalResponseValidator()

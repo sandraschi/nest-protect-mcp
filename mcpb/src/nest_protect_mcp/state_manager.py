@@ -5,9 +5,10 @@ import json
 import logging
 import os
 import time
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, TypeVar
 
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict
@@ -21,14 +22,14 @@ class StateManager:
     """Thread-safe state manager with persistence."""
 
     _instance = None
-    _state: Dict[str, Any] = {}
+    _state: dict[str, Any] = {}
     _state_file: Path = Path("data/state.json")
     _lock = asyncio.Lock()
     _initialized = False
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(StateManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._state = {}
             cls._instance._state_file.parent.mkdir(parents=True, exist_ok=True)
             cls._instance._initialized = False
@@ -176,7 +177,7 @@ class StateManager:
             self._state.clear()
         await self._save_state()
 
-    async def get_all(self) -> Dict[str, Any]:
+    async def get_all(self) -> dict[str, Any]:
         """Get all state."""
         async with self._lock:
             return self._state.copy()
@@ -213,16 +214,16 @@ class AppState(BaseModel):
     """Legacy AppState for backward compatibility."""
 
     config: Any = None
-    access_token: Optional[str] = None
-    refresh_token: Optional[str] = None
-    token_expires_in: Optional[int] = None
-    oauth_state: Optional[str] = None
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_expires_in: int | None = None
+    oauth_state: str | None = None
     http_session: Any = None  # aiohttp.ClientSession
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-_app_state: Optional[AppState] = None
+_app_state: AppState | None = None
 
 
 def initialize_app_state(config_instance: Any = None) -> None:

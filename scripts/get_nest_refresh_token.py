@@ -47,15 +47,11 @@ def main() -> None:
         os.chdir(repo_root)
         candidates = glob.glob("client_secret_*.json")
         if not candidates:
-            print(
-                "No client_secret_*.json found. Download from Google Cloud Console:"
-            )
+            print("No client_secret_*.json found. Download from Google Cloud Console:")
             print(
                 "  APIs & Services -> Credentials -> Create OAuth client ID (Desktop app)"
             )
-            print(
-                "  Save the JSON as client_secret_XXXX.json in the repo root."
-            )
+            print("  Save the JSON as client_secret_XXXX.json in the repo root.")
             sys.exit(1)
         client_secret_path = candidates[0]
 
@@ -99,9 +95,7 @@ def main() -> None:
     creds = flow.run_local_server(port=args.port)
 
     if not getattr(creds, "refresh_token", None):
-        print(
-            "No refresh_token in response. Revoke app access for your Google account"
-        )
+        print("No refresh_token in response. Revoke app access for your Google account")
         print("and run this script again to get a new consent.")
         sys.exit(1)
 
