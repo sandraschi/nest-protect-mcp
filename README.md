@@ -1,9 +1,11 @@
 # Nest Protect MCP Server
 
+[![FastMCP Version](https://img.shields.io/badge/FastMCP-3.2.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/sandraschi/fastmcp) [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/) [![Built with Just](https://img.shields.io/badge/Built_with-Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![FastMCP 3.1](https://img.shields.io/badge/FastMCP-3.1-blue)](https://github.com/PrefectHQ/fastmcp)
+[![FastMCP 3.2.0](https://img.shields.io/badge/FastMCP-3.1-blue)](https://github.com/PrefectHQ/fastmcp)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![CI/CD](https://github.com/sandraschi/nest-protect-mcp/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sandraschi/nest-protect-mcp/actions)
 [![codecov](https://codecov.io/gh/sandraschi/nest-protect-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/sandraschi/nest-protect-mcp)
@@ -11,12 +13,12 @@
 
 ##  Overview
 
-The Nest Protect MCP Server is a **production-ready** FastMCP 3.1 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
+The Nest Protect MCP Server is a **production-ready** FastMCP 3.2.0 compatible server that provides seamless integration between Google Nest Protect devices and the Model Context Protocol (MCP). It offers comprehensive monitoring and control capabilities for your Nest Protect smoke and carbon monoxide detectors through Claude Desktop and other MCP clients.
 
 ###  **Current Status: FULLY OPERATIONAL - SOTA UPGRADE COMPLETE**
 - **20 Production Tools** - Complete device management suite
 - **Real API Integration** - No mocks, authentic Google Smart Device Management API v1
-- **FastMCP 3.1** - Sampling, agentic workflows, prompts (skills)
+- **FastMCP 3.2.0** - Sampling, agentic workflows, prompts (skills)
 - **MCPB Packaging** - Claude Desktop optimized deployment
 - **Python 3.10+** - Modern baseline requirements
 - **OAuth 2.0 Security** - Complete authentication flow with token management
@@ -50,7 +52,7 @@ graph LR
 ##  Features
 
 ###  **Core Capabilities**
-- **FastMCP 3.1 Compliance**: Sampling, agentic workflows, prompts (skills)
+- **FastMCP 3.2.0 Compliance**: Sampling, agentic workflows, prompts (skills)
 - **Real Nest API Integration**: Authentic Google Smart Device Management API v1 calls with OAuth 2.0
 - **20 Production Tools**: Complete device management and control suite
 - **MCPB Packaging**: Claude Desktop optimized deployment with comprehensive assets
@@ -128,7 +130,7 @@ Add to your `claude_desktop_config.json`:
 2. **Drag the `.mcpb` file** into Claude Desktop settings
 3. **Install Python dependencies** (run in terminal):
    ```bash
-   pip install fastmcp>=2.13.0 pydantic>=2.0.0 aiohttp>=3.8.0 httpx>=0.24.0 websockets>=11.0.0 python-dotenv>=1.0.0 tomli>=0.10.2 python-dateutil>=2.8.2 anyio>=4.5.0 structlog>=23.1.0
+   pip install FastMCP 3.2.0 pydantic>=2.0.0 aiohttp>=3.8.0 httpx>=0.24.0 websockets>=11.0.0 python-dotenv>=1.0.0 tomli>=0.10.2 python-dateutil>=2.8.2 anyio>=4.5.0 structlog>=23.1.0
    ```
 4. **Configure Google Nest API** credentials in Claude Desktop settings:
    - `nest_client_id`: Your Google OAuth Client ID
@@ -225,7 +227,7 @@ The Nest Protect MCP server includes a **production-ready MCPB package** optimiz
 **MCPB Features:**
 -  **20 Production Tools** - Complete device management suite
 -  **22KB Comprehensive Assets** - Extensive prompt templates and documentation
--  **FastMCP 2.13.0** - Latest MCP specification compliance
+-  **FastMCP 3.2.0** - Latest MCP specification compliance
 -  **OAuth 2.0 Security** - Secure authentication with automatic token refresh
 -  **Claude Desktop Optimized** - Seamless drag-and-drop installation
 
@@ -304,7 +306,7 @@ FROM python:3.11-slim as base
 #### **Package Configuration**
 ```json
 {
-  "dependencies": ["fastmcp>=3.1.0,<4.0.0"],
+  "dependencies": ["FastMCP 3.2.0,<4.0.0"],
   "configuration": {
     "nest_client_id": {"type": "string", "required": true},
     "nest_client_secret": {"type": "string", "required": true, "secret": true},
@@ -317,7 +319,7 @@ FROM python:3.11-slim as base
 ##  Troubleshooting
 
 ### **Recent Fixes Applied**
-- **FastMCP 3.1**: Sampling, agentic workflows, prompts (skills); see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) for auth.
+- **FastMCP 3.2.0**: Sampling, agentic workflows, prompts (skills); see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md) for auth.
 - **MCPB Packaging**: Claude Desktop optimized; run `scripts/get_nest_refresh_token.py` for refresh token.
 - **Webapp**: Onboarding page and Help modal with setup steps.
 
@@ -375,7 +377,7 @@ For detailed documentation, please refer to the [docs](docs/) directory:
 
 - **[AUTH_SETUP](docs/AUTH_SETUP.md)** - Auth and refresh token (quick reference); also in webapp **Setup & auth** and Help modal
 - **[Setup Guide](docs/SETUP_GUIDE.md)** - Full installation and configuration
-- **[Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design, FastMCP 3.1, tools and prompts
+- **[Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design, FastMCP 3.2.0, tools and prompts
 - **[MCP Production Checklist](docs/MCP_PRODUCTION_CHECKLIST.md)** - Deployment readiness
 - **[Containerization Guidelines](docs/CONTAINERIZATION_GUIDELINES.md)** - Docker deployment
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
@@ -515,6 +517,17 @@ For support, please:
 1. Check the [troubleshooting guide](docs/TROUBLESHOOTING.md)
 2. Search existing [issues](https://github.com/sandraschi/nest-protect-mcp/issues)
 3. Open a new issue with detailed information
+
+
+## 🛡️ Industrial Quality Stack
+
+This project adheres to **SOTA 14.1** industrial standards for high-fidelity agentic orchestration:
+
+- **Python (Core)**: [Ruff](https://astral.sh/ruff) for linting and formatting. Zero-tolerance for `print` statements in core handlers (`T201`).
+- **Webapp (UI)**: [Biome](https://biomejs.dev/) for sub-millisecond linting. Strict `noConsoleLog` enforcement.
+- **Protocol Compliance**: Hardened `stdout/stderr` isolation to ensure crash-resistant JSON-RPC communication.
+- **Automation**: [Justfile](./justfile) recipes for all fleet operations (`just lint`, `just fix`, `just dev`).
+- **Security**: Automated audits via `bandit` and `safety`.
 
 ##  License
 

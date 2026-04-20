@@ -1,29 +1,20 @@
-# start.ps1 - Nest Protect MCP SOTA Startup
-# 1. Clear port from zombies/squatters
-# 2. Build and run
+Param([switch]$Headless)
 
-$PORT = 10753
-Write-Host "--- Nest Protect MCP Startup ---" -ForegroundColor Cyan
-
-# Clear port
-Write-Host "Checking for port $PORT squatters..." -ForegroundColor Yellow
-$netsat = Get-NetTCPConnection -LocalPort $PORT -ErrorAction SilentlyContinue
-if ($netsat) {
-    Write-Host "Found squatter on port $PORT. Terminating..." -ForegroundColor Red
-    $netsat | ForEach-Object {
-        $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
-        if ($p) {
-            Write-Host "Stopping process $($p.Name) ($($p.Id))..."
-            Stop-Process -Id $p.Id -Force
-        }
-    }
+# --- SOTA Headless Standard ---
+if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
+    Start-Process pwsh -ArgumentList '-NoProfile', '-File', $PSCommandPath, '-Headless' -WindowStyle Hidden
+    exit
 }
+$WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
+# ------------------------------
 
-# Sync environment
-Write-Host "Syncing environment with uv..." -ForegroundColor Yellow
-uv sync --all-extras
+$env:FASTMCP_LOG_LEVEL = 'WARNING'
+# nest-protect-mcp Start - Standards-Compliant SOTA
+Write-Host 'Starting nest-protect-mcp...' -ForegroundColor Cyan
 
-# Start backend
-Write-Host "Starting Nest Protect MCP server on port $PORT..." -ForegroundColor Green
-# uv run python -m nest_protect_mcp.fastmcp_server --http --port $PORT
-Start-Process "uv" -ArgumentList "run", "python", "-m", "nest_protect_mcp.fastmcp_server", "--http", "--port", "$PORT" -NoNewWindow
+Set-Location $PSScriptRoot
+Write-Host 'Starting Standardized Fullstack Hybrid...' -ForegroundColor Green
+# Launch backend Hidden by default to prevent console spam
+Start-Process pwsh -ArgumentList '-NoProfile', '-Command', 'uv run -m nest_protect_mcp' -WindowStyle Hidden
+Set-Location web_sota
+npm run dev
