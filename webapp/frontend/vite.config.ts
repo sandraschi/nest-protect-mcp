@@ -10,9 +10,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    port: 7770,
-    proxy: {
+  server: {proxy: {
       '/api': {
         target: 'http://localhost:7771',
         changeOrigin: true,
