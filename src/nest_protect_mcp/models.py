@@ -5,7 +5,7 @@ This module defines the data structures used throughout the Nest Protect MCP ser
 including configuration, state, and command models.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -56,13 +56,18 @@ class ProtectConfig(BaseModel):
     """Configuration for the Nest Protect MCP server."""
 
     # Connection settings
-    project_id: str = Field("", description="Google Cloud Project ID")
+    project_id: str = Field(
+        "",
+        description=(
+            "Nest Device Access project id (SDM enterprise UUID), not the numeric GCP project id"
+        ),
+    )
     client_id: str = Field("", description="OAuth 2.0 Client ID")
     client_secret: str = Field("", description="OAuth 2.0 Client Secret")
     refresh_token: str = Field("", description="OAuth 2.0 Refresh Token")
 
     # Device settings
-    update_interval: int = Field(60, description="Update interval in seconds")
+    update_interval: int = Field(60, ge=1, description="Update interval in seconds")
 
     # MQTT settings (optional)
     mqtt_enabled: bool = Field(False, description="Enable MQTT integration")
@@ -160,7 +165,7 @@ class ProtectEvent(BaseModel):
     event_id: str = Field(..., description="Unique event identifier")
     device_id: str = Field(..., description="Source device ID")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Event timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Event timestamp"
     )
     event_type: str = Field(..., description="Type of event")
     event_data: dict[str, Any] = Field(default_factory=dict, description="Event data")

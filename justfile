@@ -2,33 +2,9 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
-# Display the SOTA Industrial Dashboard
+# Open the interactive recipe dashboard in the browser
 default:
-    @$lines = Get-Content '{{justfile()}}'; \
-    Write-Host ' [SOTA] Industrial Operations Dashboard v1.3.2' -ForegroundColor White -BackgroundColor Cyan; \
-    Write-Host '' ; \
-    $currentCategory = ''; \
-    foreach ($line in $lines) { \
-        if ($line -match '^# ── ([^─]+) ─') { \
-            $currentCategory = $matches[1].Trim(); \
-            Write-Host "`n  $currentCategory" -ForegroundColor Cyan; \
-            Write-Host ('  ' + ('─' * 45)) -ForegroundColor Gray; \
-        } elseif ($line -match '^# ([^─].+)') { \
-            $desc = $matches[1].Trim(); \
-            $idx = [array]::IndexOf($lines, $line); \
-            if ($idx -lt $lines.Count - 1) { \
-                $nextLine = $lines[$idx + 1]; \
-                if ($nextLine -match '^([a-z0-9-]+):') { \
-                    $recipe = $matches[1]; \
-                    $pad = ' ' * [math]::Max(2, (18 - $recipe.Length)); \
-                    Write-Host "    $recipe" -ForegroundColor White -NoNewline; \
-                    Write-Host "$pad$desc" -ForegroundColor Gray; \
-                } \
-            } \
-        } \
-    } \
-    Write-Host "`n  [System State: PROD/HARDENED]" -ForegroundColor DarkGray; \
-    Write-Host ''
+    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ../mcp-central-docs/scripts/just-dashboard.ps1 -Path .
 
 # ── Quality ───────────────────────────────────────────────────────────────────
 
@@ -70,6 +46,29 @@ run:
 # Run the MCP server in HTTP mode (for web_sota)
 serve port="10753":
     @uv run python -m nest_protect_mcp.fastmcp_server --http --port {{port}}
+
+# ── Auth (Nest Device Access / PCM) ───────────────────────────────────────────
+
+# Partner Connections CLI: opens browser; prints full NEST_* .env lines. Uses env NEST_PROJECT_ID if set — or pass flags, e.g. just auth --project-id YOUR_UUID
+auth *ARGS:
+    Set-Location '{{justfile_directory()}}'
+    uv run python scripts/get_nest_refresh_token.py {{ARGS}}
+
+# Open Google Cloud → Credentials (add authorized redirect URIs)
+auth-console:
+    Start-Process 'https://console.cloud.google.com/apis/credentials'
+
+# Print redirect URIs to register for CLI vs web onboarding wizard
+auth-help:
+    Write-Host ''
+    Write-Host 'OAuth Desktop client — Authorized redirect URIs:' -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host '  CLI (just auth; default callback port 8080):'
+    Write-Host '    http://127.0.0.1:8080/callback'
+    Write-Host ''
+    Write-Host '  Web wizard (/onboarding):'
+    Write-Host '    http://127.0.0.1:10753/api/v1/auth/callback'
+    Write-Host ''
 
 # Run tests
 test:

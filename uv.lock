@@ -1648,7 +1648,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.3.0,<24.0.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=0.10.0,<1.0.0" },
     { name = "fastapi", specifier = ">=0.95.0,<1.0.0" },
-    { name = "fastmcp", specifier = ">=3.2.0" },
+    { name = "fastmcp", specifier = ">=3.2.0,<4.0.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=6.0.0,<7.0.0" },
     { name = "flake8-bugbear", marker = "extra == 'dev'", specifier = ">=23.3.0,<24.0.0" },
     { name = "httpx", specifier = ">=0.24.0,<1.0.0" },

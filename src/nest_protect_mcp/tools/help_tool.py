@@ -24,9 +24,13 @@ def _get_tool_category(tool_name: str) -> str:
         "get_supported_devices",
     ]
     auth_tools = [
-        "initiate_oauth_flow",
-        "handle_oauth_callback",
-        "refresh_access_token",
+        "start_google_oauth",
+        "finish_google_oauth",
+        "refresh_nest_token",
+        "get_nest_auth_status",
+        "get_oauth_redirect_reference",
+        "get_pcm_authorize_url",
+        "validate_nest_credentials",
     ]
     config_tools = [
         "get_config",

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Nest Protect MCP Server using FastMCP 3.1.
+Nest Protect MCP Server using FastMCP 3.2.x.
 Tools, prompts (skills), sampling and agentic workflows.
 """
 
 import logging
+import os
 import sys
 from typing import Any, Literal
 
+from fastmcp import FastMCP
 from fastmcp.apps import FastMCPApp
 from fastmcp.tools import ToolResult
 from pydantic import BaseModel, Field
@@ -26,6 +28,7 @@ except ImportError:
     PrefabApp = None
     Card = CardContent = CardHeader = CardTitle = Text = Image = None
 
+from .tools.auth_tools import PCMUrlParams, ValidateNestAuthParams
 from .transport import run_server
 
 # Configure enhanced logging
@@ -38,10 +41,10 @@ logger = logging.getLogger("nest_protect_mcp")
 logger.info("=== INITIALIZING FASTMCP SERVER ===")
 logger.info("Loading FastMCP framework...")
 
-# Create the FastMCPApp with emoji icon
+# Provider app (tools + UI meta); wrapped by FastMCP below for prompts and transport.
 try:
     logger.info("Creating FastMCPApp instance...")
-    app = FastMCPApp("🔥 nest-protect", version="1.0.0")
+    protect_app = FastMCPApp("🔥 nest-protect")
     logger.info("FastMCPApp created successfully")
 except Exception as e:
     logger.error(f"Failed to create FastMCPApp: {e}", exc_info=True)
@@ -228,7 +231,7 @@ class AboutParams(BaseModel):
 # ===== Device Status Tools =====
 
 
-@app.tool(name="list_nest_devices", app=True)
+@protect_app.tool(name="list_nest_devices", model=True)
 async def list_devices() -> ToolResult:
     """Discover Nest Protect Devices.
 
@@ -261,7 +264,7 @@ async def list_devices() -> ToolResult:
         return ToolResult(content=f"Failed to list devices: {e}", is_error=True)
 
 
-@app.tool(name="get_device_health", app=True)
+@protect_app.tool(name="get_device_health", model=True)
 async def get_device_status(device_id: str) -> ToolResult:
     """Get Device Health Status.
 
@@ -295,7 +298,7 @@ async def get_device_status(device_id: str) -> ToolResult:
         return ToolResult(content=f"Error getting status: {e}", is_error=True)
 
 
-@app.tool(name="get_nest_events")
+@protect_app.tool(model=True, name="get_nest_events")
 async def get_device_events(params: DeviceEventsParams) -> ToolResult:
     """Get Recent Device Events.
 
@@ -310,7 +313,7 @@ async def get_device_events(params: DeviceEventsParams) -> ToolResult:
 # ===== Device Control Tools =====
 
 
-@app.tool(name="hush_active_alarm")
+@protect_app.tool(model=True, name="hush_active_alarm")
 async def hush_alarm(params: HushAlarmParams) -> ToolResult:
     """Silence Active Alarm Device.
 
@@ -322,7 +325,7 @@ async def hush_alarm(params: HushAlarmParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="run_safety_test")
+@protect_app.tool(model=True, name="run_safety_test")
 async def run_safety_check(params: SafetyCheckParams) -> ToolResult:
     """Execute Device Safety Test.
 
@@ -334,7 +337,7 @@ async def run_safety_check(params: SafetyCheckParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="set_device_led")
+@protect_app.tool(model=True, name="set_device_led")
 async def set_led_brightness(params: LedBrightnessParams) -> ToolResult:
     """Set Device LED Brightness.
 
@@ -346,8 +349,9 @@ async def set_led_brightness(params: LedBrightnessParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(
-    name="sound_alarm",
+@protect_app.tool(
+    name="trigger_test_alarm",
+    model=True,
     description="""
     🚨 **Test Alarm Systems (Use Responsibly!)**
 
@@ -372,7 +376,6 @@ async def set_led_brightness(params: LedBrightnessParams) -> ToolResult:
     • volume: Alarm volume percentage (50-100%) - default: 100
     """,
 )
-@app.tool(name="trigger_test_alarm")
 async def sound_alarm(
     device_id: str,
     alarm_type: str = "smoke",
@@ -389,7 +392,7 @@ async def sound_alarm(
     return ToolResult(content=str(result))
 
 
-@app.tool(name="set_security_mode")
+@protect_app.tool(model=True, name="set_security_mode")
 async def arm_disarm_security(params: ArmDisarmSecurityParams) -> ToolResult:
     """Set Guard Security Mode.
 
@@ -404,7 +407,7 @@ async def arm_disarm_security(params: ArmDisarmSecurityParams) -> ToolResult:
 # ===== System Status Tools =====
 
 
-@app.tool(name="get_server_status")
+@protect_app.tool(model=True, name="get_server_status")
 async def get_system_status(params: EmptyParams) -> ToolResult:
     """Get Server System Status.
 
@@ -416,7 +419,7 @@ async def get_system_status(params: EmptyParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="get_mcp_process")
+@protect_app.tool(model=True, name="get_mcp_process")
 async def get_process_status(params: ProcessStatusParams) -> ToolResult:
     """Get MCP Process Metrics.
 
@@ -428,7 +431,7 @@ async def get_process_status(params: ProcessStatusParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="check_api_connectivity")
+@protect_app.tool(model=True, name="check_api_connectivity")
 async def get_api_status(params: EmptyParams) -> ToolResult:
     """Check API Connection Health.
 
@@ -443,7 +446,7 @@ async def get_api_status(params: EmptyParams) -> ToolResult:
 # ===== Help Tools =====
 
 
-@app.tool(name="list_server_tools")
+@protect_app.tool(model=True, name="list_server_tools")
 async def list_available_tools(params: EmptyParams) -> ToolResult:
     """List Available MCP Tools.
 
@@ -455,7 +458,7 @@ async def list_available_tools(params: EmptyParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="get_tool_details")
+@protect_app.tool(model=True, name="get_tool_details")
 async def get_tool_help(params: ToolHelpParams) -> ToolResult:
     """Get Tool Practical Help.
 
@@ -467,7 +470,7 @@ async def get_tool_help(params: ToolHelpParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="search_mcp_tools")
+@protect_app.tool(model=True, name="search_mcp_tools")
 async def search_tools(params: SearchToolsParams) -> ToolResult:
     """Search Tools by Keyword.
 
@@ -482,7 +485,7 @@ async def search_tools(params: SearchToolsParams) -> ToolResult:
 # ===== Authentication Tools =====
 
 
-@app.tool(name="start_google_oauth")
+@protect_app.tool(model=True, name="start_google_oauth")
 async def initiate_oauth_flow(params: OAuthFlowParams) -> ToolResult:
     """Initiate Google OAuth Flow.
 
@@ -494,7 +497,7 @@ async def initiate_oauth_flow(params: OAuthFlowParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="finish_google_oauth")
+@protect_app.tool(model=True, name="finish_google_oauth")
 async def handle_oauth_callback(params: OAuthCallbackParams) -> ToolResult:
     """Complete Google OAuth Callback.
 
@@ -508,7 +511,7 @@ async def handle_oauth_callback(params: OAuthCallbackParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="refresh_nest_token")
+@protect_app.tool(model=True, name="refresh_nest_token")
 async def refresh_access_token(params: RefreshTokenParams) -> ToolResult:
     """Refresh Nest Access Token.
 
@@ -520,10 +523,58 @@ async def refresh_access_token(params: RefreshTokenParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
+@protect_app.tool(model=True, name="get_nest_auth_status")
+async def nest_auth_status(params: EmptyParams) -> ToolResult:
+    """Get Nest Auth Configuration Status.
+
+    Summarize whether NEST_* credentials and tokens are loaded (masked); reads repo ``.env`` when needed.
+    """
+    from .tools.auth_tools import get_nest_auth_status as tool_func
+
+    result = await tool_func()
+    return ToolResult(content=str(result))
+
+
+@protect_app.tool(model=True, name="get_oauth_redirect_reference")
+async def oauth_redirect_reference(params: EmptyParams) -> ToolResult:
+    """Get OAuth Redirect URI Reference.
+
+    Return example redirect URIs (CLI vs web wizard), doc links, and ``just auth`` hints for PCM setup.
+    """
+    from .tools.auth_tools import get_oauth_redirect_reference as tool_func
+
+    result = await tool_func()
+    return ToolResult(content=str(result))
+
+
+@protect_app.tool(model=True, name="get_pcm_authorize_url")
+async def pcm_authorize_url(params: PCMUrlParams) -> ToolResult:
+    """Get PCM Authorize URL.
+
+    Build the Partner Connections Manager authorization URL (same as start_google_oauth); optional browser.
+    """
+    from .tools.auth_tools import get_pcm_authorize_url as tool_func
+
+    result = await tool_func(params.redirect_uri, params.open_browser)
+    return ToolResult(content=str(result))
+
+
+@protect_app.tool(model=True, name="validate_nest_credentials")
+async def validate_nest_credentials_tool(params: ValidateNestAuthParams) -> ToolResult:
+    """Validate Nest SDM Credentials.
+
+    Optionally refresh the access token, then call SDM ``devices?pageSize=1`` to verify the stack works.
+    """
+    from .tools.auth_tools import validate_nest_credentials as tool_func
+
+    result = await tool_func(params.force_refresh)
+    return ToolResult(content=str(result))
+
+
 # ===== Configuration Tools =====
 
 
-@app.tool(name="get_mcp_config")
+@protect_app.tool(model=True, name="get_mcp_config")
 async def get_config(params: ConfigSectionParams) -> ToolResult:
     """Get Current Server Configuration.
 
@@ -535,7 +586,7 @@ async def get_config(params: ConfigSectionParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="update_mcp_config")
+@protect_app.tool(model=True, name="update_mcp_config")
 async def update_config(params: UpdateConfigParams) -> ToolResult:
     """Update Server Configuration Values.
 
@@ -547,7 +598,7 @@ async def update_config(params: UpdateConfigParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="reset_mcp_config")
+@protect_app.tool(model=True, name="reset_mcp_config")
 async def reset_config(params: ResetConfigParams) -> ToolResult:
     """Reset Configuration to Defaults.
 
@@ -559,7 +610,7 @@ async def reset_config(params: ResetConfigParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="export_config_file")
+@protect_app.tool(model=True, name="export_config_file")
 async def export_config(params: ExportConfigParams) -> ToolResult:
     """Export Config To File.
 
@@ -571,7 +622,7 @@ async def export_config(params: ExportConfigParams) -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="import_config_file")
+@protect_app.tool(model=True, name="import_config_file")
 async def import_config(params: ImportConfigParams) -> ToolResult:
     """Import Config From File.
 
@@ -586,7 +637,7 @@ async def import_config(params: ImportConfigParams) -> ToolResult:
 # ===== Advanced AI Orchestration Tools =====
 
 
-@app.tool(name="analyze_home_safety")
+@protect_app.tool(model=True, name="analyze_home_safety")
 async def assess_home_safety(
     include_recommendations: bool = True,
     assessment_scope: str = "comprehensive",
@@ -602,7 +653,7 @@ async def assess_home_safety(
     return ToolResult(content=str(result))
 
 
-@app.tool(name="coordinate_emergency_ai")
+@protect_app.tool(model=True, name="coordinate_emergency_ai")
 async def coordinate_emergency_response(
     emergency_type: str, affected_devices: list[str], response_priority: str = "high"
 ) -> ToolResult:
@@ -616,7 +667,7 @@ async def coordinate_emergency_response(
     return ToolResult(content=str(result))
 
 
-@app.tool(name="forecast_maintenance_needs")
+@protect_app.tool(model=True, name="forecast_maintenance_needs")
 async def predict_maintenance_needs(
     analysis_depth: str = "detailed",
     time_horizon: str = "1_month",
@@ -632,7 +683,7 @@ async def predict_maintenance_needs(
     return ToolResult(content=str(result))
 
 
-@app.tool(name="configure_smart_automation")
+@protect_app.tool(model=True, name="configure_smart_automation")
 async def setup_smart_automation(
     automation_type: str,
     learning_period: str = "2_weeks",
@@ -651,7 +702,7 @@ async def setup_smart_automation(
 # ===== About & General Help Tools =====
 
 
-@app.tool(name="get_server_info")
+@protect_app.tool(model=True, name="get_server_info")
 async def about_server(level: str = "simple") -> ToolResult:
     """Get Server Information.
 
@@ -663,7 +714,7 @@ async def about_server(level: str = "simple") -> ToolResult:
     return ToolResult(content=str(result))
 
 
-@app.tool(name="list_supported_hardware")
+@protect_app.tool(model=True, name="list_supported_hardware")
 async def get_supported_devices(params: EmptyParams) -> ToolResult:
     """List Supported Nest Hardware.
 
@@ -673,6 +724,31 @@ async def get_supported_devices(params: EmptyParams) -> ToolResult:
 
     result = await tool_func()
     return ToolResult(content=str(result))
+
+
+# Wire transport, version, and prompts; tools live on protect_app.
+app = FastMCP(
+    "🔥 nest-protect",
+    version="1.0.0",
+    providers=[protect_app],
+)
+
+# MCP Bridge — Proxy external MCP servers via MCP_BRIDGE_URLS
+_bridge_proxies: list[str] = []
+bridge_urls = os.getenv("MCP_BRIDGE_URLS", "")
+if bridge_urls:
+    try:
+        from fastmcp.server import create_proxy
+        for url in bridge_urls.split(","):
+            url = url.strip()
+            if url:
+                try:
+                    app.add_provider(create_proxy(url))
+                    _bridge_proxies.append(url)
+                except Exception:
+                    pass
+    except ImportError:
+        pass
 
 
 # ===== Prompts (skills) for agentic workflows =====
@@ -691,11 +767,17 @@ if Message is not None:
     )
     def prompt_nest_protect_setup() -> "Message":
         return Message(
-            "To use Nest Protect MCP you need one-time Google OAuth setup: "
-            "1) Google Cloud: enable Smart Device Management API, create OAuth Desktop client, download client_secret JSON. "
-            "2) Run scripts/get_nest_refresh_token.py from repo root; sign in in browser; copy the refresh token. "
-            "3) Create .env with NEST_CLIENT_ID, NEST_CLIENT_SECRET, NEST_PROJECT_ID, NEST_REFRESH_TOKEN. "
-            "4) Start the server or web_sota; it will load .env and use the refresh token for API access."
+            "To use Nest Protect MCP you need one-time Google OAuth setup for Smart Device Management "
+            "(OAuth consent lists this scope under home automation / Smart Device Management): "
+            "1) Register for Device Access and note your Device Access project id "
+            "(NEST_PROJECT_ID — SDM enterprise UUID). "
+            "2) Google Cloud: enable Smart Device Management API; OAuth Desktop client; "
+            "add redirect URI matching scripts/get_nest_refresh_token.py "
+            "(default http://127.0.0.1:8080/). "
+            "3) Run scripts/get_nest_refresh_token.py — it uses Partner Connections Manager (PCM), "
+            "not accounts.google.com. "
+            "4) Put NEST_CLIENT_ID, NEST_CLIENT_SECRET, NEST_PROJECT_ID, NEST_REFRESH_TOKEN "
+            "in .env at repo root."
         )
 
     @app.prompt(
@@ -714,34 +796,44 @@ if Message is not None:
     )
     def prompt_nest_protect_overview() -> "Message":
         return Message(
-            "Nest Protect MCP provides: list_devices, get_device_status, get_device_events for status; "
-            "hush_alarm, run_safety_check, set_led_brightness for control; get_system_status, get_api_status for health; "
-            "initiate_oauth_flow, handle_oauth_callback, refresh_access_token for auth; "
-            "list_available_tools, get_tool_help, about_server for help. Use list_devices first to get device IDs."
+            "Nest Protect MCP provides: list_nest_devices, get_device_health, get_nest_events for status; "
+            "hush_active_alarm, run_safety_test, set_device_led for control; "
+            "get_server_status, check_api_connectivity for health; "
+            "start_google_oauth, finish_google_oauth, refresh_nest_token, get_nest_auth_status, "
+            "get_oauth_redirect_reference, get_pcm_authorize_url, validate_nest_credentials for auth; "
+            "list_server_tools, get_tool_details, get_server_info for help. "
+            "Use list_nest_devices first to get device IDs."
         )
 
 
 # ===== Main Entry Point =====
 
 logger.info("=== TOOL REGISTRATION COMPLETE ===")
-logger.info("All 20 tools have been registered with FastMCP")
+logger.info("All 32 tools have been registered with FastMCP")
 logger.info("Tools registered:")
-logger.info("  • Device Status: list_devices, get_device_status, get_device_events")
 logger.info(
-    "  • Device Control: hush_alarm, run_safety_check, set_led_brightness, sound_alarm, arm_disarm_security"
-)
-logger.info("  • System Status: get_system_status, get_process_status, get_api_status")
-logger.info(
-    "  • Authentication: initiate_oauth_flow, handle_oauth_callback, refresh_access_token"
+    "  • Device Status: list_nest_devices, get_device_health, get_nest_events"
 )
 logger.info(
-    "  • Configuration: get_config, update_config, reset_config, export_config, import_config"
+    "  • Device Control: hush_active_alarm, run_safety_test, set_device_led, trigger_test_alarm, set_security_mode"
 )
 logger.info(
-    "  • AI Orchestration: assess_home_safety, coordinate_emergency_response, predict_maintenance_needs, setup_smart_automation"
+    "  • System Status: get_server_status, get_mcp_process, check_api_connectivity"
 )
 logger.info(
-    "  • Help & About: list_available_tools, get_tool_help, search_tools, about_server, get_supported_devices"
+    "  • Authentication: start_google_oauth, finish_google_oauth, refresh_nest_token, "
+    "get_nest_auth_status, get_oauth_redirect_reference, get_pcm_authorize_url, validate_nest_credentials"
+)
+logger.info(
+    "  • Configuration: get_mcp_config, update_mcp_config, reset_mcp_config, export_config_file, import_config_file"
+)
+logger.info(
+    "  • AI Orchestration: analyze_home_safety, coordinate_emergency_ai, "
+    "forecast_maintenance_needs, configure_smart_automation"
+)
+logger.info(
+    "  • Help & About: list_server_tools, get_tool_details, search_mcp_tools, "
+    "get_server_info, list_supported_hardware"
 )
 
 if __name__ == "__main__":
@@ -751,5 +843,5 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Run the server
-    logger.info("Starting Nest Protect MCP server with all 20 tools...")
+    logger.info("Starting Nest Protect MCP server with all 32 tools...")
     run_server(app, server_name="🔥 nest-protect")

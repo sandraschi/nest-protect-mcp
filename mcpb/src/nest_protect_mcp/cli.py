@@ -6,16 +6,14 @@ import argparse
 import asyncio
 import json
 import logging
-import os
 import signal
 import sys
 from pathlib import Path
 
 import uvicorn
-from dotenv import load_dotenv
 
-from . import NestProtectMCP, __version__
-from .models import ProtectConfig, ProtectDeviceState, ProtectEvent
+from . import __version__
+from .models import ProtectConfig, ProtectDeviceState
 
 # Configure logging
 logging.basicConfig(
@@ -83,7 +81,7 @@ class NestProtectCLI:
         server_parser.add_argument(
             "--host",
             type=str,
-            default="0.0.0.0",
+            default="0.0.0.0",  # noqa: S104
             help="Host to bind the server to",
         )
         server_parser.add_argument(
@@ -157,7 +155,7 @@ class NestProtectCLI:
         web_parser.add_argument(
             "--host",
             type=str,
-            default="0.0.0.0",
+            default="0.0.0.0",  # noqa: S104
             help="Host to bind the web UI to",
         )
         web_parser.add_argument(
@@ -205,41 +203,12 @@ class NestProtectCLI:
             logger.error(f"Error loading config file: {e}")
             raise
 
-    async def _init_server(self, args) -> NestProtectMCP:
-        """Initialize the Nest Protect MCP server."""
-        try:
-            # Load environment variables
-            if os.path.exists(args.env_file):
-                load_dotenv(args.env_file)
-
-            # Load configuration
-            self.config = self._load_config(args.config)
-
-            # Override log level from command line
-            if args.log_level:
-                logging.getLogger().setLevel(args.log_level)
-                self.config.log_level = args.log_level
-
-            # Create and initialize server
-            server = NestProtectMCP(self.config)
-
-            # Add event listener for logging
-            def log_event(event: ProtectEvent) -> None:
-                logger.info(f"Event: {event.event_type} from {event.device_id}")
-                if event.event_data:
-                    logger.debug(f"Event data: {event.event_data}")
-
-            server.add_event_listener(log_event)
-
-            # Start the server
-            await server.start()
-
-            return server
-
-        except Exception as e:
-            logger.error(f"Failed to initialize server: {e}", exc_info=True)
-            await self._shutdown()
-            sys.exit(1)
+    async def _init_server(self, args):
+        """Legacy hook — NestProtectMCP class was removed; use ``python -m nest_protect_mcp``."""
+        raise RuntimeError(
+            "The legacy in-process NestProtectMCP server was removed. "
+            "Run the MCP server with: python -m nest_protect_mcp"
+        )
 
     def _handle_signal(self, signum, frame) -> None:
         """Handle shutdown signals."""
@@ -497,9 +466,10 @@ class NestProtectCLI:
 
 
 def main() -> None:
-    """Entry point for the CLI."""
-    cli = NestProtectCLI()
-    asyncio.run(cli.run())
+    """Entry point for ``nest-protect-mcp`` when wired to this module — delegates to FastMCP CLI."""
+    from . import __main__ as mcp_main
+
+    mcp_main.main()
 
 
 if __name__ == "__main__":

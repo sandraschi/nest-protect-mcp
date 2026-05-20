@@ -8,7 +8,35 @@ Auth for the Nest (Smart Device Management) API is a few steps and easy to get w
 2. **Refresh token, not API key** – The SDM API uses OAuth. You get a **refresh token** once (browser flow); the server then gets short-lived access tokens from it.
 3. **No built-in `nest_protect_mcp.auth`** – The README mentions `python -m nest_protect_mcp.auth`; that module does not exist. Use the script below or the MCP tools `initiate_oauth_flow` / `handle_oauth_callback` with something listening on the redirect URI.
 
-## Minimal steps
+## Web wizard (fastest)
+
+With the **web_sota** stack running (`web_sota\start.ps1` — backend on **10753**, Vite on **10752**):
+
+1. In Google Cloud → your **OAuth 2.0 Desktop** client, add this **Authorized redirect URI** (exactly):
+   - `http://127.0.0.1:10753/api/v1/auth/callback`
+2. Open **http://127.0.0.1:10752/onboarding** and use **OAuth wizard (PCM)** at the top: enter client id, client secret, and **Device Access** project id, then **Start**. You complete sign-in in the same tab; when you return, copy the **.env** block into the **repo root** `.env` and restart the backend.
+
+Override ports with environment variables on the **uvicorn** process: `WIZARD_BACKEND_BASE_URL` (default `http://127.0.0.1:10753`) and `WIZARD_FRONTEND_ORIGIN` (default `http://127.0.0.1:10752`) so the callback and post-login redirect match your dev setup.
+
+### LAN / another machine on your network
+
+Example: backend at `http://192.168.0.185:10753`, Vite onboarding at `http://192.168.0.185:10752`.
+
+1. Set on the **uvicorn** host:  
+   `WIZARD_BACKEND_BASE_URL=http://192.168.0.185:10753`  
+   (same origin the browser uses for API calls).  
+   `WIZARD_FRONTEND_ORIGIN=http://192.168.0.185:10752` — this is added to **CORS** automatically so the browser may call the API cross-origin.
+
+2. Build or run **web_sota** with  
+   `VITE_API_URL=http://192.168.0.185:10753`  
+   so the SPA and the onboarding “copy redirect URI” box use the LAN host (must match step 3).
+
+3. In Google Cloud → OAuth Desktop client → **Authorized redirect URIs**, add exactly:  
+   `http://192.168.0.185:10753/api/v1/auth/callback`
+
+Optional: comma-separated **`CORS_ALLOW_ORIGINS`** for extra origins beyond `WIZARD_FRONTEND_ORIGIN`.
+
+## Minimal steps (manual / CLI)
 
 ### 1. Google Cloud
 
@@ -29,11 +57,8 @@ Auth for the Nest (Smart Device Management) API is a few steps and easy to get w
 From the repo root (where you have the client secret JSON):
 
 ```powershell
-# Optional: create venv and install
-uv run pip install google-auth-oauthlib
-
-# Run the script (opens browser; after login you get the token in the terminal)
-uv run python scripts/get_nest_refresh_token.py
+# Run from repo root (Partner Connections / PCM flow — no extra pip package required)
+uv run python scripts/get_nest_refresh_token.py --project-id YOUR_DEVICE_ACCESS_UUID
 ```
 
 Or with a specific client secret file:
@@ -52,7 +77,7 @@ The **web backend** and **MCP tools** that call the Nest API read credentials fr
 |----------------------|----------------------------------|
 | `NEST_CLIENT_ID`     | From OAuth client JSON / Console |
 | `NEST_CLIENT_SECRET` | From OAuth client JSON           |
-| `NEST_PROJECT_ID`    | Google Cloud project ID          |
+| `NEST_PROJECT_ID`    | **Nest Device Access** project id (UUID from Device Access console); same id used in SDM URLs `/enterprises/{id}/` — not the numeric GCP project number |
 | `NEST_REFRESH_TOKEN` | From the script above            |
 
 Create a `.env` in the repo root (do not commit it):

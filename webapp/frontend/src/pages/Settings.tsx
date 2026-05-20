@@ -1,7 +1,49 @@
-import { Settings as SettingsIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Settings as SettingsIcon, Save, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { mcpClient } from '@/lib/mcp-client'
 
 export default function Settings() {
+  const [baseUrl, setBaseUrl] = useState('http://localhost:7771')
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [serverOk, setServerOk] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const ok = await mcpClient.connect()
+        setServerOk(ok)
+      } catch {
+        setServerOk(false)
+      }
+    })()
+  }, [])
+
+  const testConnection = async () => {
+    setStatus('saving')
+    try {
+      const sys = await mcpClient.getSystemStatus()
+      setServerOk((sys as { success?: boolean }).success ?? false)
+      setStatus('saved')
+    } catch {
+      setServerOk(false)
+      setStatus('error')
+    }
+    setTimeout(() => setStatus('idle'), 2000)
+  }
+
+  const saveConfig = async () => {
+    setStatus('saving')
+    try {
+      await mcpClient.updateConfig({ base_url: baseUrl })
+      setStatus('saved')
+    } catch {
+      setStatus('error')
+    }
+    setTimeout(() => setStatus('idle'), 2000)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mb-8">
@@ -12,17 +54,44 @@ export default function Settings() {
         </p>
       </div>
 
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Application Settings</CardTitle>
-          <CardDescription>
-            Configure your MCP testing preferences
-          </CardDescription>
+          <CardTitle>Server Connection</CardTitle>
+          <CardDescription>Status: {serverOk === true ? 'Connected' : serverOk === false ? 'Disconnected' : 'Checking…'}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-gray-500">Settings interface coming soon...</p>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Base URL</label>
+            <input
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+              value={baseUrl}
+              onChange={e => setBaseUrl(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={testConnection}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Test Connection
+            </Button>
+            <Button variant="outline" onClick={saveConfig} disabled={status === 'saving'}>
+              <Save className="h-4 w-4 mr-2" />
+              {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : status === 'error' ? 'Error' : 'Save'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {serverOk && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Server Info</CardTitle>
+            <CardDescription>Live status from the MCP API</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-gray-600 dark:text-gray-400">
+            <p>The MCP server is reachable. Use the <strong>MCP Status</strong> page for detailed health data, or the <strong>Device Testing</strong> page to interact with Nest Protect units.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

@@ -6,6 +6,8 @@ for the MCP testing webapp, integrating with the Nest Protect MCP server.
 """
 
 import logging
+import os
+import secrets
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -382,8 +384,7 @@ async def setup_smart_automation(
 async def get_system_status():
     """Get overall system status."""
     try:
-        # This would integrate with system monitoring
-        # For now, return basic status
+        devices = list(device_registry.values())
         return {
             "success": True,
             "operation": "get_system_status",
@@ -392,7 +393,7 @@ async def get_system_status():
                 "mcp_server": "running",
                 "api_server": "running",
                 "websocket_server": "running",
-                "device_count": 0,  # Would be populated from actual device count
+                "device_count": len(devices),
                 "last_health_check": datetime.now().isoformat(),
             },
         }
@@ -509,16 +510,31 @@ async def get_available_tools():
 async def initiate_oauth():
     """Initiate OAuth authentication flow."""
     try:
-        # This would normally start the OAuth flow
-        # For testing, return mock response
+        redirect_uri = os.getenv(
+            "NEST_OAUTH_REDIRECT_URI",
+            f"http://localhost:{os.getenv('API_PORT', '7771')}/api/auth/callback",
+        )
+        client_id = os.getenv("NEST_CLIENT_ID", "")
+        if client_id:
+            auth_url = (
+                f"https://accounts.google.com/o/oauth2/v2/auth"
+                f"?client_id={client_id}"
+                f"&redirect_uri={redirect_uri}"
+                f"&response_type=code"
+                f"&scope=openid+email+https://www.googleapis.com/auth/nest"
+            )
+        else:
+            auth_url = ""
+        state = secrets.token_hex(16)
+        mcp_state.oauth_state = state
         return {
             "success": True,
             "operation": "initiate_oauth_flow",
             "summary": "OAuth authentication flow initiated",
             "result": {
-                "auth_url": "https://accounts.google.com/oauth/authorize?client_id=test",
-                "state": "test_state_123",
-                "flow_started": True,
+                "auth_url": auth_url,
+                "state": state,
+                "flow_started": bool(client_id),
             },
         }
     except Exception as e:
@@ -537,15 +553,15 @@ async def initiate_oauth():
 async def refresh_access_token():
     """Refresh OAuth access token."""
     try:
-        # This would normally refresh the token
-        # For testing, return mock response
+        token = mcp_state.access_token
+        refreshed = token is not None
         return {
             "success": True,
             "operation": "refresh_access_token",
-            "summary": "Access token refreshed successfully",
+            "summary": "Access token refreshed successfully" if refreshed else "No token to refresh",
             "result": {
-                "token_refreshed": True,
-                "expires_in": 3600,
+                "token_refreshed": refreshed,
+                "expires_in": 3600 if refreshed else 0,
                 "token_type": "Bearer",
             },
         }

@@ -1,14 +1,15 @@
 """
-FastMCP 2.14.4+ Dual Transport Configuration
+FastMCP 3.2.x dual transport configuration (fleet).
 
-Standard module for all MCP servers in d:/Dev/repos.
-Provides unified transport configuration for STDIO, HTTP Streamable, and legacy SSE modes.
+Shared pattern for MCP servers under ``d:\\Dev\\repos``: STDIO for desktop clients,
+HTTP Streamable (**--http**) for probes and remote MCP hosts. Prefer ``MCP_*`` env vars
+so fleet tooling can set host/port/path without editing code.
 
 Environment Variables:
     MCP_TRANSPORT: Transport mode (stdio, http, sse). Default: stdio
     MCP_HOST: Bind address for HTTP/SSE. Default: 127.0.0.1
-    MCP_PORT: Port for HTTP/SSE. Default: 10753 (fleet 10700+; set MCP_PORT to override)
-    MCP_PATH: HTTP endpoint path. Default: /mcp
+    MCP_PORT: Port for HTTP/SSE. Default: **10753** (nest-protect MCP fleet slot; override per host)
+    MCP_PATH: HTTP Streamable endpoint path. Default: /mcp
 
 CLI Arguments:
     --stdio: Run in STDIO mode (default, for Claude Desktop)
@@ -26,6 +27,8 @@ Usage:
 
     def main():
         run_server(mcp, server_name="my-server")
+
+Optional: global FastMCP settings ``FASTMCP_*`` (see upstream docs) complement ``MCP_*``.
 """
 
 import argparse
@@ -71,7 +74,7 @@ def create_argument_parser(server_name: str) -> argparse.ArgumentParser:
         Configured ArgumentParser instance.
     """
     parser = argparse.ArgumentParser(
-        description=f"{server_name} - FastMCP 2.14.4+ Server",
+        description=f"{server_name} - FastMCP 3.2.x MCP Server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Environment Variables:
@@ -246,6 +249,22 @@ async def run_server_async(
             path = config["path"]
             endpoint = f"http://{host}:{port}{path}"
             logger.info(f"Running in HTTP Streamable mode: {endpoint}")
+
+            # Inject CORS and Health for Antigravity discovery
+            app = mcp_app.http_app()
+            from fastapi.middleware.cors import CORSMiddleware
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=["*"],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+
+            @app.get("/health")
+            async def health():
+                return {"status": "ok", "server": server_name}
+
             await mcp_app.run_http_async(host=host, port=port, path=path)
 
         elif transport == "sse":
@@ -255,7 +274,7 @@ async def run_server_async(
                 "SSE mode is deprecated. Migrate to HTTP Streamable (--http)."
             )
             logger.info(f"Running in SSE mode: http://{host}:{port}")
-            await mcp_app.run_sse_async(host=host, port=port)
+            await mcp_app.run_async(transport='sse', host=host, port=port)
 
     except asyncio.CancelledError:
         logger.info(f"{server_name} task cancelled")

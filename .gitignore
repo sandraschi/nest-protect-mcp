@@ -199,3 +199,5 @@ cython_debug/
 # Local development
 .DS_Store
 Thumbs.db
+
+_dashboard/

@@ -268,14 +268,11 @@ class TestAppStateLegacy:
 
     def test_initialize_app_state(self):
         """Test initialize_app_state function."""
-        from nest_protect_mcp.state_manager import (
-            _app_state,
-            get_app_state,
-            initialize_app_state,
-        )
+        import nest_protect_mcp.state_manager as sm
 
-        # Clear any existing state
-        _app_state = None
+        sm._app_state = None
+
+        from nest_protect_mcp.state_manager import get_app_state, initialize_app_state
 
         initialize_app_state({"test": "config"})
         app_state = get_app_state()
@@ -285,10 +282,11 @@ class TestAppStateLegacy:
 
     def test_get_app_state_auto_init(self):
         """Test get_app_state auto-initialization."""
-        from nest_protect_mcp.state_manager import _app_state, get_app_state
+        import nest_protect_mcp.state_manager as sm
 
-        # Clear any existing state
-        _app_state = None
+        sm._app_state = None
+
+        from nest_protect_mcp.state_manager import get_app_state
 
         app_state = get_app_state()
         assert app_state is not None

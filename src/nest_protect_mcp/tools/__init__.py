@@ -66,6 +66,10 @@ def get_all_tools() -> dict[str, Callable]:
             "initiate_oauth_flow": auth_tools.initiate_oauth_flow,
             "handle_oauth_callback": auth_tools.handle_oauth_callback,
             "refresh_access_token": auth_tools.refresh_access_token,
+            "get_nest_auth_status": auth_tools.get_nest_auth_status,
+            "get_oauth_redirect_reference": auth_tools.get_oauth_redirect_reference,
+            "get_pcm_authorize_url": auth_tools.get_pcm_authorize_url,
+            "validate_nest_credentials": auth_tools.validate_nest_credentials,
         }
     )
 

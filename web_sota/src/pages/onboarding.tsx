@@ -1,26 +1,27 @@
+import { AuthWizard } from "@/components/AuthWizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Cloud, Key, Terminal, FileCode, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const STEPS = [
   {
-    title: "Google Cloud setup",
+    title: "Google Cloud + Nest Device Access",
     icon: Cloud,
     items: [
-      "Go to Google Cloud Console and create or select a project.",
-      "APIs & Services → Library: enable Smart Device Management API.",
-      "OAuth consent screen: External, add scope https://www.googleapis.com/auth/sdm.service, add your account as test user.",
-      "Credentials → Create OAuth client ID → Desktop app. Download the JSON (client_secret_*.json).",
+      "Register at Google Nest Device Access if you have not — you get a Device Access project id (UUID).",
+      "Google Cloud Console: enable Smart Device Management API.",
+      "OAuth consent screen (External): add restricted scope https://www.googleapis.com/auth/sdm.service (shows as Smart Device Management / home automation). Add yourself as a test user.",
+      "Credentials → OAuth client ID → Desktop app. Download client_secret_*.json. In Authorized redirect URIs add http://127.0.0.1:8080/ (matches the refresh-token script default).",
     ],
   },
   {
-    title: "Get the refresh token",
+    title: "Get the refresh token (PCM)",
     icon: Key,
     items: [
-      "From the repo root (where client_secret_*.json is):",
-      "uv run pip install google-auth-oauthlib",
-      "uv run python scripts/get_nest_refresh_token.py",
-      "A browser opens; sign in with the Google account that has Nest Protect in Google Home. Copy the printed refresh token.",
+      "From repo root (with client_secret_*.json and NEST_PROJECT_ID set):",
+      "uv run python scripts/get_nest_refresh_token.py --project-id YOUR_DEVICE_ACCESS_PROJECT_ID",
+      "Uses Partner Connections (nestservices.google.com), not the generic Google login URL. Browser completes PCM; terminal prints NEST_REFRESH_TOKEN.",
+      "Optional: set NEST_OAUTH_LOCAL_PORT if 8080 is taken; add that redirect URI to the OAuth client.",
     ],
   },
   {
@@ -28,10 +29,9 @@ const STEPS = [
     icon: FileCode,
     items: [
       "Create .env in the repo root (do not commit):",
-      "NEST_CLIENT_ID=xxxx.apps.googleusercontent.com",
-      "NEST_CLIENT_SECRET=xxxx",
-      "NEST_PROJECT_ID=your-project-id",
-      "NEST_REFRESH_TOKEN=1//xxxx (from the script)",
+      "NEST_CLIENT_ID / NEST_CLIENT_SECRET — from the OAuth JSON.",
+      "NEST_PROJECT_ID — your Nest Device Access project id (UUID), same as enterprises/{id} in the SDM API — not the numeric GCP project number.",
+      "NEST_REFRESH_TOKEN — from the script. Optional: NEST_SDM_OAUTH_SCOPE only if Google assigned a different scope (default is sdm.service).",
     ],
   },
   {
@@ -63,6 +63,8 @@ export function Onboarding() {
           One-time Google OAuth setup so the dashboard and MCP server can talk to Nest Protect (fire/CO).
         </p>
       </div>
+
+      <AuthWizard />
 
       <div className="grid gap-6 md:grid-cols-1">
         {STEPS.map((step, i) => {
