@@ -11,6 +11,8 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 from fastmcp.apps import FastMCPApp
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from fastmcp.tools import ToolResult
 from pydantic import BaseModel, Field
 
@@ -732,6 +734,11 @@ app = FastMCP(
     version="1.0.0",
     providers=[protect_app],
 )
+
+
+@app.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "healthy", "server": "nest-protect-mcp"})
 
 # MCP Bridge — Proxy external MCP servers via MCP_BRIDGE_URLS
 _bridge_proxies: list[str] = []

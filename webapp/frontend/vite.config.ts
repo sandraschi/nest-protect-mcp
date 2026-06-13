@@ -10,7 +10,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {proxy: {
+  server: {    allowedHosts: ['goliath'],proxy: {
       '/api': {
         target: 'http://localhost:7771',
         changeOrigin: true,

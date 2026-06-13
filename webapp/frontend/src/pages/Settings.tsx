@@ -1,8 +1,57 @@
 import { useEffect, useState } from 'react'
-import { Settings as SettingsIcon, Save, RefreshCw } from 'lucide-react'
+import { Settings as SettingsIcon, Save, RefreshCw, Zap } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { mcpClient } from '@/lib/mcp-client'
+
+function LLMSettings() {
+  const [providers, setProviders] = useState<Record<string, {name:string}[]>>({});
+  const [selectedProvider, setSelectedProvider] = useState("ollama");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [status, setStatus] = useState<"loading"|"ready"|"error">("loading");
+  useEffect(() => {
+    fetch("/api/llm/providers").then(r => r.json()).then(d => {
+      setProviders(d);
+      const savedP = localStorage.getItem("llm_provider") || "ollama";
+      const savedM = localStorage.getItem("llm_model") || "";
+      setSelectedProvider(savedP);
+      const models = d[savedP === "ollama" ? "ollama" : "lm_studio"] || [];
+      setSelectedModel(savedM && models.some((m:{name:string}) => m.name === savedM) ? savedM : (models[0]?.name || ""));
+      setStatus(models.length > 0 ? "ready" : "error");
+    }).catch(() => {
+      setProviders({ ollama: [{name:"llama3.2:3b"}] });
+      setSelectedModel(localStorage.getItem("llm_model") || "llama3.2:3b");
+      setStatus("ready");
+    });
+  }, []);
+  const save = (p:string, m:string) => { localStorage.setItem("llm_provider", p); localStorage.setItem("llm_model", m); };
+  const models = providers[selectedProvider === "ollama" ? "ollama" : "lm_studio"] || [];
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Local LLM</CardTitle>
+        <CardDescription>Provider and model selection</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Provider</label>
+          <select className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            value={selectedProvider} onChange={(e) => { setSelectedProvider(e.target.value); save(e.target.value, ""); }}>
+            <option value="ollama">Ollama</option>
+            <option value="lm_studio">LM Studio</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Model</label>
+          <select className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            value={selectedModel} onChange={(e) => { setSelectedModel(e.target.value); save(selectedProvider, e.target.value); }}>
+            {models.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+          </select>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Settings() {
   const [baseUrl, setBaseUrl] = useState('http://localhost:7771')
@@ -92,6 +141,8 @@ export default function Settings() {
           </CardContent>
         </Card>
       )}
+
+      <LLMSettings />
     </div>
   )
 }
