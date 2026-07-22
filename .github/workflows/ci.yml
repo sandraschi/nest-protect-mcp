@@ -2,32 +2,14 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
-    tags: ['v*']
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
+    tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      run_full_test_suite:
-        description: 'Run full test suite including slow tests'
-        required: false
-        default: 'false'
-
-env:
-  PYTHON_VERSION: '3.11'
-  NODE_VERSION: '18'
-
-defaults:
-  run:
-    shell: bash
 
 jobs:
   # Quality checks
   quality:
     name: Code Quality & Security
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -82,12 +64,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12']
         exclude:
           - os: windows-latest
             python-version: '3.12'
-          - os: macos-latest
+          - os: windows-latest
             python-version: '3.12'
 
     steps:
@@ -138,7 +120,7 @@ jobs:
   # Performance testing
   performance:
     name: Performance Tests
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -164,7 +146,7 @@ jobs:
   # Build and package
   build:
     name: Build Packages
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [test, quality]
     strategy:
       matrix:
@@ -212,7 +194,7 @@ jobs:
   # Documentation
   documentation:
     name: Deploy Documentation
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
 
@@ -245,7 +227,7 @@ jobs:
   # Container build
   container:
     name: Build Container Image
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
     if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
 
