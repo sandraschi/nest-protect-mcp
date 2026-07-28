@@ -1,12 +1,20 @@
-﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+﻿set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
+import 'scripts/just/fleet.just'
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
+# â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 # Open the interactive recipe dashboard in the browser
 default:
     @just --list
 
-# ── Quality ───────────────────────────────────────────────────────────────────
+
+# Synchronize deps, pre-commit hooks, and web frontend
+bootstrap:
+    uv sync --extra dev --group dev
+    uv run pre-commit install
+    Set-Location webapp/frontend; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
+    Write-Host "Pre-commit hooks installed." -ForegroundColor Green
+# â”€â”€ Quality â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 # Execute Ruff SOTA v13.1 linting
 lint:
@@ -23,7 +31,7 @@ fix:
     Set-Location '{{justfile_directory()}}\web_sota'
     npx @biomejs/biome check --write .
 
-# ── Hardening ─────────────────────────────────────────────────────────────────
+# â”€â”€ Hardening â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 # Execute Bandit security audit
 check-sec:
@@ -47,21 +55,21 @@ run:
 serve port="10753":
     @uv run python -m nest_protect_mcp.fastmcp_server --http --port {{port}}
 
-# ── Auth (Nest Device Access / PCM) ───────────────────────────────────────────
+# â”€â”€ Auth (Nest Device Access / PCM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-# Partner Connections CLI: opens browser; prints full NEST_* .env lines. Uses env NEST_PROJECT_ID if set — or pass flags, e.g. just auth --project-id YOUR_UUID
+# Partner Connections CLI: opens browser; prints full NEST_* .env lines. Uses env NEST_PROJECT_ID if set â€” or pass flags, e.g. just auth --project-id YOUR_UUID
 auth *ARGS:
     Set-Location '{{justfile_directory()}}'
     uv run python scripts/get_nest_refresh_token.py {{ARGS}}
 
-# Open Google Cloud → Credentials (add authorized redirect URIs)
+# Open Google Cloud â†’ Credentials (add authorized redirect URIs)
 auth-console:
     Start-Process 'https://console.cloud.google.com/apis/credentials'
 
 # Print redirect URIs to register for CLI vs web onboarding wizard
 auth-help:
     Write-Host ''
-    Write-Host 'OAuth Desktop client — Authorized redirect URIs:' -ForegroundColor Cyan
+    Write-Host 'OAuth Desktop client â€” Authorized redirect URIs:' -ForegroundColor Cyan
     Write-Host ''
     Write-Host '  CLI (just auth; default callback port 8080):'
     Write-Host '    http://127.0.0.1:8080/callback'
@@ -75,7 +83,7 @@ test:
     uv run pytest
 
 e2e:
-    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\playwright-audit.ps1" -RepoPath "{{justfile_directory()}}"
+    powershell.exe -NoProfile -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\playwright-audit.ps1" -RepoPath "{{justfile_directory()}}"
 
 # Lint and format code
 # Fix linting and formatting issues
