@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nest-protect-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ã°Å¸â€Â¥ Production-ready FastMCP server for Google Nest Protect devices with real-time monitoring, device control, and alarm management"
 readme = "README.md"
 authors = [
