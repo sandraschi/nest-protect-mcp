@@ -9,18 +9,14 @@ class HushAlarmParams(BaseModel):
     """Parameters for hushing an alarm."""
 
     device_id: str = Field(..., description="ID of the device to hush")
-    duration_seconds: int = Field(
-        180, ge=30, le=300, description="Duration to hush in seconds (30-300)"
-    )
+    duration_seconds: int = Field(180, ge=30, le=300, description="Duration to hush in seconds (30-300)")
 
 
 class SafetyCheckParams(BaseModel):
     """Parameters for running a safety check."""
 
     device_id: str = Field(..., description="ID of the device to test")
-    test_type: Literal["full", "smoke", "co", "heat"] = Field(
-        "full", description="Type of test to run"
-    )
+    test_type: Literal["full", "smoke", "co", "heat"] = Field("full", description="Type of test to run")
 
 
 class LedBrightnessParams(BaseModel):
@@ -34,27 +30,17 @@ class SoundAlarmParams(BaseModel):
     """Parameters for sounding an alarm for testing."""
 
     device_id: str = Field(..., description="ID of the device to test")
-    alarm_type: Literal["smoke", "co", "security", "emergency"] = Field(
-        "smoke", description="Type of alarm to sound"
-    )
-    duration_seconds: int = Field(
-        10, ge=5, le=60, description="Duration to sound alarm in seconds (5-60)"
-    )
-    volume: int = Field(
-        100, ge=50, le=100, description="Alarm volume percentage (50-100)"
-    )
+    alarm_type: Literal["smoke", "co", "security", "emergency"] = Field("smoke", description="Type of alarm to sound")
+    duration_seconds: int = Field(10, ge=5, le=60, description="Duration to sound alarm in seconds (5-60)")
+    volume: int = Field(100, ge=50, le=100, description="Alarm volume percentage (50-100)")
 
 
 class ArmDisarmParams(BaseModel):
     """Parameters for arming/disarming security system."""
 
     device_id: str = Field(..., description="ID of the security device (Nest Guard)")
-    action: Literal["arm_home", "arm_away", "disarm"] = Field(
-        ..., description="Security action to perform"
-    )
-    passcode: str | None = Field(
-        None, description="Security passcode (required for disarm)"
-    )
+    action: Literal["arm_home", "arm_away", "disarm"] = Field(..., description="Security action to perform")
+    passcode: str | None = Field(None, description="Security passcode (required for disarm)")
 
 
 async def hush_alarm(device_id: str, duration_seconds: int = 180) -> dict[str, Any]:

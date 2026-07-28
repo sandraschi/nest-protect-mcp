@@ -4,12 +4,12 @@ Nest Protect MCP Tools
 This module defines all the MCP tools for interacting with Nest Protect devices.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class DeviceType(str, Enum):
+class DeviceType(StrEnum):
     SMOKE_ALARM = "sdm.devices.types.SMOKE_ALARM"
     CO_ALARM = "sdm.devices.types.COA_ALARM"
     CAMERA = "sdm.devices.types.CAMERA"
@@ -18,13 +18,13 @@ class DeviceType(str, Enum):
     DOORBELL = "sdm.devices.types.DOORBELL"
 
 
-class AlarmState(str, Enum):
+class AlarmState(StrEnum):
     OK = "OK"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
 
 
-class BatteryState(str, Enum):
+class BatteryState(StrEnum):
     NORMAL = "NORMAL"
     LOW = "LOW"
     CRITICAL = "CRITICAL"
@@ -37,9 +37,7 @@ class DeviceInfo(BaseModel):
     name: str = Field(..., description="The display name of the device")
     type: DeviceType = Field(..., description="The type of the device")
     online: bool = Field(..., description="Whether the device is online")
-    battery_state: BatteryState | None = Field(
-        None, description="Battery state if applicable"
-    )
+    battery_state: BatteryState | None = Field(None, description="Battery state if applicable")
     alarm_state: AlarmState | None = Field(None, description="Current alarm state")
     last_connection: str | None = Field(None, description="Last connection timestamp")
 
@@ -53,33 +51,23 @@ class GetDevicesTool(BaseModel):
 class GetDeviceTool(BaseModel):
     """Get detailed information about a specific Nest Protect device."""
 
-    device_id: str = Field(
-        ..., description="The ID of the device to get information about"
-    )
+    device_id: str = Field(..., description="The ID of the device to get information about")
 
 
 class SilenceAlarmTool(BaseModel):
     """Silence the alarm on a specific Nest Protect device."""
 
     device_id: str = Field(..., description="The ID of the device to silence")
-    duration_seconds: int = Field(
-        300, description="Duration to silence the alarm in seconds", ge=60, le=600
-    )
+    duration_seconds: int = Field(300, description="Duration to silence the alarm in seconds", ge=60, le=600)
 
 
 class GetDeviceHistoryTool(BaseModel):
     """Get the history of events for a specific Nest Protect device."""
 
     device_id: str = Field(..., description="The ID of the device to get history for")
-    start_time: str | None = Field(
-        None, description="Start time for the history query (ISO 8601 format)"
-    )
-    end_time: str | None = Field(
-        None, description="End time for the history query (ISO 8601 format)"
-    )
-    max_results: int = Field(
-        10, description="Maximum number of results to return", ge=1, le=100
-    )
+    start_time: str | None = Field(None, description="Start time for the history query (ISO 8601 format)")
+    end_time: str | None = Field(None, description="End time for the history query (ISO 8601 format)")
+    max_results: int = Field(10, description="Maximum number of results to return", ge=1, le=100)
 
 
 # Tool schemas for MCP

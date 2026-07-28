@@ -1,7 +1,14 @@
+import {
+  AlertCircle,
+  Cloud,
+  FileCode,
+  Key,
+  ShieldCheck,
+  Terminal,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { AuthWizard } from "@/components/AuthWizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Cloud, Key, Terminal, FileCode, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const STEPS = [
   {
@@ -45,11 +52,26 @@ const STEPS = [
 ];
 
 const TROUBLESHOOTING = [
-  { issue: "invalid_client", fix: "Wrong client ID/secret or swapped; check the JSON and .env." },
-  { issue: "access_denied", fix: "Add your account as test user on OAuth consent screen; use the account that owns Nest Protects." },
-  { issue: "invalid_scope", fix: "Scope must be exactly https://www.googleapis.com/auth/sdm.service." },
-  { issue: "No refresh token", fix: "Revoke app access for your Google account, then run the script again." },
-  { issue: "No devices", fix: "Same Google account must have Nest Protect in Google Home; wait a few minutes after linking." },
+  {
+    issue: "invalid_client",
+    fix: "Wrong client ID/secret or swapped; check the JSON and .env.",
+  },
+  {
+    issue: "access_denied",
+    fix: "Add your account as test user on OAuth consent screen; use the account that owns Nest Protects.",
+  },
+  {
+    issue: "invalid_scope",
+    fix: "Scope must be exactly https://www.googleapis.com/auth/sdm.service.",
+  },
+  {
+    issue: "No refresh token",
+    fix: "Revoke app access for your Google account, then run the script again.",
+  },
+  {
+    issue: "No devices",
+    fix: "Same Google account must have Nest Protect in Google Home; wait a few minutes after linking.",
+  },
 ];
 
 export function Onboarding() {
@@ -60,7 +82,8 @@ export function Onboarding() {
           Setup &amp; auth
         </h2>
         <p className="text-slate-400 mt-1">
-          One-time Google OAuth setup so the dashboard and MCP server can talk to Nest Protect (fire/CO).
+          One-time Google OAuth setup so the dashboard and MCP server can talk
+          to Nest Protect (fire/CO).
         </p>
       </div>
 

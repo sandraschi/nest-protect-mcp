@@ -57,9 +57,7 @@ class TestConversationalResponses:
             ],
         }
 
-        errors = validator.validate_conversational_response(
-            mock_response, "list_devices"
-        )
+        errors = validator.validate_conversational_response(mock_response, "list_devices")
         assert len(errors) == 0, f"Conversational response validation failed: {errors}"
 
     async def test_device_status_conversational_format(self, validator):
@@ -93,9 +91,7 @@ class TestConversationalResponses:
             ],
         }
 
-        errors = validator.validate_conversational_response(
-            mock_response, "get_device_status"
-        )
+        errors = validator.validate_conversational_response(mock_response, "get_device_status")
         assert len(errors) == 0, f"Conversational response validation failed: {errors}"
 
     async def test_error_response_format(self, validator):
@@ -146,9 +142,7 @@ class TestSamplingCapabilities:
             },
             "requires_sampling": True,
             "sampling_reason": "Complex safety analysis with multiple critical issues detected",
-            "next_steps": [
-                "AI will analyze safety patterns and generate prioritized recommendations"
-            ],
+            "next_steps": ["AI will analyze safety patterns and generate prioritized recommendations"],
             "context": {
                 "operation_details": "Comprehensive safety assessment with critical findings",
                 "assessment_timestamp": "2025-01-18T10:30:00Z",
@@ -173,9 +167,7 @@ class TestSamplingCapabilities:
             },
             "requires_sampling": True,
             "sampling_reason": "Complex emergency coordination required for smoke incident",
-            "next_steps": [
-                "AI will analyze emergency patterns and determine optimal response"
-            ],
+            "next_steps": ["AI will analyze emergency patterns and determine optimal response"],
         }
 
         assert expected_response["requires_sampling"] is True
@@ -234,9 +226,7 @@ class TestMockDeviceScenarios:
         mock_server.add_devices(emergency_devices)
 
         devices = await mock_server.list_devices()
-        emergency_count = sum(
-            1 for d in devices["devices"] if "emergency-" in d["name"]
-        )
+        emergency_count = sum(1 for d in devices["devices"] if "emergency-" in d["name"])
 
         assert emergency_count == 2
 
@@ -269,9 +259,7 @@ class TestMockDeviceScenarios:
 
     async def test_network_conditions(self, mock_server):
         """High latency path still returns devices (packet loss uses RNG — keep deterministic)."""
-        mock_server.set_network_conditions(
-            latency_ms=1000, packet_loss=0.0, connection_drops=0
-        )
+        mock_server.set_network_conditions(latency_ms=1000, packet_loss=0.0, connection_drops=0)
 
         devices = await mock_server.list_devices()
         assert "devices" in devices
@@ -372,9 +360,7 @@ class TestIntegrationScenarios:
         }
 
         validator = ConversationalResponseValidator()
-        errors = validator.validate_conversational_response(
-            mock_response, "test_operation"
-        )
+        errors = validator.validate_conversational_response(mock_response, "test_operation")
 
         assert len(errors) == 0, f"Mock response format invalid: {errors}"
 

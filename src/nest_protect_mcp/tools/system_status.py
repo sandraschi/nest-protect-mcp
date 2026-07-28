@@ -12,9 +12,7 @@ from pydantic import BaseModel, Field
 class ProcessStatusParams(BaseModel):
     """Parameters for process status."""
 
-    pid: int | None = Field(
-        None, description="Process ID to check (default: current process)"
-    )
+    pid: int | None = Field(None, description="Process ID to check (default: current process)")
 
 
 async def get_system_status() -> dict[str, Any]:
@@ -47,16 +45,12 @@ async def get_system_status() -> dict[str, Any]:
                 "hostname": platform.node(),
                 "python_version": platform.python_version(),
                 "uptime_seconds": int(uptime),
-                "boot_time": time.strftime(
-                    "%Y-%m-%d %H:%M:%S", time.localtime(boot_time)
-                ),
+                "boot_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(boot_time)),
             },
             "cpu": {
                 "usage_percent": cpu_percent,
                 "cores": cpu_count,
-                "load_avg": [x / cpu_count * 100 for x in os.getloadavg()]
-                if hasattr(os, "getloadavg")
-                else None,
+                "load_avg": [x / cpu_count * 100 for x in os.getloadavg()] if hasattr(os, "getloadavg") else None,
             },
             "memory": {
                 "total_gb": round(mem.total / (1024**3), 2),
@@ -73,20 +67,12 @@ async def get_system_status() -> dict[str, Any]:
                 "used_gb": round(disk.used / (1024**3), 2),
                 "free_gb": round(disk.free / (1024**3), 2),
                 "used_percent": disk.percent,
-                "read_mb": round(disk_io.read_bytes / (1024**2), 2)
-                if disk_io
-                else None,
-                "write_mb": round(disk_io.write_bytes / (1024**2), 2)
-                if disk_io
-                else None,
+                "read_mb": round(disk_io.read_bytes / (1024**2), 2) if disk_io else None,
+                "write_mb": round(disk_io.write_bytes / (1024**2), 2) if disk_io else None,
             },
             "network": {
-                "bytes_sent_mb": round(net_io.bytes_sent / (1024**2), 2)
-                if net_io
-                else None,
-                "bytes_recv_mb": round(net_io.bytes_recv / (1024**2), 2)
-                if net_io
-                else None,
+                "bytes_sent_mb": round(net_io.bytes_sent / (1024**2), 2) if net_io else None,
+                "bytes_recv_mb": round(net_io.bytes_recv / (1024**2), 2) if net_io else None,
                 "interfaces": list(net_if.keys()) if net_if else [],
             },
         }
@@ -122,9 +108,7 @@ async def get_process_status(pid: int | None = None) -> dict[str, Any]:
                             "fd": conn.fd,
                             "family": conn.family,
                             "type": conn.type,
-                            "laddr": f"{conn.laddr.ip}:{conn.laddr.port}"
-                            if conn.laddr
-                            else None,
+                            "laddr": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else None,
                             "raddr": f"{conn.raddr.ip}:{conn.raddr.port}"
                             if hasattr(conn, "raddr") and conn.raddr
                             else None,
@@ -160,9 +144,7 @@ async def get_api_status() -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {state.access_token}"}
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, headers=headers, params={"pageSize": 1}
-            ) as response:
+            async with session.get(url, headers=headers, params={"pageSize": 1}) as response:
                 if response.status == 200:
                     return {
                         "status": "success",

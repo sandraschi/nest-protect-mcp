@@ -1,36 +1,36 @@
-import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useTheme } from "@/components/theme-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Shield,
-  Home,
-  TestTube,
-  MessageSquare,
   Activity,
-  Settings,
+  Home,
   Menu,
+  MessageSquare,
+  Settings,
+  Shield,
+  TestTube,
   X,
-  Zap
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useTheme } from '@/components/theme-provider'
+  Zap,
+} from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Device Testing', href: '/devices', icon: TestTube },
-  { name: 'Conversational AI', href: '/conversational', icon: MessageSquare },
-  { name: 'MCP Status', href: '/status', icon: Activity },
-  { name: 'Settings', href: '/settings', icon: Settings },
-]
+  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Device Testing", href: "/devices", icon: TestTube },
+  { name: "Conversational AI", href: "/conversational", icon: MessageSquare },
+  { name: "MCP Status", href: "/status", icon: Activity },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
 
 interface LayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const location = useLocation()
-  const { theme, setTheme } = useTheme()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -47,9 +47,11 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white/95 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-slate-900/95 lg:translate-x-0 lg:static lg:inset-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white/95 backdrop-blur-sm shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-slate-900/95 lg:translate-x-0 lg:static lg:inset-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center space-x-3">
             <div className="relative">
@@ -65,22 +67,24 @@ export default function Layout({ children }: LayoutProps) {
 
         <nav className="mt-8 px-4">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href
+            const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg mb-2 transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500 dark:bg-blue-900/50 dark:text-blue-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-500 dark:bg-blue-900/50 dark:text-blue-300"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
                 }`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                <item.icon
+                  className={`h-5 w-5 mr-3 ${isActive ? "text-blue-600 dark:text-blue-400" : ""}`}
+                />
                 {item.name}
               </Link>
-            )
+            );
           })}
         </nav>
 
@@ -89,7 +93,9 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center space-x-2 mb-3">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">MCP Server</span>
-            <Badge variant="success" className="text-xs">Connected</Badge>
+            <Badge variant="success" className="text-xs">
+              Connected
+            </Badge>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             FastMCP 2.14.3 • AI Orchestration Enabled
@@ -99,15 +105,16 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Main content */}
       <div className="lg:ml-64">
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <main className="min-h-screen">{children}</main>
       </div>
     </div>
-  )
+  );
 }

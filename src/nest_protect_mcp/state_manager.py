@@ -51,9 +51,7 @@ class StateManager:
     async def _load_state(self) -> None:
         """Load state from file if it exists."""
         if not self._state_file.exists():
-            logger.debug(
-                f"No state file found at {self._state_file}, using empty state"
-            )
+            logger.debug(f"No state file found at {self._state_file}, using empty state")
             self._state = {}
             return
 
@@ -72,18 +70,12 @@ class StateManager:
                         import shutil
 
                         shutil.copy2(self._state_file, backup_file)
-                        logger.warning(
-                            f"Backed up corrupted state file to {backup_file}"
-                        )
+                        logger.warning(f"Backed up corrupted state file to {backup_file}")
                     except Exception as backup_error:
-                        logger.error(
-                            f"Failed to back up corrupted state file: {backup_error}"
-                        )
+                        logger.error(f"Failed to back up corrupted state file: {backup_error}")
                     self._state = {}
         except Exception as e:
-            logger.error(
-                f"Failed to load state from {self._state_file}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to load state from {self._state_file}: {e}", exc_info=True)
             self._state = {}
 
     async def _save_state(self) -> None:
@@ -120,17 +112,13 @@ class StateManager:
                     logger.debug(f"Successfully saved state to {self._state_file}")
 
                 except Exception as e:
-                    logger.error(
-                        f"Error saving state to {self._state_file}: {e}", exc_info=True
-                    )
+                    logger.error(f"Error saving state to {self._state_file}: {e}", exc_info=True)
                     # Clean up the temporary file if it exists
                     if os.path.exists(temp_file):
                         try:
                             os.unlink(temp_file)
                         except Exception as cleanup_error:
-                            logger.error(
-                                f"Failed to clean up temporary file {temp_file}: {cleanup_error}"
-                            )
+                            logger.error(f"Failed to clean up temporary file {temp_file}: {cleanup_error}")
 
         except Exception as e:
             logger.error(f"Unexpected error in _save_state: {e}", exc_info=True)

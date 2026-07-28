@@ -110,6 +110,7 @@ dev = [# Testing
     # Build and release
     "build>=0.10.0,<1.0.0",
     "twine>=4.0.0,<5.0.0",
+    "ruff>=0.16.0,<0.17",
     "ruff>=0.16.0,<0.17"
 ]
 
@@ -167,7 +168,8 @@ select = ["E", "F", "W", "I", "B", "S", "UP", "RUF"]
 ignore = ["S101", "B008", "S106", "S110", "S112", "S101", "B008", "S106", "S110", "S112", "RUF012", "S603", "S607", "S324", "E402", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S105"]
+"tests/**" = ["S105", "S311"]
+"src/nest_protect_mcp/constants.py" = ["S105"]
 
 [tool.ruff.format]
 quote-style = "double"

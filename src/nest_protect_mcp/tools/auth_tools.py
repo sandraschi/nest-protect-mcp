@@ -22,9 +22,7 @@ _log = logging.getLogger(__name__)
 class OAuthFlowParams(BaseModel):
     """Parameters for OAuth flow initiation."""
 
-    redirect_uri: str = Field(
-        "http://localhost:8000/auth/callback", description="Redirect URI for auth code"
-    )
+    redirect_uri: str = Field("http://localhost:8000/auth/callback", description="Redirect URI for auth code")
     state: str | None = Field(None, description="CSRF protection state")
     open_browser: bool = Field(True, description="Open auth URL in browser")
 
@@ -247,8 +245,7 @@ async def handle_oauth_callback(
                 return {
                     "status": "success",
                     "message": "Successfully authenticated with Nest API",
-                    "access_token": "****"
-                    + (app_state.access_token[-4:] if app_state.access_token else ""),
+                    "access_token": "****" + (app_state.access_token[-4:] if app_state.access_token else ""),
                     "token_type": token_data.get("token_type"),
                     "expires_in": token_data.get("expires_in"),
                     "scope": token_data.get("scope"),
@@ -300,9 +297,7 @@ async def get_oauth_redirect_reference() -> dict[str, Any]:
         "links": {
             "google_cloud_credentials": "https://console.cloud.google.com/apis/credentials",
             "revoke_app_access": "https://myaccount.google.com/permissions",
-            "nest_pcm_authorization_docs": (
-                "https://developers.google.com/nest/device-access/api/authorization"
-            ),
+            "nest_pcm_authorization_docs": ("https://developers.google.com/nest/device-access/api/authorization"),
         },
         "cli": {
             "just": "just auth",
@@ -365,10 +360,7 @@ async def validate_nest_credentials(
                 "error": rr2.get("error", "refresh_failed"),
             }
 
-    url = (
-        "https://smartdevicemanagement.googleapis.com/v1/"
-        f"enterprises/{pid.strip()}/devices?pageSize=1"
-    )
+    url = f"https://smartdevicemanagement.googleapis.com/v1/enterprises/{pid.strip()}/devices?pageSize=1"
     headers = {"Authorization": f"Bearer {st.access_token}"}
 
     try:
@@ -414,12 +406,7 @@ async def refresh_access_token(force: bool = False) -> dict[str, Any]:
         }
 
     exp = getattr(app_state, "token_expires_in", None)
-    if (
-        not force
-        and getattr(app_state, "access_token", None)
-        and exp is not None
-        and not exp < 300
-    ):
+    if not force and getattr(app_state, "access_token", None) and exp is not None and not exp < 300:
         return {"status": "success", "message": "Token not expired, refresh not needed"}
 
     try:
@@ -449,8 +436,7 @@ async def refresh_access_token(force: bool = False) -> dict[str, Any]:
                 return {
                     "status": "success",
                     "message": "Access token refreshed",
-                    "access_token": "****"
-                    + (app_state.access_token[-4:] if app_state.access_token else ""),
+                    "access_token": "****" + (app_state.access_token[-4:] if app_state.access_token else ""),
                     "token_type": token_data.get("token_type"),
                     "expires_in": token_data.get("expires_in"),
                     "scope": token_data.get("scope"),

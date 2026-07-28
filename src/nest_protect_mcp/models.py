@@ -6,13 +6,13 @@ including configuration, state, and command models.
 """
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class ProtectAlarmState(str, Enum):
+class ProtectAlarmState(StrEnum):
     """Possible alarm states for Nest Protect."""
 
     OK = "ok"
@@ -22,7 +22,7 @@ class ProtectAlarmState(str, Enum):
     OFF = "off"
 
 
-class ProtectAlarmType(str, Enum):
+class ProtectAlarmType(StrEnum):
     """Types of alarms that Nest Protect can detect."""
 
     SMOKE = "smoke"
@@ -34,7 +34,7 @@ class ProtectAlarmType(str, Enum):
     TEST = "test"
 
 
-class ProtectBatteryState(str, Enum):
+class ProtectBatteryState(StrEnum):
     """Battery state of the Nest Protect."""
 
     OK = "ok"
@@ -44,7 +44,7 @@ class ProtectBatteryState(str, Enum):
     INVALID = "invalid"
 
 
-class ProtectHushState(str, Enum):
+class ProtectHushState(StrEnum):
     """Hush state of the Nest Protect."""
 
     NONE = "none"
@@ -58,9 +58,7 @@ class ProtectConfig(BaseModel):
     # Connection settings
     project_id: str = Field(
         "",
-        description=(
-            "Nest Device Access project id (SDM enterprise UUID), not the numeric GCP project id"
-        ),
+        description=("Nest Device Access project id (SDM enterprise UUID), not the numeric GCP project id"),
     )
     client_id: str = Field("", description="OAuth 2.0 Client ID")
     client_secret: str = Field("", description="OAuth 2.0 Client Secret")
@@ -78,12 +76,8 @@ class ProtectConfig(BaseModel):
     mqtt_topic_prefix: str = Field("nest/protect/", description="MQTT topic prefix")
 
     # Home Assistant settings (optional)
-    homeassistant_discovery: bool = Field(
-        False, description="Enable Home Assistant MQTT discovery"
-    )
-    homeassistant_prefix: str = Field(
-        "homeassistant", description="Home Assistant MQTT discovery prefix"
-    )
+    homeassistant_discovery: bool = Field(False, description="Enable Home Assistant MQTT discovery")
+    homeassistant_prefix: str = Field("homeassistant", description="Home Assistant MQTT discovery prefix")
 
     # Logging
     log_level: str = Field("INFO", description="Logging level")
@@ -107,22 +101,16 @@ class ProtectDeviceState(BaseModel):
 
     # Status
     online: bool = Field(False, description="Whether the device is online")
-    battery_health: ProtectBatteryState = Field(
-        ..., description="Battery health status"
-    )
+    battery_health: ProtectBatteryState = Field(..., description="Battery health status")
     co_alarm_state: ProtectAlarmState = Field(..., description="CO alarm state")
     smoke_alarm_state: ProtectAlarmState = Field(..., description="Smoke alarm state")
     heat_alarm_state: ProtectAlarmState = Field(..., description="Heat alarm state")
 
     # Sensors
-    battery_level: int | None = Field(
-        None, description="Battery level (0-100)", ge=0, le=100
-    )
+    battery_level: int | None = Field(None, description="Battery level (0-100)", ge=0, le=100)
     co_ppm: float | None = Field(None, description="CO level in PPM", ge=0)
     temperature: float | None = Field(None, description="Temperature in °C")
-    humidity: float | None = Field(
-        None, description="Humidity percentage", ge=0, le=100
-    )
+    humidity: float | None = Field(None, description="Humidity percentage", ge=0, le=100)
 
     # Timestamps
     last_connection: datetime | None = Field(None, description="Last connection time")
@@ -140,12 +128,8 @@ class ProtectCommand(BaseModel):
     """Command to send to a Nest Protect device."""
 
     command: str = Field(..., description="Command to execute")
-    device_id: str | None = Field(
-        None, description="Target device ID (if not specified, applies to all)"
-    )
-    params: dict[str, Any] = Field(
-        default_factory=dict, description="Command parameters"
-    )
+    device_id: str | None = Field(None, description="Target device ID (if not specified, applies to all)")
+    params: dict[str, Any] = Field(default_factory=dict, description="Command parameters")
 
     @field_validator("command")
     @classmethod
@@ -153,9 +137,7 @@ class ProtectCommand(BaseModel):
         """Validate the command type."""
         valid_commands = ["hush", "test", "locate", "update"]
         if v not in valid_commands:
-            raise ValueError(
-                f"Invalid command. Must be one of: {', '.join(valid_commands)}"
-            )
+            raise ValueError(f"Invalid command. Must be one of: {', '.join(valid_commands)}")
         return v
 
 
@@ -164,9 +146,7 @@ class ProtectEvent(BaseModel):
 
     event_id: str = Field(..., description="Unique event identifier")
     device_id: str = Field(..., description="Source device ID")
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), description="Event timestamp"
-    )
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC), description="Event timestamp")
     event_type: str = Field(..., description="Type of event")
     event_data: dict[str, Any] = Field(default_factory=dict, description="Event data")
 

@@ -1,13 +1,13 @@
+import { HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { HelpCircle } from "lucide-react";
 
 interface HelpModalProps {
   open: boolean;
@@ -21,19 +21,44 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
         <DialogHeader>
           <DialogTitle>Setup &amp; auth</DialogTitle>
           <DialogDescription>
-            One-time Google OAuth so the dashboard and MCP server can talk to Nest Protect (fire/CO).
+            One-time Google OAuth so the dashboard and MCP server can talk to
+            Nest Protect (fire/CO).
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 text-sm text-slate-300">
           <p>
-            You need a Google Cloud project with Smart Device Management API enabled, OAuth Desktop credentials,
-            and a <strong className="text-white">refresh token</strong> from a browser sign-in.
+            You need a Google Cloud project with Smart Device Management API
+            enabled, OAuth Desktop credentials, and a{" "}
+            <strong className="text-white">refresh token</strong> from a browser
+            sign-in.
           </p>
           <ol className="list-decimal list-inside space-y-2">
-            <li>Google Cloud Console: enable Smart Device Management API; OAuth consent screen (External, scope sdm.service); create Desktop OAuth client; download client_secret_*.json.</li>
-            <li>Run <code className="rounded bg-slate-800 px-1 py-0.5">uv run python scripts/get_nest_refresh_token.py</code> from repo root; sign in in the browser; copy the printed refresh token.</li>
-            <li>Create <code className="rounded bg-slate-800 px-1 py-0.5">.env</code> in repo root with NEST_CLIENT_ID, NEST_CLIENT_SECRET, NEST_PROJECT_ID, NEST_REFRESH_TOKEN.</li>
-            <li>Run <code className="rounded bg-slate-800 px-1 py-0.5">web_sota\\start.ps1</code>; the backend loads .env and the dashboard shows devices.</li>
+            <li>
+              Google Cloud Console: enable Smart Device Management API; OAuth
+              consent screen (External, scope sdm.service); create Desktop OAuth
+              client; download client_secret_*.json.
+            </li>
+            <li>
+              Run{" "}
+              <code className="rounded bg-slate-800 px-1 py-0.5">
+                uv run python scripts/get_nest_refresh_token.py
+              </code>{" "}
+              from repo root; sign in in the browser; copy the printed refresh
+              token.
+            </li>
+            <li>
+              Create{" "}
+              <code className="rounded bg-slate-800 px-1 py-0.5">.env</code> in
+              repo root with NEST_CLIENT_ID, NEST_CLIENT_SECRET,
+              NEST_PROJECT_ID, NEST_REFRESH_TOKEN.
+            </li>
+            <li>
+              Run{" "}
+              <code className="rounded bg-slate-800 px-1 py-0.5">
+                web_sota\\start.ps1
+              </code>
+              ; the backend loads .env and the dashboard shows devices.
+            </li>
           </ol>
           <p>
             <Link

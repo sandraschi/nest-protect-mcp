@@ -8,9 +8,7 @@ from pydantic import BaseModel, Field
 class HomeSafetyAssessmentParams(BaseModel):
     """Parameters for comprehensive home safety assessment."""
 
-    include_recommendations: bool = Field(
-        True, description="Include AI-generated safety recommendations"
-    )
+    include_recommendations: bool = Field(True, description="Include AI-generated safety recommendations")
     assessment_scope: Literal["basic", "comprehensive", "emergency"] = Field(
         "comprehensive", description="Scope of safety assessment"
     )
@@ -26,9 +24,7 @@ class EmergencyResponseParams(BaseModel):
     emergency_type: Literal["smoke", "co", "security", "medical", "unknown"] = Field(
         ..., description="Type of emergency detected"
     )
-    affected_devices: list[str] = Field(
-        ..., description="Device IDs involved in emergency"
-    )
+    affected_devices: list[str] = Field(..., description="Device IDs involved in emergency")
     response_priority: Literal["low", "medium", "high", "critical"] = Field(
         "high", description="Response priority level"
     )
@@ -43,9 +39,7 @@ class PredictiveMaintenanceParams(BaseModel):
     time_horizon: Literal["1_week", "1_month", "3_months", "1_year"] = Field(
         "1_month", description="Time horizon for predictions"
     )
-    include_cost_estimates: bool = Field(
-        True, description="Include maintenance cost estimates"
-    )
+    include_cost_estimates: bool = Field(True, description="Include maintenance cost estimates")
 
 
 class SmartAutomationParams(BaseModel):
@@ -57,12 +51,9 @@ class SmartAutomationParams(BaseModel):
     learning_period: Literal["1_week", "2_weeks", "1_month"] = Field(
         "2_weeks", description="Period to learn user patterns"
     )
-    confidence_threshold: float = Field(
-        0.8, ge=0.5, le=0.95, description="Minimum confidence for automation triggers"
-    )
+    confidence_threshold: float = Field(0.8, ge=0.5, le=0.95, description="Minimum confidence for automation triggers")
 
 
-@mcp.tool()
 async def assess_home_safety(
     include_recommendations: bool = True,
     assessment_scope: str = "comprehensive",
@@ -262,25 +253,12 @@ async def assess_home_safety(
 
             analysis = {
                 "device_id": device_id,
-                "name": traits.get("sdm.devices.traits.Info", {}).get(
-                    "customName", f"Device {device_id[:8]}"
-                ),
-                "online": traits.get("sdm.devices.traits.Connectivity", {}).get(
-                    "status"
-                )
-                == "ONLINE",
-                "battery_level": traits.get("sdm.devices.traits.Battery", {}).get(
-                    "batteryLevel"
-                ),
-                "alarm_status": traits.get("sdm.devices.traits.SafetyAlarm", {}).get(
-                    "alarmStatus"
-                ),
-                "smoke_status": traits.get("sdm.devices.traits.Smoke", {}).get(
-                    "smokeStatus"
-                ),
-                "co_status": traits.get("sdm.devices.traits.CarbonMonoxide", {}).get(
-                    "coStatus"
-                ),
+                "name": traits.get("sdm.devices.traits.Info", {}).get("customName", f"Device {device_id[:8]}"),
+                "online": traits.get("sdm.devices.traits.Connectivity", {}).get("status") == "ONLINE",
+                "battery_level": traits.get("sdm.devices.traits.Battery", {}).get("batteryLevel"),
+                "alarm_status": traits.get("sdm.devices.traits.SafetyAlarm", {}).get("alarmStatus"),
+                "smoke_status": traits.get("sdm.devices.traits.Smoke", {}).get("smokeStatus"),
+                "co_status": traits.get("sdm.devices.traits.CarbonMonoxide", {}).get("coStatus"),
                 "last_update": device.get("lastEventTime"),
             }
 
@@ -328,9 +306,7 @@ async def assess_home_safety(
             ]
 
             # Signal for AI sampling - complex safety analysis needed
-            if len(safety_issues) > 3 or any(
-                issue["severity"] == "critical" for issue in safety_issues
-            ):
+            if len(safety_issues) > 3 or any(issue["severity"] == "critical" for issue in safety_issues):
                 return {
                     "success": True,
                     "operation": "assess_home_safety",
@@ -387,9 +363,7 @@ async def assess_home_safety(
                 "assessment_timestamp": datetime.now().isoformat(),
                 "focus_areas_covered": focus_areas,
             },
-            "suggestions": recommendations[:3]
-            if recommendations
-            else [],  # Top 3 recommendations
+            "suggestions": recommendations[:3] if recommendations else [],  # Top 3 recommendations
             "follow_up_questions": [
                 "Would you like me to run safety checks on specific devices?",
                 "Should I help you schedule battery replacements?",
@@ -421,7 +395,6 @@ async def assess_home_safety(
         }
 
 
-@mcp.tool()
 async def coordinate_emergency_response(
     emergency_type: str, affected_devices: list[str], response_priority: str = "high"
 ) -> dict[str, Any]:

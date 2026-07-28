@@ -1,3 +1,13 @@
+
+## [Unreleased] — 2026-06-14
+
+### Added
+- Tauri 2.0 native wrapper with `bundle.resources` + `std::process::Command`
+- PyInstaller frozen backend embedded in NSIS installer
+- CUA-NSIS smoke test (`scripts/cua-smoke.py`, `scripts/cua-nsis-config.json`)
+- `just cua-nsis-test` recipe
+- Tauri CORS: `tauri://localhost` origins for WebView API access
+- `GET /api/v1/diagnostics` endpoint for CUA verification
 # Changelog
 
 All notable changes to the Nest Protect MCP project will be documented in this file.
@@ -138,3 +148,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/yourusername/nest-protect-mcp/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/yourusername/nest-protect-mcp/releases/tag/v0.1.0
+

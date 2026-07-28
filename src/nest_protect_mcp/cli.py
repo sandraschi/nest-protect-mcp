@@ -193,9 +193,7 @@ class NestProtectCLI:
                 with open(config_path) as f:
                     config_data = yaml.safe_load(f)
             else:
-                raise ValueError(
-                    f"Unsupported config file format: {config_path.suffix}"
-                )
+                raise ValueError(f"Unsupported config file format: {config_path.suffix}")
 
             return ProtectConfig(**config_data)
 
@@ -236,9 +234,7 @@ class NestProtectCLI:
                     device.co_alarm_state.value,
                     device.smoke_alarm_state.value,
                     device.heat_alarm_state.value,
-                    f"{device.battery_level}%"
-                    if device.battery_level is not None
-                    else "N/A",
+                    f"{device.battery_level}%" if device.battery_level is not None else "N/A",
                     device.battery_health.value,
                 ]
             )
@@ -271,9 +267,7 @@ class NestProtectCLI:
             ["Heat Alarm", device.heat_alarm_state.value],
             [
                 "Battery Level",
-                f"{device.battery_level}%"
-                if device.battery_level is not None
-                else "N/A",
+                f"{device.battery_level}%" if device.battery_level is not None else "N/A",
             ],
             ["Battery Health", device.battery_health.value],
             [
@@ -293,9 +287,7 @@ class NestProtectCLI:
             ],
             [
                 "Last Test",
-                device.last_manual_test.isoformat()
-                if device.last_manual_test
-                else "Never",
+                device.last_manual_test.isoformat() if device.last_manual_test else "Never",
             ],
         ]
 
@@ -400,9 +392,7 @@ class NestProtectCLI:
 
     async def _hush_alarm(self, args) -> None:
         """Hush an alarm on a device."""
-        logger.info(
-            f"Hushing alarm on device {args.device_id} for {args.duration} seconds"
-        )
+        logger.info(f"Hushing alarm on device {args.device_id} for {args.duration} seconds")
 
         try:
             success = await self.server.send_command(
@@ -437,9 +427,7 @@ class NestProtectCLI:
             )
 
             if success:
-                print(
-                    f"Successfully started {args.type} test on device {args.device_id}"
-                )
+                print(f"Successfully started {args.type} test on device {args.device_id}")
                 print("The device will beep and flash during the test.")
             else:
                 logger.error(f"Failed to start test on device {args.device_id}")

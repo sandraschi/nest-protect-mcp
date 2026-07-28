@@ -2,8 +2,9 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import nest_protect_mcp.state_manager as sm
 import pytest
+
+import nest_protect_mcp.state_manager as sm
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +23,7 @@ def reset_app_state():
 async def test_refresh_skips_when_token_still_valid():
     """Do not call Google when access token exists and expires_in is far out."""
     from nest_protect_mcp.tools import auth_tools
+
     st = sm.get_app_state()
     st.refresh_token = "refresh"
     st.access_token = "access-token-value"
@@ -40,6 +42,7 @@ async def test_refresh_skips_when_token_still_valid():
 async def test_refresh_runs_when_access_token_missing():
     """Refresh when refresh token exists but access token is missing."""
     from nest_protect_mcp.tools import auth_tools
+
     st = sm.get_app_state()
     st.refresh_token = "rt"
     st.access_token = None
@@ -93,6 +96,7 @@ async def test_get_oauth_redirect_reference_structure():
 @pytest.mark.asyncio
 async def test_get_nest_auth_status_masked():
     from nest_protect_mcp.tools import auth_tools
+
     st = sm.get_app_state()
     st.config = MagicMock()
     st.config.client_id = "client-id-long"

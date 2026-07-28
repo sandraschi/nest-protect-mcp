@@ -1,6 +1,19 @@
 ﻿{
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "files": { "ignore": ["dist", "node_modules", "build"] },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100, "lineEnding": "lf" },
-  "linter": { "enabled": true, "rules": { "recommended": true, "a11y": { "recommended": false }, "style": { "noNonNullAssertion": "off" } } }
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": { "recommended": false },
+      "style": { "noNonNullAssertion": "off" }
+    }
+  }
 }

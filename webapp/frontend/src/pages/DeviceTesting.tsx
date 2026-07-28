@@ -1,118 +1,126 @@
-import { useState, useEffect } from 'react'
-import { TestTube, Shield, Wifi, Battery, Thermometer, AlertTriangle, CheckCircle, Play } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { mcpClient } from '@/lib/mcp-client'
-import { DeviceInfo, DeviceStatus, MCPResponse } from '@/types/mcp'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { mcpClient } from "@/lib/mcp-client";
+import { type DeviceInfo, type DeviceStatus, MCPResponse } from "@/types/mcp";
+import {
+  AlertTriangle,
+  Battery,
+  CheckCircle,
+  Play,
+  Shield,
+  TestTube,
+  Thermometer,
+  Wifi,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function DeviceTesting() {
-  const [devices, setDevices] = useState<DeviceInfo[]>([])
-  const [selectedDevice, setSelectedDevice] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [testResults, setTestResults] = useState<Record<string, any>>({})
-  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus | null>(null)
+  const [devices, setDevices] = useState<DeviceInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [testResults, setTestResults] = useState<Record<string, any>>({});
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus | null>(null);
 
   useEffect(() => {
-    loadDevices()
-  }, [])
+    loadDevices();
+  }, []);
 
   const loadDevices = async () => {
     try {
-      setIsLoading(true)
-      const response = await mcpClient.listDevices()
+      setIsLoading(true);
+      const response = await mcpClient.listDevices();
       if (response.success && response.result) {
-        setDevices(response.result.devices)
+        setDevices(response.result.devices);
       }
     } catch (error) {
-      console.error('Failed to load devices:', error)
+      console.error("Failed to load devices:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const loadDeviceStatus = async (deviceId: string) => {
     try {
-      const response = await mcpClient.getDeviceStatus(deviceId)
+      const response = await mcpClient.getDeviceStatus(deviceId);
       if (response.success && response.result) {
-        setDeviceStatus(response.result.device)
+        setDeviceStatus(response.result.device);
       }
     } catch (error) {
-      console.error('Failed to load device status:', error)
+      console.error("Failed to load device status:", error);
     }
-  }
+  };
 
-  const runSafetyTest = async (deviceId: string, testType: string = 'full') => {
+  const runSafetyTest = async (deviceId: string, testType = "full") => {
     try {
-      setTestResults(prev => ({ ...prev, [deviceId]: { status: 'running', testType } }))
+      setTestResults((prev) => ({ ...prev, [deviceId]: { status: "running", testType } }));
 
-      const response = await mcpClient.runSafetyCheck(deviceId, testType)
+      const response = await mcpClient.runSafetyCheck(deviceId, testType);
 
-      setTestResults(prev => ({
+      setTestResults((prev) => ({
         ...prev,
         [deviceId]: {
-          status: response.success ? 'completed' : 'failed',
+          status: response.success ? "completed" : "failed",
           testType,
           result: response,
-          timestamp: new Date().toISOString()
-        }
-      }))
+          timestamp: new Date().toISOString(),
+        },
+      }));
 
       // Refresh device status after test
       if (selectedDevice === deviceId) {
-        await loadDeviceStatus(deviceId)
+        await loadDeviceStatus(deviceId);
       }
-
     } catch (error) {
-      setTestResults(prev => ({
+      setTestResults((prev) => ({
         ...prev,
         [deviceId]: {
-          status: 'failed',
+          status: "failed",
           testType,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        }
-      }))
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString(),
+        },
+      }));
     }
-  }
+  };
 
   const hushAlarm = async (deviceId: string) => {
     try {
-      const response = await mcpClient.hushAlarm(deviceId, 180)
+      const response = await mcpClient.hushAlarm(deviceId, 180);
       if (response.success) {
-        alert('Alarm hushed successfully for 3 minutes')
-        await loadDeviceStatus(deviceId)
+        alert("Alarm hushed successfully for 3 minutes");
+        await loadDeviceStatus(deviceId);
       }
     } catch (error) {
-      alert('Failed to hush alarm')
+      alert("Failed to hush alarm");
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'OK':
-      case 'ONLINE':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'LOW':
-      case 'OFFLINE':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      case "OK":
+      case "ONLINE":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "LOW":
+      case "OFFLINE":
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       default:
-        return <AlertTriangle className="h-4 w-4 text-red-500" />
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'OK':
-      case 'ONLINE':
-        return 'text-green-600'
-      case 'LOW':
-      case 'OFFLINE':
-        return 'text-yellow-600'
+      case "OK":
+      case "ONLINE":
+        return "text-green-600";
+      case "LOW":
+      case "OFFLINE":
+        return "text-yellow-600";
       default:
-        return 'text-red-600'
+        return "text-red-600";
     }
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -132,8 +140,8 @@ export default function DeviceTesting() {
         </h1>
 
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center mb-8">
-          Comprehensive testing interface for Nest Protect devices with real-time monitoring,
-          safety diagnostics, and interactive controls.
+          Comprehensive testing interface for Nest Protect devices with real-time monitoring, safety
+          diagnostics, and interactive controls.
         </p>
       </div>
 
@@ -146,9 +154,7 @@ export default function DeviceTesting() {
                 <Shield className="h-5 w-5 mr-2" />
                 Devices ({devices.length})
               </CardTitle>
-              <CardDescription>
-                Available Nest Protect devices
-              </CardDescription>
+              <CardDescription>Available Nest Protect devices</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {isLoading ? (
@@ -167,24 +173,31 @@ export default function DeviceTesting() {
                   <div
                     key={device.id}
                     onClick={() => {
-                      setSelectedDevice(device.id)
-                      loadDeviceStatus(device.id)
+                      setSelectedDevice(device.id);
+                      loadDeviceStatus(device.id);
                     }}
                     className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       selectedDevice === device.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium">{device.name || `Device ${device.id.slice(-4)}`}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{device.type}</div>
+                        <div className="font-medium">
+                          {device.name || `Device ${device.id.slice(-4)}`}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {device.type}
+                        </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {getStatusIcon(device.online ? 'ONLINE' : 'OFFLINE')}
-                        <Badge variant={device.online ? 'success' : 'destructive'} className="text-xs">
-                          {device.online ? 'Online' : 'Offline'}
+                        {getStatusIcon(device.online ? "ONLINE" : "OFFLINE")}
+                        <Badge
+                          variant={device.online ? "success" : "destructive"}
+                          className="text-xs"
+                        >
+                          {device.online ? "Online" : "Offline"}
                         </Badge>
                       </div>
                     </div>
@@ -194,8 +207,11 @@ export default function DeviceTesting() {
                       <div className="mt-2 flex items-center space-x-2">
                         <Badge
                           variant={
-                            testResults[device.id].status === 'completed' ? 'success' :
-                            testResults[device.id].status === 'running' ? 'warning' : 'destructive'
+                            testResults[device.id].status === "completed"
+                              ? "success"
+                              : testResults[device.id].status === "running"
+                                ? "warning"
+                                : "destructive"
                           }
                           className="text-xs"
                         >
@@ -226,22 +242,24 @@ export default function DeviceTesting() {
                     <Wifi className="h-5 w-5 mr-2" />
                     {deviceStatus.name || `Device ${selectedDevice.slice(-4)}`}
                   </CardTitle>
-                  <CardDescription>
-                    Device ID: {selectedDevice}
-                  </CardDescription>
+                  <CardDescription>Device ID: {selectedDevice}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
-                      <div className={`text-2xl font-bold ${getStatusColor(deviceStatus.online ? 'ONLINE' : 'OFFLINE')}`}>
-                        {deviceStatus.online ? '●' : '○'}
+                      <div
+                        className={`text-2xl font-bold ${getStatusColor(deviceStatus.online ? "ONLINE" : "OFFLINE")}`}
+                      >
+                        {deviceStatus.online ? "●" : "○"}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">Status</div>
                     </div>
 
                     {deviceStatus.battery && (
                       <div className="text-center">
-                        <Battery className={`h-6 w-6 mx-auto mb-1 ${getStatusColor(deviceStatus.battery.status)}`} />
+                        <Battery
+                          className={`h-6 w-6 mx-auto mb-1 ${getStatusColor(deviceStatus.battery.status)}`}
+                        />
                         <div className="text-lg font-bold">{deviceStatus.battery.level}%</div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">Battery</div>
                       </div>
@@ -249,7 +267,9 @@ export default function DeviceTesting() {
 
                     {deviceStatus.alarm && (
                       <div className="text-center">
-                        <AlertTriangle className={`h-6 w-6 mx-auto mb-1 ${getStatusColor(deviceStatus.alarm.status === 'NONE' ? 'OK' : 'ALARM')}`} />
+                        <AlertTriangle
+                          className={`h-6 w-6 mx-auto mb-1 ${getStatusColor(deviceStatus.alarm.status === "NONE" ? "OK" : "ALARM")}`}
+                        />
                         <div className="text-sm font-medium">{deviceStatus.alarm.status}</div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">Alarm</div>
                       </div>
@@ -273,15 +293,13 @@ export default function DeviceTesting() {
                     <TestTube className="h-5 w-5 mr-2" />
                     Safety Testing
                   </CardTitle>
-                  <CardDescription>
-                    Run comprehensive safety tests on this device
-                  </CardDescription>
+                  <CardDescription>Run comprehensive safety tests on this device</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <Button
-                      onClick={() => runSafetyTest(selectedDevice, 'full')}
-                      disabled={testResults[selectedDevice]?.status === 'running'}
+                      onClick={() => runSafetyTest(selectedDevice, "full")}
+                      disabled={testResults[selectedDevice]?.status === "running"}
                       className="flex flex-col h-auto py-4"
                     >
                       <Play className="h-4 w-4 mb-1" />
@@ -289,8 +307,8 @@ export default function DeviceTesting() {
                     </Button>
 
                     <Button
-                      onClick={() => runSafetyTest(selectedDevice, 'smoke')}
-                      disabled={testResults[selectedDevice]?.status === 'running'}
+                      onClick={() => runSafetyTest(selectedDevice, "smoke")}
+                      disabled={testResults[selectedDevice]?.status === "running"}
                       variant="outline"
                       className="flex flex-col h-auto py-4"
                     >
@@ -299,8 +317,8 @@ export default function DeviceTesting() {
                     </Button>
 
                     <Button
-                      onClick={() => runSafetyTest(selectedDevice, 'co')}
-                      disabled={testResults[selectedDevice]?.status === 'running'}
+                      onClick={() => runSafetyTest(selectedDevice, "co")}
+                      disabled={testResults[selectedDevice]?.status === "running"}
                       variant="outline"
                       className="flex flex-col h-auto py-4"
                     >
@@ -308,7 +326,7 @@ export default function DeviceTesting() {
                       CO
                     </Button>
 
-                    {deviceStatus.alarm && deviceStatus.alarm.status !== 'NONE' && (
+                    {deviceStatus.alarm && deviceStatus.alarm.status !== "NONE" && (
                       <Button
                         onClick={() => hushAlarm(selectedDevice)}
                         variant="destructive"
@@ -330,20 +348,28 @@ export default function DeviceTesting() {
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <Badge variant={
-                          testResults[selectedDevice].status === 'completed' ? 'success' :
-                          testResults[selectedDevice].status === 'running' ? 'warning' : 'destructive'
-                        }>
+                        <Badge
+                          variant={
+                            testResults[selectedDevice].status === "completed"
+                              ? "success"
+                              : testResults[selectedDevice].status === "running"
+                                ? "warning"
+                                : "destructive"
+                          }
+                        >
                           {testResults[selectedDevice].status}
                         </Badge>
                         <span className="text-sm text-gray-600">
-                          {testResults[selectedDevice].testType} test • {new Date(testResults[selectedDevice].timestamp).toLocaleTimeString()}
+                          {testResults[selectedDevice].testType} test •{" "}
+                          {new Date(testResults[selectedDevice].timestamp).toLocaleTimeString()}
                         </span>
                       </div>
 
                       {testResults[selectedDevice].result && (
                         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                          <div className="text-sm font-medium">{testResults[selectedDevice].result.summary}</div>
+                          <div className="text-sm font-medium">
+                            {testResults[selectedDevice].result.summary}
+                          </div>
                           {testResults[selectedDevice].result.next_steps && (
                             <div className="text-xs text-gray-600 mt-1">
                               Next: {testResults[selectedDevice].result.next_steps[0]}
@@ -376,5 +402,5 @@ export default function DeviceTesting() {
         </div>
       </div>
     </div>
-  )
+  );
 }

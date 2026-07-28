@@ -8,7 +8,7 @@ Nest Protect smoke and carbon monoxide detectors.
 __version__ = "0.1.0"
 __author__ = "Sandra Schiessl"
 __email__ = "sandra.schiessl@example.com"
-__all__ = ["app", "ProtectConfig", "ProtectDeviceState", "ProtectCommand"]
+__all__ = ["ProtectCommand", "ProtectConfig", "ProtectDeviceState", "app"]
 
 # Initialize logging
 import logging

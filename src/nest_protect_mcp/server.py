@@ -120,9 +120,7 @@ def _unwrap(result: dict[str, Any]) -> dict[str, Any]:
         return result
     if result.get("error") or result.get("error_code"):
         raise HTTPException(
-            status_code=400
-            if "AUTHENTICATION" in str(result.get("error_code", ""))
-            else 500,
+            status_code=400 if "AUTHENTICATION" in str(result.get("error_code", "")) else 500,
             detail=result.get("message") or result.get("error", "Request failed"),
         )
     return result
@@ -137,8 +135,7 @@ async def health() -> dict[str, Any]:
     return {
         "success": True,
         "message": "Nest Protect MCP backend",
-        "api_connected": api_result.get("status") == "success"
-        or "connected" in str(api_result).lower(),
+        "api_connected": api_result.get("status") == "success" or "connected" in str(api_result).lower(),
     }
 
 
@@ -209,9 +206,7 @@ async def get_status() -> dict[str, Any]:
             "online_devices": stats.get("online", 0),
             "devices": devices,
         },
-        "system": system_result
-        if system_result and system_result.get("status") == "success"
-        else None,
+        "system": system_result if system_result and system_result.get("status") == "success" else None,
     }
 
 
@@ -229,9 +224,7 @@ async def hush_alarm(device_id: str, body: HushBody | None = None) -> dict[str, 
     duration = (body or HushBody()).duration_seconds
     result = await tool_hush(device_id, duration)
     if result.get("status") == "error":
-        raise HTTPException(
-            status_code=400, detail=result.get("message", "Hush failed")
-        )
+        raise HTTPException(status_code=400, detail=result.get("message", "Hush failed"))
     return {"success": True, "message": "Alarm hushed", "result": result}
 
 
@@ -242,18 +235,14 @@ class SafetyCheckBody(BaseModel):
 
 
 @app.post("/api/v1/devices/{device_id}/safety-check")
-async def run_safety_check(
-    device_id: str, body: SafetyCheckBody | None = None
-) -> dict[str, Any]:
+async def run_safety_check(device_id: str, body: SafetyCheckBody | None = None) -> dict[str, Any]:
     """Run a safety check (test) on a Nest Protect device."""
     from .tools.device_control import run_safety_check as tool_safety
 
     test_type = (body or SafetyCheckBody()).test_type
     result = await tool_safety(device_id, test_type)
     if result.get("status") == "error":
-        raise HTTPException(
-            status_code=400, detail=result.get("message", "Safety check failed")
-        )
+        raise HTTPException(status_code=400, detail=result.get("message", "Safety check failed"))
     return {"success": True, "message": "Safety check completed", "result": result}
 
 
@@ -274,9 +263,7 @@ async def wizard_pcm_start(body: WizardStartBody) -> dict[str, Any]:
     """Returns PCM authorize URL; register ``redirect_uri_must_register`` in Google OAuth client."""
     from .wizard_auth import start_wizard_session, wizard_callback_uri
 
-    backend_base = os.getenv(
-        "WIZARD_BACKEND_BASE_URL", "http://127.0.0.1:10753"
-    ).strip()
+    backend_base = os.getenv("WIZARD_BACKEND_BASE_URL", "http://127.0.0.1:10753").strip()
     _, authorize_url = start_wizard_session(
         client_id=body.client_id,
         client_secret=body.client_secret,
@@ -305,9 +292,7 @@ async def wizard_pcm_callback(
     """PCM / Google redirects here after user signs in."""
     from .wizard_auth import complete_pcm_callback
 
-    frontend = os.getenv(
-        "WIZARD_FRONTEND_ORIGIN", "http://127.0.0.1:10752"
-    ).rstrip("/")
+    frontend = os.getenv("WIZARD_FRONTEND_ORIGIN", "http://127.0.0.1:10752").rstrip("/")
 
     completion_id, err_msg = await complete_pcm_callback(
         oauth_state=state,

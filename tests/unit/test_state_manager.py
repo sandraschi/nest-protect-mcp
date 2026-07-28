@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from nest_protect_mcp.state_manager import StateManager, state_manager
 
 
@@ -147,9 +148,7 @@ class TestStateManager:
         await state_manager_instance.set("key1", "value1")
         await state_manager_instance.set("key2", "value2")
 
-        assert (
-            len(await state_manager_instance.get_all()) == 3
-        )  # Including loaded test_key
+        assert len(await state_manager_instance.get_all()) == 3  # Including loaded test_key
 
         await state_manager_instance.clear()
         assert len(await state_manager_instance.get_all()) == 0
@@ -183,9 +182,7 @@ class TestStateManager:
 
         async def increment_counter():
             for _ in range(100):
-                await state_manager_instance.update(
-                    "counter", lambda x: (x or 0) + 1, 0
-                )
+                await state_manager_instance.update("counter", lambda x: (x or 0) + 1, 0)
 
         # Run multiple concurrent operations
         tasks = [increment_counter() for _ in range(5)]

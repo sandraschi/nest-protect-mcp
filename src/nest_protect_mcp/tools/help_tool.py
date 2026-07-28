@@ -56,16 +56,12 @@ def _get_tool_category(tool_name: str) -> str:
         return "Other"
 
 
-def _generate_usage_examples(
-    tool_name: str, parameters: dict[str, Any]
-) -> list[dict[str, Any]]:
+def _generate_usage_examples(tool_name: str, parameters: dict[str, Any]) -> list[dict[str, Any]]:
     """Generate usage examples for a tool based on its parameters."""
     examples = []
 
     # Basic example with minimal required parameters
-    required_params = {
-        name: info for name, info in parameters.items() if info.get("required", False)
-    }
+    required_params = {name: info for name, info in parameters.items() if info.get("required", False)}
 
     if required_params:
         basic_example = {
@@ -103,13 +99,9 @@ def _generate_usage_examples(
                 elif "device" in param_name.lower():
                     advanced_example["parameters"][param_name] = "device-456"
                 else:
-                    advanced_example["parameters"][
-                        param_name
-                    ] = f"advanced_{param_name}"
+                    advanced_example["parameters"][param_name] = f"advanced_{param_name}"
             elif param_info["type"] == "integer":
-                advanced_example["parameters"][param_name] = param_info.get(
-                    "maximum", 100
-                )
+                advanced_example["parameters"][param_name] = param_info.get("maximum", 100)
             elif param_info["type"] == "boolean":
                 advanced_example["parameters"][param_name] = False
         examples.append(advanced_example)
@@ -127,9 +119,7 @@ class SearchToolsParams(BaseModel):
     """Parameters for searching tools."""
 
     query: str = Field(..., description="Search query")
-    search_in: list[str] = Field(
-        ["name", "description"], description="Fields to search in"
-    )
+    search_in: list[str] = Field(["name", "description"], description="Fields to search in")
 
 
 async def list_available_tools() -> dict[str, Any]:
@@ -151,9 +141,7 @@ async def list_available_tools() -> dict[str, Any]:
             params_ref = input_schema.get("properties", {}).get("params", {})
             if "$ref" in params_ref:
                 # Get the referenced schema from $defs
-                ref_name = params_ref["$ref"].split("/")[
-                    -1
-                ]  # Get 'EmptyParams' from '#/$defs/EmptyParams'
+                ref_name = params_ref["$ref"].split("/")[-1]  # Get 'EmptyParams' from '#/$defs/EmptyParams'
                 param_schema = input_schema.get("$defs", {}).get(ref_name, {})
             else:
                 param_schema = params_ref
@@ -179,9 +167,7 @@ async def list_available_tools() -> dict[str, Any]:
         return {
             "status": "success",
             "count": len(tools),
-            "categories": {
-                k: sorted(v, key=lambda x: x["name"]) for k, v in categories.items()
-            },
+            "categories": {k: sorted(v, key=lambda x: x["name"]) for k, v in categories.items()},
             "tools": sorted(tools, key=lambda x: x["name"]),
         }
     except Exception as e:
@@ -258,9 +244,7 @@ async def get_tool_help(tool_name: str) -> dict[str, Any]:
         }
 
 
-async def search_tools(
-    query: str, search_in: list[str] | None = None
-) -> dict[str, Any]:
+async def search_tools(query: str, search_in: list[str] | None = None) -> dict[str, Any]:
     """Search for tools by keyword or description with advanced filtering."""
     from ..fastmcp_server import app
 

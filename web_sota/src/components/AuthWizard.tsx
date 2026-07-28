@@ -1,19 +1,3 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  getWizardCallbackRedirectUri,
-  getWizardResult,
-  startAuthWizard,
-} from "@/lib/api";
 import {
   AlertCircle,
   CheckCircle2,
@@ -22,6 +6,22 @@ import {
   ExternalLink,
   KeyRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  getWizardCallbackRedirectUri,
+  getWizardResult,
+  startAuthWizard,
+} from "@/lib/api";
 
 const REDIRECT_URI = getWizardCallbackRedirectUri();
 const GCP_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials";
@@ -124,17 +124,20 @@ export function AuthWizard() {
           OAuth wizard (PCM)
         </CardTitle>
         <CardDescription className="text-emerald-200/80">
-          Paste OAuth client id/secret and your Nest Device Access project id. We open
-          Partner Connections in this tab; after you approve Google, you return here with a
-          one-time <span className="font-mono text-emerald-300">.env</span> block to save.
+          Paste OAuth client id/secret and your Nest Device Access project id.
+          We open Partner Connections in this tab; after you approve Google, you
+          return here with a one-time{" "}
+          <span className="font-mono text-emerald-300">.env</span> block to
+          save.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3 rounded-md border border-amber-900/40 bg-amber-950/30 p-3 text-sm text-amber-100/90">
           <p>
-            <strong className="text-amber-200">Step 1 — Google Cloud:</strong> open your
-            Desktop OAuth client, then under <em>Authorized redirect URIs</em> add this value
-            (use Copy, then Save in Google):
+            <strong className="text-amber-200">Step 1 — Google Cloud:</strong>{" "}
+            open your Desktop OAuth client, then under{" "}
+            <em>Authorized redirect URIs</em> add this value (use Copy, then
+            Save in Google):
           </p>
           <code className="block break-all rounded bg-black/40 px-2 py-1.5 text-xs text-amber-300">
             {REDIRECT_URI}
@@ -185,7 +188,9 @@ export function AuthWizard() {
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-slate-300">Device Access project id (UUID)</Label>
+          <Label className="text-slate-300">
+            Device Access project id (UUID)
+          </Label>
           <Input
             className="border-slate-800 bg-slate-900 text-slate-100"
             placeholder="Nest Device Access console — same as NEST_PROJECT_ID"
@@ -241,8 +246,8 @@ export function AuthWizard() {
               </Button>
             </div>
             <p className="text-xs text-slate-500">
-              Restart the backend after saving .env (or reload if it hot-reloads env). Secrets
-              were shown once and removed from server memory.
+              Restart the backend after saving .env (or reload if it hot-reloads
+              env). Secrets were shown once and removed from server memory.
             </p>
           </div>
         )}

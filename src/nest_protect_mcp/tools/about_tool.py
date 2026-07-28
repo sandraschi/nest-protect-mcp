@@ -43,7 +43,7 @@ async def about_server(
                         "🌡️ Nest Thermostat (planned)",
                         "📹 Nest Cameras (planned)",
                         "🚪 Nest Hello Doorbell (planned)",
-                        "🔒 Nest × Yale Lock (planned)",
+                        "🔒 Nest x Yale Lock (planned)",
                     ],
                 },
                 "how_to_use": "Just ask Claude to check your smoke detectors, run a safety test, or silence an alarm. Claude will use this server to talk to your Nest devices!",
@@ -404,7 +404,7 @@ async def get_supported_devices() -> dict[str, Any]:
                 },
                 "nest_security": {
                     "nest_x_yale_lock": {
-                        "name": "Nest × Yale Lock",
+                        "name": "Nest x Yale Lock",
                         "features": [
                             "Keyless entry",
                             "Passcode management",

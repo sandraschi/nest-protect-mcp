@@ -2,9 +2,11 @@
 Unit tests for Nest Protect models.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
+from pydantic import ValidationError
+
 from nest_protect_mcp.models import (
     ProtectAlarmState,
     ProtectAlarmType,
@@ -14,7 +16,6 @@ from nest_protect_mcp.models import (
     ProtectDeviceState,
     ProtectEvent,
 )
-from pydantic import ValidationError
 
 
 class TestProtectAlarmState:
@@ -202,7 +203,7 @@ class TestProtectEvent:
 
     def test_event_with_custom_timestamp(self):
         """Test event with custom timestamp."""
-        custom_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        custom_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
         event = ProtectEvent(
             event_id="event-123",
             device_id="device-456",
@@ -213,12 +214,10 @@ class TestProtectEvent:
 
     def test_event_default_timestamp(self):
         """Test event with default timestamp."""
-        event = ProtectEvent(
-            event_id="event-456", device_id="device-789", event_type="alarm_triggered"
-        )
+        event = ProtectEvent(event_id="event-456", device_id="device-789", event_type="alarm_triggered")
         # The timestamp should be set automatically
         assert isinstance(event.timestamp, datetime)
         # Should be close to current time (within 1 second)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         time_diff = abs((now - event.timestamp).total_seconds())
         assert time_diff < 1.0

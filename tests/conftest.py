@@ -3,6 +3,7 @@ Pytest configuration for Nest Protect MCP tests.
 """
 
 import sys
+from datetime import UTC
 from pathlib import Path
 
 import pytest
@@ -28,7 +29,7 @@ def sample_config():
 @pytest.fixture
 def sample_device_data():
     """Sample device data for testing."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from nest_protect_mcp.models import ProtectAlarmState, ProtectBatteryState
 
@@ -46,7 +47,7 @@ def sample_device_data():
         "co_ppm": 0.0,
         "temperature": 22.5,
         "humidity": 45.0,
-        "last_connection": datetime.now(timezone.utc),
+        "last_connection": datetime.now(UTC),
         "software_version": "1.2.3",
         "wifi_ip": "192.168.1.100",
         "wifi_ssid": "TestNetwork",

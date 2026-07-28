@@ -26,9 +26,7 @@ def load_config() -> dict[str, Any]:
     # Default configuration
     config = {
         "log_level": os.getenv("LOG_LEVEL", "INFO").upper(),
-        "state_file": os.path.expanduser(
-            os.getenv("NEST_PROTECT_STATE_FILE", "~/.nest_protect_mcp/state.json")
-        ),
+        "state_file": os.path.expanduser(os.getenv("NEST_PROTECT_STATE_FILE", "~/.nest_protect_mcp/state.json")),
         "client_id": os.getenv("NEST_CLIENT_ID"),
         "client_secret": os.getenv("NEST_CLIENT_SECRET"),
         "project_id": os.getenv("NEST_PROJECT_ID"),
@@ -54,9 +52,7 @@ def parse_args():
     """Parse command line arguments."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Nest Protect MCP Server (FastMCP 2.12)"
-    )
+    parser = argparse.ArgumentParser(description="Nest Protect MCP Server (FastMCP 2.12)")
 
     # Server options
     server_group = parser.add_argument_group("Server Options")
@@ -125,13 +121,9 @@ def main():
         parser = create_argument_parser(server_name="NestProtectMCP")
         parser.add_argument("--config", type=str, help="Path to configuration file")
         parser.add_argument("--client-id", type=str, help="Nest OAuth client ID")
-        parser.add_argument(
-            "--client-secret", type=str, help="Nest OAuth client secret"
-        )
+        parser.add_argument("--client-secret", type=str, help="Nest OAuth client secret")
         parser.add_argument("--project-id", type=str, help="Google Cloud project ID")
-        parser.add_argument(
-            "--kill", action="store_true", help="Kill any running instance"
-        )
+        parser.add_argument("--kill", action="store_true", help="Kill any running instance")
 
         args = parser.parse_args()
 

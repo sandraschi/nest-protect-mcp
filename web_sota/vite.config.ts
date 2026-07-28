@@ -14,5 +14,8 @@ export default defineConfig({
     port: 10828,
     strictPort: true,
     host: "127.0.0.1",
+    proxy: {
+      "/api": { target: "http://127.0.0.1:10829", changeOrigin: true },
+    },
   }
 });

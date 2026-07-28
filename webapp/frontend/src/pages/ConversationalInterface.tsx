@@ -1,93 +1,98 @@
-import { useState, useEffect } from 'react'
-import { Send, MessageSquare, Cpu, Zap } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { mcpClient } from '@/lib/mcp-client'
-import { MCPResponse } from '@/types/mcp'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { mcpClient } from "@/lib/mcp-client";
+import type { MCPResponse } from "@/types/mcp";
+import { Cpu, MessageSquare, Send, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ConversationMessage {
-  id: string
-  type: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp: string
-  metadata?: any
+  id: string;
+  type: "user" | "assistant" | "system";
+  content: string;
+  timestamp: string;
+  metadata?: any;
 }
 
 export default function ConversationalInterface() {
-  const [messages, setMessages] = useState<ConversationMessage[]>([])
-  const [inputMessage, setInputMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedTool, setSelectedTool] = useState<string>('assess_home_safety')
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<string>("assess_home_safety");
 
   const quickActions = [
     {
-      name: 'Safety Assessment',
-      tool: 'assess_home_safety',
-      description: 'AI-powered home safety evaluation',
+      name: "Safety Assessment",
+      tool: "assess_home_safety",
+      description: "AI-powered home safety evaluation",
       icon: Shield,
-      color: 'bg-green-500'
+      color: "bg-green-500",
     },
     {
-      name: 'Emergency Response',
-      tool: 'coordinate_emergency_response',
-      description: 'Coordinate emergency handling',
+      name: "Emergency Response",
+      tool: "coordinate_emergency_response",
+      description: "Coordinate emergency handling",
       icon: AlertTriangle,
-      color: 'bg-red-500'
+      color: "bg-red-500",
     },
     {
-      name: 'Predictive Maintenance',
-      tool: 'predict_maintenance_needs',
-      description: 'AI maintenance forecasting',
+      name: "Predictive Maintenance",
+      tool: "predict_maintenance_needs",
+      description: "AI maintenance forecasting",
       icon: TrendingUp,
-      color: 'bg-blue-500'
+      color: "bg-blue-500",
     },
     {
-      name: 'Smart Automation',
-      tool: 'setup_smart_automation',
-      description: 'Intelligent automation setup',
+      name: "Smart Automation",
+      tool: "setup_smart_automation",
+      description: "Intelligent automation setup",
       icon: Cpu,
-      color: 'bg-purple-500'
-    }
-  ]
+      color: "bg-purple-500",
+    },
+  ];
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim()) return;
 
     const userMessage: ConversationMessage = {
       id: Date.now().toString(),
-      type: 'user',
+      type: "user",
       content: inputMessage,
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    };
 
-    setMessages(prev => [...prev, userMessage])
-    setInputMessage('')
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsLoading(true);
 
     try {
-      let response: MCPResponse
+      let response: MCPResponse;
 
       // Simulate tool calls based on input
-      if (inputMessage.toLowerCase().includes('safety') || inputMessage.toLowerCase().includes('assess')) {
-        response = await mcpClient.assessHomeSafety()
-      } else if (inputMessage.toLowerCase().includes('emergency') || inputMessage.toLowerCase().includes('alarm')) {
-        response = await mcpClient.coordinateEmergencyResponse(
-          'smoke',
-          ['device-001'],
-          'high'
-        )
-      } else if (inputMessage.toLowerCase().includes('maintenance') || inputMessage.toLowerCase().includes('predict')) {
-        response = await mcpClient.predictMaintenance()
+      if (
+        inputMessage.toLowerCase().includes("safety") ||
+        inputMessage.toLowerCase().includes("assess")
+      ) {
+        response = await mcpClient.assessHomeSafety();
+      } else if (
+        inputMessage.toLowerCase().includes("emergency") ||
+        inputMessage.toLowerCase().includes("alarm")
+      ) {
+        response = await mcpClient.coordinateEmergencyResponse("smoke", ["device-001"], "high");
+      } else if (
+        inputMessage.toLowerCase().includes("maintenance") ||
+        inputMessage.toLowerCase().includes("predict")
+      ) {
+        response = await mcpClient.predictMaintenance();
       } else {
         // Default to safety assessment
-        response = await mcpClient.assessHomeSafety()
+        response = await mcpClient.assessHomeSafety();
       }
 
       const assistantMessage: ConversationMessage = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: response.summary || 'Response received',
+        type: "assistant",
+        content: response.summary || "Response received",
         timestamp: new Date().toISOString(),
         metadata: {
           operation: response.operation,
@@ -95,52 +100,51 @@ export default function ConversationalInterface() {
           requires_sampling: response.requires_sampling,
           next_steps: response.next_steps,
           suggestions: response.suggestions,
-          follow_up_questions: response.follow_up_questions
-        }
-      }
+          follow_up_questions: response.follow_up_questions,
+        },
+      };
 
-      setMessages(prev => [...prev, assistantMessage])
-
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       const errorMessage: ConversationMessage = {
         id: (Date.now() + 2).toString(),
-        type: 'system',
-        content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        timestamp: new Date().toISOString()
-      }
-      setMessages(prev => [...prev, errorMessage])
+        type: "system",
+        content: `Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleQuickAction = async (toolName: string) => {
-    let response: MCPResponse
+    let response: MCPResponse;
 
     switch (toolName) {
-      case 'assess_home_safety':
-        response = await mcpClient.assessHomeSafety()
-        break
-      case 'coordinate_emergency_response':
+      case "assess_home_safety":
+        response = await mcpClient.assessHomeSafety();
+        break;
+      case "coordinate_emergency_response":
         response = await mcpClient.coordinateEmergencyResponse(
-          'smoke',
-          ['device-001', 'device-002'],
-          'critical'
-        )
-        break
-      case 'predict_maintenance_needs':
-        response = await mcpClient.predictMaintenance()
-        break
-      case 'setup_smart_automation':
-        response = await mcpClient.setupSmartAutomation('safety')
-        break
+          "smoke",
+          ["device-001", "device-002"],
+          "critical",
+        );
+        break;
+      case "predict_maintenance_needs":
+        response = await mcpClient.predictMaintenance();
+        break;
+      case "setup_smart_automation":
+        response = await mcpClient.setupSmartAutomation("safety");
+        break;
       default:
-        return
+        return;
     }
 
     const message: ConversationMessage = {
       id: Date.now().toString(),
-      type: 'assistant',
+      type: "assistant",
       content: response.summary || `${toolName} executed`,
       timestamp: new Date().toISOString(),
       metadata: {
@@ -149,12 +153,12 @@ export default function ConversationalInterface() {
         requires_sampling: response.requires_sampling,
         next_steps: response.next_steps,
         suggestions: response.suggestions,
-        follow_up_questions: response.follow_up_questions
-      }
-    }
+        follow_up_questions: response.follow_up_questions,
+      },
+    };
 
-    setMessages(prev => [...prev, message])
-  }
+    setMessages((prev) => [...prev, message]);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -174,16 +178,24 @@ export default function ConversationalInterface() {
         </h1>
 
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center mb-8">
-          Experience FastMCP 2.14.3 conversational responses with intelligent suggestions,
-          sampling signals, and natural language interactions.
+          Experience FastMCP 2.14.3 conversational responses with intelligent suggestions, sampling
+          signals, and natural language interactions.
         </p>
 
         {/* Feature Badges */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
-          <Badge variant="info" className="px-3 py-1">Conversational AI</Badge>
-          <Badge variant="success" className="px-3 py-1">Sampling Signals</Badge>
-          <Badge variant="warning" className="px-3 py-1">FastMCP 2.14.3</Badge>
-          <Badge variant="secondary" className="px-3 py-1">AI Orchestration</Badge>
+          <Badge variant="info" className="px-3 py-1">
+            Conversational AI
+          </Badge>
+          <Badge variant="success" className="px-3 py-1">
+            Sampling Signals
+          </Badge>
+          <Badge variant="warning" className="px-3 py-1">
+            FastMCP 2.14.3
+          </Badge>
+          <Badge variant="secondary" className="px-3 py-1">
+            AI Orchestration
+          </Badge>
         </div>
       </div>
 
@@ -196,9 +208,7 @@ export default function ConversationalInterface() {
                 <Cpu className="h-5 w-5 mr-2" />
                 AI Tools
               </CardTitle>
-              <CardDescription>
-                FastMCP 2.14.3 intelligent operations
-              </CardDescription>
+              <CardDescription>FastMCP 2.14.3 intelligent operations</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {quickActions.map((action) => (
@@ -234,9 +244,7 @@ export default function ConversationalInterface() {
                 <MessageSquare className="h-5 w-5 mr-2" />
                 Conversation
               </CardTitle>
-              <CardDescription>
-                Interactive dialogue with AI-powered MCP responses
-              </CardDescription>
+              <CardDescription>Interactive dialogue with AI-powered MCP responses</CardDescription>
             </CardHeader>
 
             {/* Messages Area */}
@@ -251,21 +259,21 @@ export default function ConversationalInterface() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                      message.type === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : message.type === 'system'
-                        ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                      message.type === "user"
+                        ? "bg-blue-500 text-white"
+                        : message.type === "system"
+                          ? "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     }`}
                   >
                     <div className="text-sm">{message.content}</div>
 
                     {/* Metadata for assistant messages */}
-                    {message.type === 'assistant' && message.metadata && (
+                    {message.type === "assistant" && message.metadata && (
                       <div className="mt-2 space-y-1">
                         {message.metadata.operation && (
                           <Badge variant="outline" className="text-xs">
@@ -281,9 +289,11 @@ export default function ConversationalInterface() {
                           <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                             <div className="font-medium">Next steps:</div>
                             <ul className="list-disc list-inside ml-2">
-                              {message.metadata.next_steps.slice(0, 2).map((step: string, idx: number) => (
-                                <li key={idx}>{step}</li>
-                              ))}
+                              {message.metadata.next_steps
+                                .slice(0, 2)
+                                .map((step: string, idx: number) => (
+                                  <li key={idx}>{step}</li>
+                                ))}
                             </ul>
                           </div>
                         )}
@@ -303,10 +313,18 @@ export default function ConversationalInterface() {
                     <div className="flex items-center space-x-2">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        ></div>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">AI is processing...</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        AI is processing...
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -320,7 +338,7 @@ export default function ConversationalInterface() {
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="Type your message or use AI tools above..."
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                   disabled={isLoading}
@@ -338,5 +356,5 @@ export default function ConversationalInterface() {
         </div>
       </div>
     </div>
-  )
+  );
 }

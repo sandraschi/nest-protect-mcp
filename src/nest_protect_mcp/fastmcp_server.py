@@ -11,10 +11,10 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 from fastmcp.apps import FastMCPApp
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 from fastmcp.tools import ToolResult
 from pydantic import BaseModel, Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 try:
     from prefab_ui.app import PrefabApp
@@ -71,27 +71,21 @@ class DeviceEventsParams(BaseModel):
     """Parameters for getting device events."""
 
     device_id: str = Field(..., description="ID of the device")
-    limit: int = Field(
-        10, ge=1, le=100, description="Maximum number of events to return"
-    )
+    limit: int = Field(10, ge=1, le=100, description="Maximum number of events to return")
 
 
 class HushAlarmParams(BaseModel):
     """Parameters for hushing an alarm."""
 
     device_id: str = Field(..., description="ID of the device to hush")
-    duration_seconds: int = Field(
-        180, ge=30, le=300, description="Duration to hush in seconds (30-300)"
-    )
+    duration_seconds: int = Field(180, ge=30, le=300, description="Duration to hush in seconds (30-300)")
 
 
 class SafetyCheckParams(BaseModel):
     """Parameters for running a safety check."""
 
     device_id: str = Field(..., description="ID of the device to test")
-    test_type: Literal["full", "smoke", "co", "heat"] = Field(
-        "full", description="Type of test to run"
-    )
+    test_type: Literal["full", "smoke", "co", "heat"] = Field("full", description="Type of test to run")
 
 
 class LedBrightnessParams(BaseModel):
@@ -104,9 +98,7 @@ class LedBrightnessParams(BaseModel):
 class ProcessStatusParams(BaseModel):
     """Parameters for process status."""
 
-    pid: int | None = Field(
-        None, description="Process ID to check (default: current process)"
-    )
+    pid: int | None = Field(None, description="Process ID to check (default: current process)")
 
 
 class ToolHelpParams(BaseModel):
@@ -119,17 +111,13 @@ class SearchToolsParams(BaseModel):
     """Parameters for searching tools."""
 
     query: str = Field(..., description="Search query")
-    search_in: list[str] = Field(
-        ["name", "description"], description="Fields to search in"
-    )
+    search_in: list[str] = Field(["name", "description"], description="Fields to search in")
 
 
 class OAuthFlowParams(BaseModel):
     """Parameters for OAuth flow initiation."""
 
-    redirect_uri: str = Field(
-        "http://localhost:8000/auth/callback", description="Redirect URI for auth code"
-    )
+    redirect_uri: str = Field("http://localhost:8000/auth/callback", description="Redirect URI for auth code")
     state: str | None = Field(None, description="CSRF protection state")
     open_browser: bool = Field(True, description="Open auth URL in browser")
 
@@ -155,20 +143,14 @@ class RefreshTokenParams(BaseModel):
 class ConfigSectionParams(BaseModel):
     """Parameters for getting config section."""
 
-    section: str | None = Field(
-        None, description="Specific section to retrieve (optional)"
-    )
+    section: str | None = Field(None, description="Specific section to retrieve (optional)")
 
 
 class UpdateConfigParams(BaseModel):
     """Parameters for updating config."""
 
-    updates: dict[str, Any] = Field(
-        ..., description="Dictionary of configuration updates"
-    )
-    save_to_file: bool = Field(
-        True, description="Whether to save changes to config file"
-    )
+    updates: dict[str, Any] = Field(..., description="Dictionary of configuration updates")
+    save_to_file: bool = Field(True, description="Whether to save changes to config file")
 
 
 class ResetConfigParams(BaseModel):
@@ -180,9 +162,7 @@ class ResetConfigParams(BaseModel):
 class ExportConfigParams(BaseModel):
     """Parameters for exporting config."""
 
-    file_path: str = Field(
-        "config/exported_config.toml", description="Path to save the config file"
-    )
+    file_path: str = Field("config/exported_config.toml", description="Path to save the config file")
     format: str = Field("toml", description="Export format (toml, json)")
 
 
@@ -190,36 +170,24 @@ class ImportConfigParams(BaseModel):
     """Parameters for importing config."""
 
     file_path: str = Field(..., description="Path to the config file to import")
-    merge: bool = Field(
-        True, description="Merge with existing config (True) or replace (False)"
-    )
+    merge: bool = Field(True, description="Merge with existing config (True) or replace (False)")
 
 
 class SoundAlarmParams(BaseModel):
     """Parameters for sounding an alarm for testing."""
 
     device_id: str = Field(..., description="ID of the device to test")
-    alarm_type: Literal["smoke", "co", "security", "emergency"] = Field(
-        "smoke", description="Type of alarm to sound"
-    )
-    duration_seconds: int = Field(
-        10, ge=5, le=60, description="Duration to sound alarm in seconds (5-60)"
-    )
-    volume: int = Field(
-        100, ge=50, le=100, description="Alarm volume percentage (50-100)"
-    )
+    alarm_type: Literal["smoke", "co", "security", "emergency"] = Field("smoke", description="Type of alarm to sound")
+    duration_seconds: int = Field(10, ge=5, le=60, description="Duration to sound alarm in seconds (5-60)")
+    volume: int = Field(100, ge=50, le=100, description="Alarm volume percentage (50-100)")
 
 
 class ArmDisarmSecurityParams(BaseModel):
     """Parameters for arming/disarming security system."""
 
     device_id: str = Field(..., description="ID of the security device (Nest Guard)")
-    action: Literal["arm_home", "arm_away", "disarm"] = Field(
-        ..., description="Security action to perform"
-    )
-    passcode: str | None = Field(
-        None, description="Security passcode (required for disarm)"
-    )
+    action: Literal["arm_home", "arm_away", "disarm"] = Field(..., description="Security action to perform")
+    passcode: str | None = Field(None, description="Security passcode (required for disarm)")
 
 
 class AboutParams(BaseModel):
@@ -507,9 +475,7 @@ async def handle_oauth_callback(params: OAuthCallbackParams) -> ToolResult:
     """
     from .tools.auth_tools import handle_oauth_callback as tool_func
 
-    result = await tool_func(
-        params.code, params.state, params.expected_state, params.redirect_uri
-    )
+    result = await tool_func(params.code, params.state, params.expected_state, params.redirect_uri)
     return ToolResult(content=str(result))
 
 
@@ -740,12 +706,14 @@ app = FastMCP(
 async def health_check(request: Request) -> JSONResponse:
     return JSONResponse({"status": "healthy", "server": "nest-protect-mcp"})
 
+
 # MCP Bridge — Proxy external MCP servers via MCP_BRIDGE_URLS
 _bridge_proxies: list[str] = []
 bridge_urls = os.getenv("MCP_BRIDGE_URLS", "")
 if bridge_urls:
     try:
         from fastmcp.server import create_proxy
+
         for url in bridge_urls.split(","):
             url = url.strip()
             if url:
@@ -818,15 +786,11 @@ if Message is not None:
 logger.info("=== TOOL REGISTRATION COMPLETE ===")
 logger.info("All 32 tools have been registered with FastMCP")
 logger.info("Tools registered:")
-logger.info(
-    "  • Device Status: list_nest_devices, get_device_health, get_nest_events"
-)
+logger.info("  • Device Status: list_nest_devices, get_device_health, get_nest_events")
 logger.info(
     "  • Device Control: hush_active_alarm, run_safety_test, set_device_led, trigger_test_alarm, set_security_mode"
 )
-logger.info(
-    "  • System Status: get_server_status, get_mcp_process, check_api_connectivity"
-)
+logger.info("  • System Status: get_server_status, get_mcp_process, check_api_connectivity")
 logger.info(
     "  • Authentication: start_google_oauth, finish_google_oauth, refresh_nest_token, "
     "get_nest_auth_status, get_oauth_redirect_reference, get_pcm_authorize_url, validate_nest_credentials"
@@ -839,8 +803,7 @@ logger.info(
     "forecast_maintenance_needs, configure_smart_automation"
 )
 logger.info(
-    "  • Help & About: list_server_tools, get_tool_details, search_mcp_tools, "
-    "get_server_info, list_supported_hardware"
+    "  • Help & About: list_server_tools, get_tool_details, search_mcp_tools, get_server_info, list_supported_hardware"
 )
 
 if __name__ == "__main__":

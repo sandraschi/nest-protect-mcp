@@ -11,6 +11,7 @@ NEST_SDM_OAUTH_SCOPE: str = "https://www.googleapis.com/auth/sdm.service"
 # Google OAuth 2.0 token endpoint (preferred over legacy .../oauth2/v4/token)
 GOOGLE_OAUTH_TOKEN_URL: str = "https://oauth2.googleapis.com/token"
 
+
 # Partner Connections Manager (PCM) — must be used instead of accounts.google.com
 # for the SDM authorization step. {device_access_project_id} is the Device Access
 # program project id (UUID), same as NEST_PROJECT_ID / enterprise in API paths.

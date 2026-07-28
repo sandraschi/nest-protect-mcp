@@ -1,0 +1,14 @@
+{
+    "product_name": "Nest Protect MCP",
+    "install_dir": "%LOCALAPPDATA%\\Nest Protect MCP",
+    "operator_exe": "nest-protect-mcp-native.exe",
+    "backend_process_names": ["nest-protect-mcp-native", "nest-protect-mcp-backend"],
+    "backend_port": 10753,
+    "health_path": "/api/v1/health",
+    "diagnostics_path": "/api/v1/diagnostics",
+    "feature_smoke_path": "/api/v1/system/info",
+    "window_title_re": "Nest Protect MCP",
+    "nsis_glob": "native/target/release/bundle/nsis/Nest Protect MCP_*_x64-setup.exe",
+    "bridge_ok_text": "REST bridge reachable",
+    "uninstall_registry_filter": "*Nest Protect MCP*"
+}

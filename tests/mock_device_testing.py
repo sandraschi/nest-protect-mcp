@@ -7,7 +7,7 @@ including device state simulation, network condition testing, and conversational
 
 import asyncio
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -99,13 +99,11 @@ class MockDeviceFactory:
             name="Living Room Detector",
             serial_number="NR123456789",
             location="Living Room",
-            last_event_time=datetime.now(timezone.utc) - timedelta(hours=1),
+            last_event_time=datetime.now(UTC) - timedelta(hours=1),
         )
 
     @staticmethod
-    def create_low_battery_device(
-        device_id: str = "test-device-002"
-    ) -> MockDeviceState:
+    def create_low_battery_device(device_id: str = "test-device-002") -> MockDeviceState:
         """Create device with low battery."""
         return MockDeviceState(
             device_id=device_id,
@@ -114,7 +112,7 @@ class MockDeviceFactory:
             battery_level=15,
             battery_status="LOW",
             location="Kitchen",
-            last_event_time=datetime.now(timezone.utc) - timedelta(hours=2),
+            last_event_time=datetime.now(UTC) - timedelta(hours=2),
         )
 
     @staticmethod
@@ -126,13 +124,11 @@ class MockDeviceFactory:
             serial_number="NR555666777",
             online=False,
             location="Master Bedroom",
-            last_event_time=datetime.now(timezone.utc) - timedelta(days=1),
+            last_event_time=datetime.now(UTC) - timedelta(days=1),
         )
 
     @staticmethod
-    def create_smoke_alarm_device(
-        device_id: str = "test-device-004"
-    ) -> MockDeviceState:
+    def create_smoke_alarm_device(device_id: str = "test-device-004") -> MockDeviceState:
         """Create device with active smoke alarm."""
         return MockDeviceState(
             device_id=device_id,
@@ -141,7 +137,7 @@ class MockDeviceFactory:
             smoke_status="SMOKE_DETECTED",
             alarm_status="SMOKE",
             location="Hallway",
-            last_event_time=datetime.now(timezone.utc) - timedelta(minutes=5),
+            last_event_time=datetime.now(UTC) - timedelta(minutes=5),
         )
 
     @staticmethod
@@ -155,7 +151,7 @@ class MockDeviceFactory:
             co_ppm=85.5,
             alarm_status="CO",
             location="Basement",
-            last_event_time=datetime.now(timezone.utc) - timedelta(minutes=10),
+            last_event_time=datetime.now(UTC) - timedelta(minutes=10),
         )
 
     @staticmethod
@@ -165,18 +161,12 @@ class MockDeviceFactory:
 
         # Normal devices
         for i in range(count - 3):
-            devices.append(
-                MockDeviceFactory.create_normal_device(f"normal-device-{i+1:03d}")
-            )
+            devices.append(MockDeviceFactory.create_normal_device(f"normal-device-{i + 1:03d}"))
 
         # Add some problem devices
-        devices.append(
-            MockDeviceFactory.create_low_battery_device("low-battery-device")
-        )
+        devices.append(MockDeviceFactory.create_low_battery_device("low-battery-device"))
         devices.append(MockDeviceFactory.create_offline_device("offline-device"))
-        devices.append(
-            MockDeviceFactory.create_smoke_alarm_device("smoke-alarm-device")
-        )
+        devices.append(MockDeviceFactory.create_smoke_alarm_device("smoke-alarm-device"))
 
         return devices
 
@@ -190,14 +180,10 @@ class MockNetworkSimulator:
         self.packet_loss_rate = 0.0
         self.connection_drops = 0
 
-    async def simulate_request(
-        self, response_data: Any, status_code: int = 200
-    ) -> tuple:
+    async def simulate_request(self, response_data: Any, status_code: int = 200) -> tuple:
         """Simulate network request with configurable conditions."""
         # Simulate latency
-        actual_latency = self.latency_ms + random.uniform(
-            -self.jitter_ms, self.jitter_ms
-        )
+        actual_latency = self.latency_ms + random.uniform(-self.jitter_ms, self.jitter_ms)
         await asyncio.sleep(actual_latency / 1000)
 
         # Simulate packet loss
@@ -229,9 +215,7 @@ class MockNestAPIServer:
         for device in devices:
             self.add_device(device)
 
-    def set_network_conditions(
-        self, latency_ms: int = 50, packet_loss: float = 0.0, connection_drops: int = 0
-    ) -> None:
+    def set_network_conditions(self, latency_ms: int = 50, packet_loss: float = 0.0, connection_drops: int = 0) -> None:
         """Configure network simulation conditions."""
         self.network.latency_ms = latency_ms
         self.network.packet_loss_rate = packet_loss
@@ -242,7 +226,7 @@ class MockNestAPIServer:
         self.request_history.append(
             {
                 "endpoint": "list_devices",
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": datetime.now(UTC),
                 "device_count": len(self.devices),
             }
         )
@@ -250,11 +234,7 @@ class MockNestAPIServer:
         status_code, _ = await self.network.simulate_request({}, 200)
 
         if status_code == 200:
-            return {
-                "devices": [
-                    device.to_nest_api_format() for device in self.devices.values()
-                ]
-            }
+            return {"devices": [device.to_nest_api_format() for device in self.devices.values()]}
         else:
             return {"error": {"message": "API Error", "code": status_code}}
 
@@ -264,7 +244,7 @@ class MockNestAPIServer:
             {
                 "endpoint": "get_device",
                 "device_id": device_id,
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": datetime.now(UTC),
             }
         )
 
@@ -288,7 +268,7 @@ class MockNestAPIServer:
                 "device_id": device_id,
                 "command": command,
                 "params": params,
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": datetime.now(UTC),
             }
         )
 
@@ -315,9 +295,7 @@ class ConversationalResponseValidator:
     """Validate FastMCP 2.14.3+ conversational response formats."""
 
     @staticmethod
-    def validate_conversational_response(
-        response: dict[str, Any], expected_operation: str
-    ) -> list[str]:
+    def validate_conversational_response(response: dict[str, Any], expected_operation: str) -> list[str]:
         """Validate that response follows conversational format standards."""
         errors = []
 
@@ -332,9 +310,7 @@ class ConversationalResponseValidator:
             errors.append("Field 'success' must be boolean")
 
         if "operation" in response and response["operation"] != expected_operation:
-            errors.append(
-                f"Operation mismatch: expected {expected_operation}, got {response['operation']}"
-            )
+            errors.append(f"Operation mismatch: expected {expected_operation}, got {response['operation']}")
 
         # Conversational fields (recommended)
         conversational_fields = [
@@ -370,9 +346,7 @@ class ConversationalResponseValidator:
                 errors.append(f"Missing error field: {field}")
 
         # Recovery options validation
-        if "recovery_options" in response and not isinstance(
-            response["recovery_options"], list
-        ):
+        if "recovery_options" in response and not isinstance(response["recovery_options"], list):
             errors.append("Field 'recovery_options' must be a list")
 
         return errors
@@ -406,9 +380,7 @@ class ComprehensiveTestSuite:
         elif scenario == "network_issues":
             devices = MockDeviceFactory.create_multiple_devices(3)
             self.mock_server.add_devices(devices)
-            self.mock_server.set_network_conditions(
-                latency_ms=500, packet_loss=0.1, connection_drops=2
-            )
+            self.mock_server.set_network_conditions(latency_ms=500, packet_loss=0.1, connection_drops=2)
 
     async def test_conversational_responses(self) -> dict[str, Any]:
         """Test all tools return proper conversational responses."""
@@ -435,14 +407,10 @@ class ComprehensiveTestSuite:
                 "follow_up_questions": ["Question 1"],
             }
 
-            errors = self.validator.validate_conversational_response(
-                mock_response, operation
-            )
+            errors = self.validator.validate_conversational_response(mock_response, operation)
             if errors:
                 results["failed"] += 1
-                results["details"].append(
-                    {"operation": operation, "status": "failed", "errors": errors}
-                )
+                results["details"].append({"operation": operation, "status": "failed", "errors": errors})
             else:
                 results["passed"] += 1
                 results["details"].append({"operation": operation, "status": "passed"})
@@ -483,9 +451,7 @@ class ComprehensiveTestSuite:
                 "next_steps": ["AI will process complex patterns"],
                 "context": {"sampling_triggered": True},
                 "suggestions": ["Wait for AI analysis completion"],
-                "follow_up_questions": [
-                    "Would you like me to explain the analysis process?"
-                ],
+                "follow_up_questions": ["Would you like me to explain the analysis process?"],
             }
 
             if mock_response.get("requires_sampling"):
@@ -544,10 +510,7 @@ class ComprehensiveTestSuite:
         device.alarm_status = "SMOKE"
 
         results["transitions_tested"] += 1
-        if (
-            device.alarm_status != initial_alarm
-            and device.smoke_status == "SMOKE_DETECTED"
-        ):
+        if device.alarm_status != initial_alarm and device.smoke_status == "SMOKE_DETECTED":
             results["transitions_successful"] += 1
             results["details"].append(
                 {
@@ -572,7 +535,7 @@ class ComprehensiveTestSuite:
         """Run the complete comprehensive test suite."""
         results = {
             "test_suite": "Comprehensive Nest Protect MCP Testing",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "conversational_tests": await self.test_conversational_responses(),
             "sampling_tests": await self.test_sampling_capabilities(),
             "state_transition_tests": await self.test_device_state_transitions(),

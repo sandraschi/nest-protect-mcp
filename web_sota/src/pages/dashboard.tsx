@@ -1,36 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+  Activity,
+  AlertTriangle,
+  Battery,
+  Cpu,
+  Flame,
+  ShieldCheck,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, ShieldCheck, Battery, Cpu, AlertTriangle, Flame } from "lucide-react";
-import { getStatus, type DeviceSummary } from "@/lib/api";
+import { type DeviceSummary, getStatus } from "@/lib/api";
 
-function safetyLabel(devices: DeviceSummary[]): { status: string; sub: string } {
+function safetyLabel(devices: DeviceSummary[]): {
+  status: string;
+  sub: string;
+} {
   if (!devices?.length) return { status: "Unknown", sub: "No devices" };
   const anyAlarm = devices.some(
     (d) =>
-      (d.alarm && d.alarm.toLowerCase() !== "ok" && d.alarm.toLowerCase() !== "none") ||
+      (d.alarm &&
+        d.alarm.toLowerCase() !== "ok" &&
+        d.alarm.toLowerCase() !== "none") ||
       (d.smoke && d.smoke.toLowerCase() !== "ok") ||
-      (d.co && d.co.toLowerCase() !== "ok")
+      (d.co && d.co.toLowerCase() !== "ok"),
   );
-  if (anyAlarm)
-    return { status: "Alert", sub: "Smoke/CO or alarm active" };
+  if (anyAlarm) return { status: "Alert", sub: "Smoke/CO or alarm active" };
   const allOk = devices.every(
     (d) =>
       (d.smoke === "OK" || !d.smoke) &&
       (d.co === "OK" || !d.co) &&
-      (d.alarm === "OK" || d.alarm === "none" || !d.alarm)
+      (d.alarm === "OK" || d.alarm === "none" || !d.alarm),
   );
   if (allOk) return { status: "Nominal", sub: "No smoke/CO detected" };
   return { status: "Nominal", sub: "Devices reporting" };
 }
 
-function batteryLabel(devices: DeviceSummary[]): { status: string; sub: string } {
+function batteryLabel(devices: DeviceSummary[]): {
+  status: string;
+  sub: string;
+} {
   if (!devices?.length) return { status: "—", sub: "No data" };
   const low = devices.filter(
     (d) =>
       d.battery &&
-      (d.battery.toLowerCase().includes("low") || d.battery.toLowerCase().includes("replace"))
+      (d.battery.toLowerCase().includes("low") ||
+        d.battery.toLowerCase().includes("replace")),
   );
-  if (low.length) return { status: "Low", sub: `${low.length} device(s) need attention` };
+  if (low.length)
+    return { status: "Low", sub: `${low.length} device(s) need attention` };
   return { status: "OK", sub: "All modules healthy" };
 }
 
@@ -60,7 +76,8 @@ export function Dashboard() {
 
       {error && (
         <div className="rounded-md border border-red-900/50 bg-red-950/30 p-3 text-sm text-red-300">
-          Backend unreachable. Run web_sota\\start.ps1 (backend on port {BACKEND_PORT}).
+          Backend unreachable. Run web_sota\\start.ps1 (backend on port{" "}
+          {BACKEND_PORT}).
         </div>
       )}
 
@@ -135,20 +152,27 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4 border-slate-800 bg-slate-950/50">
           <CardHeader>
-            <CardTitle className="text-white">Safety (Fire / CO) by device</CardTitle>
+            <CardTitle className="text-white">
+              Safety (Fire / CO) by device
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[200px] font-mono text-xs p-4 overflow-y-auto border border-slate-800 rounded-md bg-slate-900/50 text-slate-400 space-y-2">
               {isLoading && <p className="text-slate-500">Loading…</p>}
               {error && <p className="text-red-400">Could not load devices</p>}
               {!isLoading && !error && devices.length === 0 && (
-                <p className="text-slate-500">No devices (auth or API may be needed)</p>
+                <p className="text-slate-500">
+                  No devices (auth or API may be needed)
+                </p>
               )}
               {devices.map((d) => (
                 <p key={d.device_id}>
-                  <span className="text-white">{d.name || d.room || d.device_id}</span>
+                  <span className="text-white">
+                    {d.name || d.room || d.device_id}
+                  </span>
                   {" · "}
-                  smoke: {d.smoke ?? "—"} | CO: {d.co ?? "—"} | alarm: {d.alarm ?? "—"}
+                  smoke: {d.smoke ?? "—"} | CO: {d.co ?? "—"} | alarm:{" "}
+                  {d.alarm ?? "—"}
                   {d.online === false && " (offline)"}
                 </p>
               ))}

@@ -1,14 +1,14 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from '@/components/ui/toaster'
-import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
-import Dashboard from '@/pages/Dashboard'
-import DeviceTesting from '@/pages/DeviceTesting'
-import ConversationalInterface from '@/pages/ConversationalInterface'
-import MCPStatus from '@/pages/MCPStatus'
-import Settings from '@/pages/Settings'
-import Layout from '@/components/Layout'
+import Layout from "@/components/Layout";
+import ConversationalInterface from "@/pages/ConversationalInterface";
+import Dashboard from "@/pages/Dashboard";
+import DeviceTesting from "@/pages/DeviceTesting";
+import MCPStatus from "@/pages/MCPStatus";
+import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 function App() {
   return (
@@ -37,7 +37,7 @@ function App() {
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
+export default App;
