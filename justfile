@@ -1,7 +1,7 @@
-﻿set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
-# â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Dashboard ---
 
 # Open the interactive recipe dashboard in the browser
 default:
@@ -14,7 +14,7 @@ bootstrap:
     uv run pre-commit install
     Set-Location webapp/frontend; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
     Write-Host "Pre-commit hooks installed." -ForegroundColor Green
-# â”€â”€ Quality â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Quality ---
 
 # Execute Ruff SOTA v13.1 linting
 lint:
@@ -31,7 +31,7 @@ fix:
     Set-Location '{{justfile_directory()}}\web_sota'
     npx @biomejs/biome check --write .
 
-# â”€â”€ Hardening â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Hardening ---
 
 # Execute Bandit security audit
 check-sec:
@@ -55,21 +55,21 @@ run:
 serve port="10753":
     @uv run python -m nest_protect_mcp.fastmcp_server --http --port {{port}}
 
-# â”€â”€ Auth (Nest Device Access / PCM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Auth  Nest Device Access  PCM ---
 
-# Partner Connections CLI: opens browser; prints full NEST_* .env lines. Uses env NEST_PROJECT_ID if set â€” or pass flags, e.g. just auth --project-id YOUR_UUID
+# --- Partner Connections CLI opens browser prints full NEST_ env lines Uses env NEST_PROJECT_ID if set  or pass flags e g just auth --project-id YOUR_UUID ---
 auth *ARGS:
     Set-Location '{{justfile_directory()}}'
     uv run python scripts/get_nest_refresh_token.py {{ARGS}}
 
-# Open Google Cloud â†’ Credentials (add authorized redirect URIs)
+# --- Open Google Cloud  Credentials  add authorized redirect URIs ---
 auth-console:
     Start-Process 'https://console.cloud.google.com/apis/credentials'
 
 # Print redirect URIs to register for CLI vs web onboarding wizard
 auth-help:
     Write-Host ''
-    Write-Host 'OAuth Desktop client â€” Authorized redirect URIs:' -ForegroundColor Cyan
+    Write-Host 'OAuth Desktop client  Authorized redirect URIs:' -ForegroundColor Cyan
     Write-Host ''
     Write-Host '  CLI (just auth; default callback port 8080):'
     Write-Host '    http://127.0.0.1:8080/callback'
@@ -94,3 +94,5 @@ web:
 # Comprehensive dev setup (sync, lint, test)
 dev: sync lint test
 
+
+# Bootstrap: install dev deps + pre-commit hook
