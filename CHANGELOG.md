@@ -1,4 +1,24 @@
 
+## [Unreleased] — 2026-09-21 (assfix)
+
+### Security
+- `transport.py` HTTP CORS: replaced `allow_origins=["*"]` with explicit
+  origins (10752/10828) + unconditional regex (loopback, LAN, Tailscale,
+  `tauri://localhost`); methods narrowed to GET/POST/OPTIONS.
+- Ruff: removed `S110`/`S112` from `ignore` (was masking silent swallows);
+  fixed bridge-proxy `except: pass` -> `logger.warning`. Added `T20` to select
+  with CLI per-file-ignore.
+
+### Added
+- `.env.example` (NEST_* template, no secrets). `just fmt` alias,
+  `just build-native`. `.windsurfrules`, `.github/copilot-instructions.md`,
+  `## Session Context` in `.cursorrules`. Installed pre-commit hook.
+- `.gitignore`: `reports/`, `*.mcpb`, `*.bak(*)`, `node_modules/`.
+
+### Fixed
+- `justfile` Windows cwd robustness: joined `Set-Location` recipe lines with
+  `;` (bootstrap subdir HIGH + root-level LOWs). `glama.json` version 0.1.1.
+
 ## [Unreleased] — 2026-06-14
 
 ### Added
@@ -148,4 +168,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/yourusername/nest-protect-mcp/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/yourusername/nest-protect-mcp/releases/tag/v0.1.0
-
