@@ -5,10 +5,12 @@
     BackendPort  = 10753
     FrontendPort = 10752
     HealthPath   = '/health'
-    WebRoot      = 'D:\Dev\repos\nest-protect-mcp\web_sota'
+    WebRoot      = 'web_sota'
     Backend = @{
         Kind          = 'uvicorn'
-        UvicornTarget = 'nest_protect_mcp.server:app'
+        UvicornTarget = 'main:app'
+        WorkDir       = 'webapp\backend'
+        PythonPath    = 'webapp\backend;src'
         SyncExtras    = @('dev')
         Env           = @{ WEB_PORT = '10753' }
     }
