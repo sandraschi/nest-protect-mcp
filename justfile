@@ -10,9 +10,8 @@ default:
 
 # Synchronize deps, pre-commit hooks, and web frontend
 bootstrap:
-    uv sync --extra dev --group dev
-    uv run pre-commit install
-    Set-Location webapp/frontend; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
+    Set-Location '{{justfile_directory()}}'; uv sync --extra dev --group dev; uv run pre-commit install
+    Set-Location '{{justfile_directory()}}\webapp\frontend'; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
     Write-Host "Pre-commit hooks installed." -ForegroundColor Green
 # --- Quality ---
 
@@ -24,36 +23,41 @@ lint:
 fix:
     Set-Location '{{justfile_directory()}}'; uv run ruff check . --fix --unsafe-fixes; uv run ruff format .; Set-Location '{{justfile_directory()}}\web_sota'; npx @biomejs/biome check --write .
 
+# Alias: fmt == fix (fleet checklist expects a fmt recipe)
+fmt:
+    @just fix
+
 # --- Hardening ---
 
 # Execute Bandit security audit
 check-sec:
-    Set-Location '{{justfile_directory()}}'
-    uv run bandit -r src/
+    Set-Location '{{justfile_directory()}}'; uv run bandit -r src/
 
 # Execute safety audit of dependencies
 audit-deps:
-    Set-Location '{{justfile_directory()}}'
-    uv run safety check
+    Set-Location '{{justfile_directory()}}'; uv run safety check
 
 # Install dependencies and sync environment
 sync:
-    uv sync
+    Set-Location '{{justfile_directory()}}'; uv sync
 
 # Run the MCP server in stdio mode
 run:
-    uv run python -m nest_protect_mcp.fastmcp_server
+    Set-Location '{{justfile_directory()}}'; uv run python -m nest_protect_mcp.fastmcp_server
 
 # Run the MCP server in HTTP mode (for web_sota)
 serve port="10753":
-    @uv run python -m nest_protect_mcp.fastmcp_server --http --port {{port}}
+    Set-Location '{{justfile_directory()}}'; uv run python -m nest_protect_mcp.fastmcp_server --http --port {{port}}
+
+# Build the Tauri native shell (requires native/ toolchain)
+build-native:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\native\build.ps1"
 
 # --- Auth  Nest Device Access  PCM ---
 
 # --- Partner Connections CLI opens browser prints full NEST_ env lines Uses env NEST_PROJECT_ID if set  or pass flags e g just auth --project-id YOUR_UUID ---
 auth *ARGS:
-    Set-Location '{{justfile_directory()}}'
-    uv run python scripts/get_nest_refresh_token.py {{ARGS}}
+    Set-Location '{{justfile_directory()}}'; uv run python scripts/get_nest_refresh_token.py {{ARGS}}
 
 # --- Open Google Cloud  Credentials  add authorized redirect URIs ---
 auth-console:
@@ -82,7 +86,7 @@ e2e:
 # Fix linting and formatting issues
 # Start the web dashboard (Vite)
 web:
-    cd web_sota; npm run dev
+    Set-Location '{{justfile_directory()}}\web_sota'; npm run dev
 
 # Comprehensive dev setup (sync, lint, test)
 dev: sync lint test

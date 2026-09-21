@@ -206,3 +206,18 @@ _dashboard/
 # on every pack. Never hand-edit, never commit.
 mcpb/src/
 
+# Assfix 2026-09-21: audit snapshots (regenerable, not source)
+reports/
+
+# MCPB distributables
+*.mcpb
+
+# Batch-edit backups (Batch Mutation Safety rule)
+*.bak
+*.bak.*
+*.bak-*
+
+# Frontend deps (both webroots)
+node_modules/
+webapp/frontend/node_modules/
+web_sota/node_modules/

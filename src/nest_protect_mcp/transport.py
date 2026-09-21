@@ -238,15 +238,25 @@ async def run_server_async(mcp_app, args: argparse.Namespace | None = None, serv
             endpoint = f"http://{host}:{port}{path}"
             logger.info(f"Running in HTTP Streamable mode: {endpoint}")
 
-            # Inject CORS and Health for Antigravity discovery
+            # Inject CORS and Health for Antigravity discovery.
+            # Fleet CORS standard: explicit origins + unconditional regex
+            # (tauri schemes, loopback, LAN, Tailscale). Never ["*"].
             app = mcp_app.http_app()
             from fastapi.middleware.cors import CORSMiddleware
 
+            _cors_extra = [o.strip().rstrip("/") for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()]
             app.add_middleware(
                 CORSMiddleware,
-                allow_origins=["*"],
+                allow_origins=[
+                    "http://localhost:10752",
+                    "http://127.0.0.1:10752",
+                    "http://localhost:10828",
+                    "http://127.0.0.1:10828",
+                    *_cors_extra,
+                ],
+                allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[a-z0-9-]+\.tail[a-z0-9-]*\.ts\.net)(:\d+)?|tauri://localhost|https?://tauri\.localhost",
                 allow_credentials=True,
-                allow_methods=["*"],
+                allow_methods=["GET", "POST", "OPTIONS"],
                 allow_headers=["*"],
             )
 

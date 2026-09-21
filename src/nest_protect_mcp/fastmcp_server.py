@@ -221,7 +221,7 @@ async def list_devices() -> ToolResult:
                         name = dev.get("name", "Unknown Device")
                         status = "✅ Online" if dev.get("online") else "❌ Offline"
                         room = dev.get("where", "Unknown Location")
-                        Text(f"• **{name}** ({room}) — {status}")
+                        Text(f"• **{name}** ({room}) - {status}")
 
             return ToolResult(
                 content=f"Found {len(result['devices'])} Nest Protect devices.",
@@ -707,7 +707,7 @@ async def health_check(request: Request) -> JSONResponse:
     return JSONResponse({"status": "healthy", "server": "nest-protect-mcp"})
 
 
-# MCP Bridge — Proxy external MCP servers via MCP_BRIDGE_URLS
+# MCP Bridge - Proxy external MCP servers via MCP_BRIDGE_URLS
 _bridge_proxies: list[str] = []
 bridge_urls = os.getenv("MCP_BRIDGE_URLS", "")
 if bridge_urls:
@@ -720,8 +720,8 @@ if bridge_urls:
                 try:
                     app.add_provider(create_proxy(url))
                     _bridge_proxies.append(url)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Bridge proxy skipped for {url}: {e}")
     except ImportError:
         pass
 
@@ -745,11 +745,11 @@ if Message is not None:
             "To use Nest Protect MCP you need one-time Google OAuth setup for Smart Device Management "
             "(OAuth consent lists this scope under home automation / Smart Device Management): "
             "1) Register for Device Access and note your Device Access project id "
-            "(NEST_PROJECT_ID — SDM enterprise UUID). "
+            "(NEST_PROJECT_ID - SDM enterprise UUID). "
             "2) Google Cloud: enable Smart Device Management API; OAuth Desktop client; "
             "add redirect URI matching scripts/get_nest_refresh_token.py "
             "(default http://127.0.0.1:8080/). "
-            "3) Run scripts/get_nest_refresh_token.py — it uses Partner Connections Manager (PCM), "
+            "3) Run scripts/get_nest_refresh_token.py - it uses Partner Connections Manager (PCM), "
             "not accounts.google.com. "
             "4) Put NEST_CLIENT_ID, NEST_CLIENT_SECRET, NEST_PROJECT_ID, NEST_REFRESH_TOKEN "
             "in .env at repo root."
