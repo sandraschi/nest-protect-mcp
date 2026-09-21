@@ -202,7 +202,7 @@ class NestProtectCLI:
             raise
 
     async def _init_server(self, args):
-        """Legacy hook — NestProtectMCP class was removed; use ``python -m nest_protect_mcp``."""
+        """Legacy hook - NestProtectMCP class was removed; use ``python -m nest_protect_mcp``."""
         raise RuntimeError(
             "The legacy in-process NestProtectMCP server was removed. "
             "Run the MCP server with: python -m nest_protect_mcp"
@@ -454,7 +454,7 @@ class NestProtectCLI:
 
 
 def main() -> None:
-    """Entry point for ``nest-protect-mcp`` when wired to this module — delegates to FastMCP CLI."""
+    """Entry point for ``nest-protect-mcp`` when wired to this module - delegates to FastMCP CLI."""
     from . import __main__ as mcp_main
 
     mcp_main.main()

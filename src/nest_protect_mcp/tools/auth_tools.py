@@ -138,7 +138,7 @@ async def initiate_oauth_flow(
     """Initiate OAuth 2.0 flow for Nest Device Access (Partner Connections Manager).
 
     Uses the PCM authorization URL (not accounts.google.com). Requires
-    ``NEST_PROJECT_ID`` — the Device Access project id (enterprise id for SDM API).
+    ``NEST_PROJECT_ID`` - the Device Access project id (enterprise id for SDM API).
     """
     _hydrate_app_state_from_nest_env()
     from ..state_manager import get_app_state

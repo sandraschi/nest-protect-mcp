@@ -323,7 +323,7 @@ async def wizard_pcm_result(completion_id: str) -> dict[str, Any]:
     if not row:
         raise HTTPException(
             status_code=404,
-            detail="Expired or already retrieved — run the wizard again.",
+            detail="Expired or already retrieved - run the wizard again.",
         )
 
     return {
