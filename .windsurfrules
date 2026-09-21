@@ -26,41 +26,6 @@
 
 ---
 
-## Documentation Branches (from Central README)
-
-### Core Standards
-- `STANDARDS.md` - Documentation quality standards
-- `STRUCTURE.md` - Directory layout guide
-- `CONTRIBUTING.md` - How to contribute
-
-### Anthropic Ecosystem (`docs/anthropic-ecosystem/`)
-- MCP Protocol, FastMCP, MCPB, Claude Desktop, Glama
-
-### Google Ecosystem (`docs/google-ecosystem/`)
-- Gemini 3, Antigravity IDE, Nano Banana Pro, DeepMind, TPU infrastructure
-
-### Patterns (`docs/patterns/`)
-- Design patterns for MCP servers and development
-
-### Projects (`docs/projects/`)
-- myai, veogen, mywienerlinien, autohotkey
-
-### Monitoring (`monitoring/`)
-- Prometheus/Grafana/Loki stack
-
-### Templates (`templates/`)
-- Reusable templates and scripts
-
----
-
-## Quick Reference
-
-**Central Docs Location:** `D:\Dev\repos\mcp-central-docs\`
-
-**Start Here:** `D:\Dev\repos\mcp-central-docs\README.md`
-
-**When in doubt:** Read the central README and navigate from there.
-
 ## Session Context (nest-protect-mcp)
 Before starting work: read `pyproject.toml` + `src/nest_protect_mcp/fastmcp_server.py`
 (32 tools: `list_nest_devices`, `hush_active_alarm`, `start_google_oauth`...).
