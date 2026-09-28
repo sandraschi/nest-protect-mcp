@@ -171,6 +171,7 @@ ignore = ["S101", "B008", "S106", "RUF012", "S603", "S607", "S324", "E402", "E50
 "tests/**" = ["S105", "S311"]
 "src/nest_protect_mcp/constants.py" = ["S105"]
 "src/nest_protect_mcp/cli.py" = ["T20"]
+"scripts/**" = ["S110", "S310", "T20"]
 
 [tool.ruff.format]
 quote-style = "double"
