@@ -4,18 +4,18 @@ export interface MCPResponse {
   success: boolean;
   operation?: string;
   summary?: string;
-  result?: any;
+  result?: unknown;
   requires_sampling?: boolean;
   sampling_reason?: string;
   next_steps?: string[];
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   suggestions?: string[];
   follow_up_questions?: string[];
   error?: string;
   error_code?: string;
   message?: string;
   recovery_options?: string[];
-  diagnostic_info?: Record<string, any>;
+  diagnostic_info?: Record<string, unknown>;
   estimated_resolution_time?: string;
   urgency?: "low" | "medium" | "high" | "critical";
 }
@@ -60,7 +60,7 @@ export interface DeviceEvent {
   event_id: string;
   type: string;
   timestamp: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export interface SafetyAssessmentResult {
@@ -83,7 +83,7 @@ export interface SafetyAssessmentResult {
 export interface MCPTool {
   name: string;
   description: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
 }
 
 export interface MCPServerStatus {
@@ -99,7 +99,7 @@ export interface ConversationMessage {
   timestamp: string;
   type: "user" | "assistant" | "system" | "error";
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TestResult {
@@ -107,7 +107,7 @@ export interface TestResult {
   status: "pending" | "running" | "passed" | "failed";
   duration?: number;
   error?: string;
-  result?: any;
+  result?: unknown;
 }
 
 export interface EmergencyResponse {
@@ -129,12 +129,12 @@ export interface PredictiveMaintenance {
 // WebSocket message types for real-time updates
 export interface WebSocketMessage {
   type: "device_update" | "alarm_triggered" | "mcp_status" | "test_result" | "conversation_update";
-  payload: any;
+  payload: unknown;
   timestamp: string;
 }
 
 // API response types
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

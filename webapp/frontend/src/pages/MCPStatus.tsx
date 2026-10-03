@@ -57,7 +57,7 @@ export default function MCPStatus() {
         <Activity className="h-16 w-16 text-primary mx-auto mb-4" />
         <h1 className="text-4xl font-bold mb-4">MCP Server Status</h1>
         <p className="text-xl text-gray-600 dark:text-gray-300">
-          {error ? "Failed to reach server" : `Live status from Nest Protect API`}
+          {error ? "Failed to reach server" : "Live status from Nest Protect API"}
         </p>
       </div>
 

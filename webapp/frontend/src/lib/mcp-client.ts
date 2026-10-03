@@ -9,7 +9,7 @@ import type {
   SafetyAssessmentResult,
   WebSocketMessage,
 } from "@/types/mcp";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { type Socket, io } from "socket.io-client";
 
 class MCPClient {
@@ -95,11 +95,11 @@ class MCPClient {
     this.socket?.on("device_update", callback);
   }
 
-  onAlarmTriggered(callback: (data: any) => void) {
+  onAlarmTriggered(callback: (data: unknown) => void) {
     this.socket?.on("alarm_triggered", callback);
   }
 
-  onMCPStatus(callback: (data: any) => void) {
+  onMCPStatus(callback: (data: unknown) => void) {
     this.socket?.on("mcp_status", callback);
   }
 
@@ -232,9 +232,13 @@ class MCPClient {
     return response.data.data as MCPResponse;
   }
 
-  async getAvailableTools(): Promise<MCPResponse & { result: { tools: any[] } }> {
+  async getAvailableTools(): Promise<
+    MCPResponse & { result: { tools: Array<Record<string, unknown>> } }
+  > {
     const response = await axios.get<APIResponse>(`${this.baseURL}/api/mcp/tools`);
-    return response.data.data as MCPResponse & { result: { tools: any[] } };
+    return response.data.data as MCPResponse & {
+      result: { tools: Array<Record<string, unknown>> };
+    };
   }
 
   // Authentication
@@ -254,7 +258,7 @@ class MCPClient {
     return response.data.data as MCPResponse;
   }
 
-  async updateConfig(updates: Record<string, any>): Promise<MCPResponse> {
+  async updateConfig(updates: Record<string, unknown>): Promise<MCPResponse> {
     const response = await axios.post<APIResponse>(`${this.baseURL}/api/config`, updates);
     return response.data.data as MCPResponse;
   }

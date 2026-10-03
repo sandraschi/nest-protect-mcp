@@ -56,7 +56,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center space-x-3">
             <div className="relative">
               <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse" />
             </div>
             <div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">Nest Protect</span>
@@ -91,7 +91,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Status section */}
         <div className="mt-auto p-4 border-t border-gray-200 dark:border-slate-700">
           <div className="flex items-center space-x-2 mb-3">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">MCP Server</span>
             <Badge variant="success" className="text-xs">
               Connected

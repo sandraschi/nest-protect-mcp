@@ -120,7 +120,7 @@ export default function Dashboard() {
                         ? "bg-yellow-500 animate-pulse"
                         : "bg-red-500"
                   }`}
-                ></div>
+                />
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">MCP Server:</span>
                   <Badge variant={serverStatus === "connected" ? "success" : "destructive"}>
@@ -152,9 +152,9 @@ export default function Dashboard() {
           Testing Capabilities
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action, index) => (
+          {quickActions.map((action) => (
             <Card
-              key={index}
+              key={action.title}
               className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group"
             >
               <CardContent className="p-6">
@@ -171,9 +171,9 @@ export default function Dashboard() {
                 </p>
 
                 <div className="space-y-1 mb-4">
-                  {action.features.map((feature, idx) => (
+                  {action.features.map((feature) => (
                     <div
-                      key={idx}
+                      key={feature}
                       className="flex items-center text-xs text-gray-500 dark:text-gray-400"
                     >
                       <CheckCircle className="h-3 w-3 text-green-500 mr-2" />
@@ -258,7 +258,7 @@ export default function Dashboard() {
                       ? "bg-yellow-500 animate-pulse"
                       : "bg-red-500"
                 }`}
-              ></div>
+              />
               <div>
                 <div className="font-medium">MCP Server</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">

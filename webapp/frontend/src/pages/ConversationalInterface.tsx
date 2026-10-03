@@ -11,7 +11,14 @@ interface ConversationMessage {
   type: "user" | "assistant" | "system";
   content: string;
   timestamp: string;
-  metadata?: any;
+  metadata?: {
+    operation?: string;
+    success?: boolean;
+    requires_sampling?: boolean;
+    next_steps?: string[];
+    suggestions?: unknown;
+    follow_up_questions?: unknown;
+  };
 }
 
 export default function ConversationalInterface() {
@@ -289,11 +296,9 @@ export default function ConversationalInterface() {
                           <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                             <div className="font-medium">Next steps:</div>
                             <ul className="list-disc list-inside ml-2">
-                              {message.metadata.next_steps
-                                .slice(0, 2)
-                                .map((step: string, idx: number) => (
-                                  <li key={idx}>{step}</li>
-                                ))}
+                              {message.metadata.next_steps.slice(0, 2).map((step: string) => (
+                                <li key={step}>{step}</li>
+                              ))}
                             </ul>
                           </div>
                         )}
@@ -312,15 +317,15 @@ export default function ConversationalInterface() {
                   <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 max-w-[80%]">
                     <div className="flex items-center space-x-2">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                         <div
                           className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: "0.1s" }}
-                        ></div>
+                        />
                         <div
                           className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: "0.2s" }}
-                        ></div>
+                        />
                       </div>
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         AI is processing...

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mcpClient } from "@/lib/mcp-client";
-import { type DeviceInfo, type DeviceStatus, MCPResponse } from "@/types/mcp";
+import type { DeviceInfo, DeviceStatus, MCPResponse } from "@/types/mcp";
 import {
   AlertTriangle,
   Battery,
@@ -15,11 +15,19 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface DeviceTestResult {
+  status: string;
+  testType?: string;
+  result?: MCPResponse;
+  timestamp?: string;
+  error?: string;
+}
+
 export default function DeviceTesting() {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, any>>({});
+  const [testResults, setTestResults] = useState<Record<string, DeviceTestResult>>({});
   const [deviceStatus, setDeviceStatus] = useState<DeviceStatus | null>(null);
 
   useEffect(() => {
@@ -159,7 +167,7 @@ export default function DeviceTesting() {
             <CardContent className="space-y-3">
               {isLoading ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto" />
                   <p className="text-sm text-gray-500 mt-2">Loading devices...</p>
                 </div>
               ) : devices.length === 0 ? (
@@ -361,7 +369,9 @@ export default function DeviceTesting() {
                         </Badge>
                         <span className="text-sm text-gray-600">
                           {testResults[selectedDevice].testType} test •{" "}
-                          {new Date(testResults[selectedDevice].timestamp).toLocaleTimeString()}
+                          {new Date(
+                            testResults[selectedDevice].timestamp ?? "",
+                          ).toLocaleTimeString()}
                         </span>
                       </div>
 

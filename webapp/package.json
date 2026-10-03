@@ -7,6 +7,7 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "python backend/main.py",
     "build": "npm run build --prefix frontend",
+    "biome:ci": "cd frontend && bun run biome:ci",
     "install:all": "npm install && pip install -r backend/requirements.txt",
     "start": "npm run dev"
   },
