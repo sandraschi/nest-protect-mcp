@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mcpClient } from "@/lib/mcp-client";
-import { RefreshCw, Save, Settings as SettingsIcon, Zap } from "lucide-react";
+import { RefreshCw, Save, Settings as SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function LLMSettings() {
   const [providers, setProviders] = useState<Record<string, { name: string }[]>>({});
   const [selectedProvider, setSelectedProvider] = useState("ollama");
   const [selectedModel, setSelectedModel] = useState("");
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [, setStatus] = useState<"loading" | "ready" | "error">("loading");
   useEffect(() => {
     fetch("/api/llm/providers")
       .then((r) => r.json())

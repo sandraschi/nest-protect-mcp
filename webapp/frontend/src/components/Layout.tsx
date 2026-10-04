@@ -1,17 +1,6 @@
-import { useTheme } from "@/components/theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Activity,
-  Home,
-  Menu,
-  MessageSquare,
-  Settings,
-  Shield,
-  TestTube,
-  X,
-  Zap,
-} from "lucide-react";
+import { Activity, Home, Menu, MessageSquare, Settings, Shield, TestTube } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -30,7 +19,6 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">

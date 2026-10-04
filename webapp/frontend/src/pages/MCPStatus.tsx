@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mcpClient } from "@/lib/mcp-client";
 import { Activity, CheckCircle, Clock, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";

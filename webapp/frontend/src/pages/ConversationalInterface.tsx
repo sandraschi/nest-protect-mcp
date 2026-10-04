@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mcpClient } from "@/lib/mcp-client";
 import type { MCPResponse } from "@/types/mcp";
-import { Cpu, MessageSquare, Send, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, Cpu, MessageSquare, Send, Shield, TrendingUp, Zap } from "lucide-react";
+import { useState } from "react";
 
 interface ConversationMessage {
   id: string;
@@ -25,7 +25,6 @@ export default function ConversationalInterface() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<string>("assess_home_safety");
 
   const quickActions = [
     {
@@ -85,7 +84,11 @@ export default function ConversationalInterface() {
         inputMessage.toLowerCase().includes("emergency") ||
         inputMessage.toLowerCase().includes("alarm")
       ) {
-        response = await mcpClient.coordinateEmergencyResponse("smoke", ["device-001"], "high");
+        response = await mcpClient.coordinateEmergencyResponse({
+          emergency_type: "smoke",
+          affected_devices: ["device-001"],
+          response_priority: "high",
+        });
       } else if (
         inputMessage.toLowerCase().includes("maintenance") ||
         inputMessage.toLowerCase().includes("predict")
@@ -133,17 +136,17 @@ export default function ConversationalInterface() {
         response = await mcpClient.assessHomeSafety();
         break;
       case "coordinate_emergency_response":
-        response = await mcpClient.coordinateEmergencyResponse(
-          "smoke",
-          ["device-001", "device-002"],
-          "critical",
-        );
+        response = await mcpClient.coordinateEmergencyResponse({
+          emergency_type: "smoke",
+          affected_devices: ["device-001", "device-002"],
+          response_priority: "critical",
+        });
         break;
       case "predict_maintenance_needs":
         response = await mcpClient.predictMaintenance();
         break;
       case "setup_smart_automation":
-        response = await mcpClient.setupSmartAutomation("safety");
+        response = await mcpClient.setupSmartAutomation({ automation_type: "safety" });
         break;
       default:
         return;

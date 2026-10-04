@@ -53,6 +53,7 @@ export interface DeviceStatus extends DeviceInfo {
     humidity?: number;
   };
   location?: string;
+  temperature_c?: number;
   last_update?: string;
 }
 

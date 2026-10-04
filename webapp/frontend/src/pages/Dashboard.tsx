@@ -2,10 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { mcpClient } from "@/lib/mcp-client";
-import { DeviceInfo, MCPResponse } from "@/types/mcp";
 import {
   Activity,
-  AlertTriangle,
   CheckCircle,
   Clock,
   Cpu,
