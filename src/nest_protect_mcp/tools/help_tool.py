@@ -129,7 +129,7 @@ async def list_available_tools() -> dict[str, Any]:
 
     try:
         # Get tools from FastMCP app
-        tools_dict = await app.get_tools()
+        tools_dict = {t.name: t for t in await app.list_tools()}
         tools = []
 
         for tool_name, tool_obj in tools_dict.items():
@@ -180,7 +180,7 @@ async def get_tool_help(tool_name: str) -> dict[str, Any]:
 
     try:
         # Get tools from FastMCP app
-        tools_dict = await app.get_tools()
+        tools_dict = {t.name: t for t in await app.list_tools()}
 
         if tool_name not in tools_dict:
             return {"status": "error", "message": f"Tool '{tool_name}' not found"}
@@ -255,7 +255,7 @@ async def search_tools(query: str, search_in: list[str] | None = None) -> dict[s
         results = []
 
         # Get tools from FastMCP app
-        tools_dict = await app.get_tools()
+        tools_dict = {t.name: t for t in await app.list_tools()}
 
         for tool_name, tool_obj in tools_dict.items():
             match = False
