@@ -1,4 +1,4 @@
-﻿# Per-repo fleet start config for nest-protect-mcp
+# Per-repo fleet start config for nest-protect-mcp
 # Edit ports/backend target here - start.ps1 is fleet-standard.
 @{
     Name         = 'nest-protect-mcp'
@@ -12,6 +12,7 @@
         WorkDir       = 'webapp\backend'
         PythonPath    = 'webapp\backend;src'
         SyncExtras    = @('dev')
+        SyncOnStart  = $true
         Env           = @{ WEB_PORT = '10753' }
     }
     Frontend = @{
