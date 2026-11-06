@@ -9,6 +9,8 @@
 </p>
 
 
+Production-ready MCP server for Google Nest Protect smoke and CO detectors - monitoring, control and alarms via the Smart Device Management API.
+
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
 [![CI/CD](https://github.com/sandraschi/nest-protect-mcp/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sandraschi/nest-protect-mcp/actions)
