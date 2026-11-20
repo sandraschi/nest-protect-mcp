@@ -81,7 +81,7 @@ class NestProtectCLI:
         server_parser.add_argument(
             "--host",
             type=str,
-            default="0.0.0.0",  # noqa: S104
+            default="127.0.0.1",
             help="Host to bind the server to",
         )
         server_parser.add_argument(
@@ -155,7 +155,7 @@ class NestProtectCLI:
         web_parser.add_argument(
             "--host",
             type=str,
-            default="0.0.0.0",  # noqa: S104
+            default="127.0.0.1",
             help="Host to bind the web UI to",
         )
         web_parser.add_argument(

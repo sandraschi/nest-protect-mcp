@@ -27,9 +27,7 @@ from nest_protect_mcp.state_manager import get_app_state
 from nest_protect_mcp.tools import ai_orchestration, device_control, device_status
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # FastAPI app
@@ -270,9 +268,7 @@ async def sound_alarm(
 ):
     """Sound an alarm for testing purposes."""
     try:
-        result = await device_control.sound_alarm(
-            device_id, alarm_type, duration_seconds, volume
-        )
+        result = await device_control.sound_alarm(device_id, alarm_type, duration_seconds, volume)
         return {"success": True, "data": result}
     except Exception as e:
         logger.error(f"Failed to sound alarm: {e}")
@@ -384,7 +380,7 @@ async def setup_smart_automation(
 async def get_system_status():
     """Get overall system status."""
     try:
-        devices = list(device_registry.values())
+        devices = getattr(mcp_state, "devices", {})
         return {
             "success": True,
             "operation": "get_system_status",
@@ -579,6 +575,4 @@ async def refresh_access_token():
 
 if __name__ == "__main__":
     logger.info("Starting Nest Protect MCP Testing API server...")
-    uvicorn.run(
-        "main:combined_app", host="0.0.0.0", port=7771, reload=True, log_level="info"
-    )
+    uvicorn.run("main:combined_app", host="127.0.0.1", port=10753, reload=True, log_level="info")
